@@ -44,6 +44,13 @@
 				"arch": "x86_64",
 				"javaVersion": 25,
 				"agent": "qa6xd-win11"
+			},
+			{
+				"os": "win32",
+				"ws": "win32",
+				"arch": "aarch64",
+				"javaVersion": 25,
+				"agent": "rie8t-win11-arm64"
 			}
 		],
 		"smokeTests": [
