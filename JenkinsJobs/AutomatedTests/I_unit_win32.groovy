@@ -1,11 +1,17 @@
 def config = new groovy.json.JsonSlurper().parseText(readFileFromWorkspace('JenkinsJobs/JobDSL.json'))
 def STREAMS = config.Streams
 
+def BUILD_CONFIGURATIONS = [ 
+  [arch: 'aarch64', javaVersion: '21', agentLabel: 'rie8t-win11-arm64', javaHome: 'C:\\\\Program Files (Arm)\\\\Microsoft\\\\jdk-21.0.2.13-hotspot' ]
+  [arch: 'x86_64',  javaVersion: '17', agentLabel: 'qa6xd-win11',       javaHome: 'C:\\\\Program Files\\\\Eclipse Adoptium\\\\jdk-17.0.11+9' ]
+]
+
 for (STREAM in STREAMS){
+for (B_CONFIG in BUILD_CONFIGURATIONS){	
   def MAJOR = STREAM.split('\\.')[0]
   def MINOR = STREAM.split('\\.')[1]
 
-  pipelineJob('AutomatedTests/ep' + MAJOR + MINOR + 'I-unit-win32-x86_64-java17'){
+  pipelineJob('AutomatedTests/ep' + MAJOR + MINOR + 'I-unit-win32-' + B_CONFIG.arch + '-java' + B_CONFIG.javaVersion){
     description('Run Eclipse SDK Tests for the platform implied by this job\'s name')
     parameters { // Define parameters in job configuration to make them available from the very first build onwards
       stringParam('buildId', null, 'Build Id to test (such as I20240611-1800, N20120716-0800).')
@@ -24,15 +30,15 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr:'5'))
   }
   agent {
-    label 'qa6xd-win11'
+    label \'''' + B_CONFIG.agentLabel + '''\'
   }
 
   stages {
       stage('Run tests'){
           environment {
               // Declaring a jdk and ant the usual way in the 'tools' section, because of unknown reasons, breaks the usage of system commands like xvnc, pkill and sh
-              JAVA_HOME = 'C:\\\\PROGRA~1\\\\ECLIPS~1\\\\jdk-17.0.11+9\\\\'
-              PATH = "%JAVA_HOME%\\\\bin;C:\\\\ProgramData\\\\Boxstarter;C:\\\\Program Files\\\\IcedTeaWeb\\\\WebStart\\\\bin;C:\\\\Users\\\\jenkins_vnc\\\\AppData\\\\Local\\\\Microsoft\\\\WindowsApps;${env.PATH}"
+              JAVA_HOME = \'''' + B_CONFIG.javaHome + '''\'
+              eclipseArch = \'''' + B_CONFIG.arch + ''''
           }
           steps {
               cleanWs() // workspace not cleaned by default
@@ -61,7 +67,7 @@ set JAVA_HOME
 
 ant -f getEBuilder.xml -Djava.io.tmpdir=%WORKSPACE%/tmp -DbuildId=%buildId%  -DeclipseStream=%STREAM% -DEBUILDER_HASH=%EBUILDER_HASH% ^
   -DdownloadURL="https://download.eclipse.org/eclipse/downloads/drops4/%buildId%" ^
-  -Dargs=all -Dosgi.os=win32 -Dosgi.ws=win32 -Dosgi.arch=x86_64 ^
+  -Dargs=all -Dosgi.os=win32 -Dosgi.ws=win32 -Dosgi.arch=%eclipseArch% ^
   -DtestSuite=all ^
    -Djvm="%JAVA_HOME%\\\\bin\\\\java.exe"
 
@@ -81,4 +87,5 @@ ant -f getEBuilder.xml -Djava.io.tmpdir=%WORKSPACE%/tmp -DbuildId=%buildId%  -De
       }
     }
   }
+}
 }
