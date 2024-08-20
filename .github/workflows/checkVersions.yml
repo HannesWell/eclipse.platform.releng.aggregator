@@ -1,0 +1,100 @@
+name: Check for and apply necessary version increments
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  versions-check-and-increment:
+    name: Check and increment service versions
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions: write-all #TODO: more fine-grained! https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/controlling-permissions-for-github_token
+#      pull-requests: read
+    steps:
+    - name: Dump GitHub context
+      id: github_context_step
+      run: echo '${{ toJSON(github) }}'
+    - name: Dump job context
+      run: echo '${{ toJSON(job) }}'
+    - name: Dump steps context
+      run: echo '${{ toJSON(steps) }}'
+    - uses: actions/checkout@v4
+      with:
+        ref: '${{ github.event.pull_request.head.sha }}'
+    - run: |
+        git config --list
+    - name: Check and increment Versions
+      uses: Wandalen/wretry.action@6feedb7dedadeb826de0f45ff482b53b379a7844 # master
+      with:
+        attempt_delay: 1000
+        attempt_limit: 10
+        command: >-
+            mvn clean verify -B -fae -T 1C
+            -DskipTests
+            -Dcompare-version-with-baselines.skip=false
+            org.eclipse.tycho:tycho-versions-plugin:bump-versions
+
+    - id: git-commit
+      run: |
+        echo 'full_name: ${{ github.event.pull_request.head.repo.full_name }}'
+        echo 'head-ref1: ${{ github.event.pull_request.head.ref }}'
+        echo 'head-ref2: ${{ github.head_ref }}'
+        git config --global user.email 'eclipse-releng-bot@eclipse.org'
+        git config --global user.name 'Eclipse Releng Bot'
+        git checkout ${{ github.event.pull_request.head.sha }}
+        echo 'Hello World' > myfile.txt
+        git add --all *
+        git status
+        git commit -m "Bump version(s) for 4.34 stream"
+        git status
+        fileList=$(git diff-tree --no-commit-id --name-only HEAD -r)
+        echo "file-list=$fileList" >> $GITHUB_OUTPUT
+        gitPatch=$(git format-patch -1 HEAD --stdout)
+        echo "git-patch=$gitPatch" >> $GITHUB_OUTPUT
+		#TODO: Derive version from something
+# TODO: create patch in one of the previous steps and assign it to an output variable using gith-actions syntax:
+#https://git-scm.com/docs/git-format-patch
+#TODO: do the same for the list of files:
+# https://stackoverflow.com/questions/424071/how-do-i-list-all-the-files-in-a-commit
+# Use https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions#setting-an-output-parameter
+    - name: Push version bump commit
+      run: |
+        git remote add 'fork' https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git
+        git remote -v
+        git push 'fork' 'HEAD:refs/heads/${{ github.event.pull_request.head.ref }}'
+
+    - name: Add information comment
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+#TODO: Or use the gh CLI ? https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/using-github-cli-in-workflows
+      with:
+        script: |
+          let commentBody = 'Some projects are changed for the first time in this development cycle and therefore the following files need a version increment:\n'
+          commentBody += '```\n'
+          commentBody += ${{ steps.git-commit.outputs.file-list }}
+          commentBody += '```\n'
+          commentBody += 'An additional commit containing all necessary changes was pushed to the top of this PR's branch.'
+          commentBody += 'To obtain these changes (for example if you want to push more changes) either fetch from your fork or apply the following Git-patch:'
+          commentBody += ${{ steps.git-commit.outputs.git-patch }}
+          #TODO: Make the git-patch foldable!
+          #TODO: Can we use the bot that provides the PAT?
+          github.rest.issues.createComment({
+            issue_number: context.issue.number, ...context.repo, body: commentBody
+          })
+
+# Message:
+# Some projects are changed for the first time in this development cycle and therefore the following files need a version increment:
+# <File-list>
+# An additional commit containing all necessary changes was pushed to the top of this PR's branch.
+# To obtain these changes (for example if you want to push more changes) either fetch from your fork or apply the following Git-patch:
+# <Git-patch>
+
+#TODO: make version dynamic and mail and bot name configurable?!
+
+
+# See
+# https://github.com/actions/toolkit
+# https://github.com/actions/github-script
+# https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs
