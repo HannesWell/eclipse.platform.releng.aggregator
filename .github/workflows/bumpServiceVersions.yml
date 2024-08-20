@@ -1,0 +1,41 @@
+name: Apply necessary version bumps
+
+on:
+#  workflow_call:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+
+permissions:
+  contents: read
+
+jobs:
+  version-bumps:
+    name: Bump service versions
+    runs-on: ubuntu-latest
+    permissions: write-all #TODO: more fine-grained! https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/controlling-permissions-for-github_token
+#      pull-requests: read
+    steps:
+    - name: Dump GitHub context
+      id: github_context_step
+      run: echo '${{ toJSON(github) }}'
+    - name: Dump job context
+      run: echo '${{ toJSON(job) }}'
+    - name: Dump steps context
+      run: echo '${{ toJSON(steps) }}'
+    - name: Dump runner context
+      run: echo '${{ toJSON(runner) }}'
+    - name: Dump strategy context
+      run: echo '${{ toJSON(strategy) }}'
+    - name: Dump matrix context
+      run: echo '${{ toJSON(matrix) }}'
+    - uses: actions/checkout@v4
+    - run: |
+        git config --list
+
+# See
+# https://github.com/actions/toolkit
+# https://github.com/actions/github-script
+# https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs
