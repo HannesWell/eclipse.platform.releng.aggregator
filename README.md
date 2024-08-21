@@ -99,3 +99,6 @@ License
 [Eclipse Public License (EPL) v2.0][2]
 
 [2]: https://www.eclipse.org/legal/epl-2.0/
+
+// Dummy change 1
+// Dummy change 2
