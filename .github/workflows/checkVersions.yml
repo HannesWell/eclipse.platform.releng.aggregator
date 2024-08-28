@@ -2,6 +2,24 @@ name: Check for and apply necessary version increments
 
 on:
   workflow_call:
+    inputs:
+      botName:
+        description: 'The name of the bot that adds the necessary version increment changes'
+        type: string
+        required: true
+      botMail:
+        description: 'The name of the bot that adds the necessary version increment changes'
+        type: string
+        required: true
+      excludedProject:
+        description: 'The comma-separated list of projects that should not be skipped (e.g. products or repositories). Can speed-up the check'
+        type: string
+        required: false
+        default: ''
+    secrets:
+      githubBotPAT:
+        description: 'The personal access token (with scope 'public_repo') of the bot to push a required change to a PR branch in a fork.'
+        required: false
 
 permissions:
   contents: read
@@ -36,6 +54,8 @@ jobs:
             -DskipTests
             -Dcompare-version-with-baselines.skip=false
             org.eclipse.tycho:tycho-versions-plugin:bump-versions
+#TODO: exclude products, p2-repos etc:
+# https://stackoverflow.com/questions/13266470/how-do-i-exclude-certain-modules-from-a-maven-build-using-the-commandline
 
     - id: git-commit
       run: |
@@ -54,7 +74,7 @@ jobs:
         echo "file-list=$fileList" >> $GITHUB_OUTPUT
         gitPatch=$(git format-patch -1 HEAD --stdout)
         echo "git-patch=$gitPatch" >> $GITHUB_OUTPUT
-		#TODO: Derive version from something
+#TODO: Derive version from something
 # TODO: create patch in one of the previous steps and assign it to an output variable using gith-actions syntax:
 #https://git-scm.com/docs/git-format-patch
 #TODO: do the same for the list of files:
