@@ -1,7 +1,25 @@
-name: Check for and apply necessary version increments
+name: Check for version increments and apply them if necessary 
 
 on:
   workflow_call:
+    inputs:
+      botName:
+        description: The name of the bot that adds the necessary version increment changes
+        type: string
+        required: true
+      botMail:
+        description: The name of the bot that adds the necessary version increment changes
+        type: string
+        required: true
+      excludedProjects:
+        description: The comma-separated list of projects that should not be skipped (e.g. products or repositories). Can speed-up the check
+        type: string
+        required: false
+        default: ''
+    secrets:
+      githubBotPAT:
+        description: The personal access token (with scope 'public_repo') of the bot to push a required change to a PR branch in a fork.
+        required: false
 
 permissions:
   contents: read
@@ -11,8 +29,6 @@ jobs:
     name: Check and increment service versions
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    permissions: write-all #TODO: more fine-grained! https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/controlling-permissions-for-github_token
-#      pull-requests: read
     steps:
     - name: Dump GitHub context
       id: github_context_step
@@ -24,77 +40,92 @@ jobs:
     - uses: actions/checkout@v4
       with:
         ref: '${{ github.event.pull_request.head.sha }}'
+        persist-credentials: false #Opt out from persisting the default Github-token authentication in order to enable use of the bot's PAT when pushing below
+#        token: ${{ secrets.githubBotPAT }} TODO: alternativly use this and and just add the fork without basic auth below.
     - run: |
         git config --list
-    - name: Check and increment Versions
+    - name: Check and increment versions
       uses: Wandalen/wretry.action@6feedb7dedadeb826de0f45ff482b53b379a7844 # master
       with:
-        attempt_delay: 1000
+        attempt_delay: 200
         attempt_limit: 10
-        command: >-
-            mvn clean verify -B -fae -T 1C
-            -DskipTests
-            -Dcompare-version-with-baselines.skip=false
-            org.eclipse.tycho:tycho-versions-plugin:bump-versions
+        command: |
+             echo 'Hello World'>someFile.txt
+             echo 'Hello World 2'>someFile2.txt
+             ls
+#            mvn clean verify -B -fae -T 1C
+#            org.eclipse.tycho:tycho-versions-plugin:bump-versions
+#            -DskipTests
+#            -Dcompare-version-with-baselines.skip=false
+#TODO: exclude products, p2-repos etc:
+# https://stackoverflow.com/questions/13266470/how-do-i-exclude-certain-modules-from-a-maven-build-using-the-commandline
+# Do something like -pl '!excludedProjects.replace(',','!,')'
+# Or create a list of all eclipse-plugin and eclipse-feature projects and use it here as input for PL?! Could be done with java-script?!
+# Or check if one can just compute the build-qualifier and then run the baseline plugin?!
 
     - id: git-commit
+      name: Commit and push version increments, if any
       run: |
-        echo 'full_name: ${{ github.event.pull_request.head.repo.full_name }}'
-        echo 'head-ref1: ${{ github.event.pull_request.head.ref }}'
-        echo 'head-ref2: ${{ github.head_ref }}'
-        git config --global user.email 'eclipse-releng-bot@eclipse.org'
-        git config --global user.name 'Eclipse Releng Bot'
-        git checkout ${{ github.event.pull_request.head.sha }}
-        echo 'Hello World' > myfile.txt
-        git add --all *
-        git status
-        git commit -m "Bump version(s) for 4.34 stream"
-        git status
-        fileList=$(git diff-tree --no-commit-id --name-only HEAD -r)
-        echo "file-list=$fileList" >> $GITHUB_OUTPUT
-        gitPatch=$(git format-patch -1 HEAD --stdout)
-        echo "git-patch=$gitPatch" >> $GITHUB_OUTPUT
-		#TODO: Derive version from something
-# TODO: create patch in one of the previous steps and assign it to an output variable using gith-actions syntax:
-#https://git-scm.com/docs/git-format-patch
-#TODO: do the same for the list of files:
-# https://stackoverflow.com/questions/424071/how-do-i-list-all-the-files-in-a-commit
-# Use https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions#setting-an-output-parameter
-    - name: Push version bump commit
-      run: |
-        git remote add 'fork' https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git
-        git remote -v
-        git push 'fork' 'HEAD:refs/heads/${{ github.event.pull_request.head.ref }}'
+        if [[ $(git status --ignore-submodules --porcelain) != '' ]]; then
+          # Workspace is not clean, i.e. some version were changed
+          echo "version-incremented=true" >> $GITHUB_OUTPUT
+          
+          # Read pom project parent version or project version as development stream version
+          sudo apt-get install -qq -y libxml2-utils
+          pomVersion=$(xmllint --xpath "(/*[local-name()='project']/*[local-name()='parent'] | /*[local-name()='project'])/*[local-name()='version']/text()" pom.xml)
+          streamVersion=$(echo "${pomVersion}" | cut -d '.' -f1-2)
+          
+          git config --global user.email '${{ inputs.botMail }}'
+          git config --global user.name '${{ inputs.botName }}'
+          git add --all
+          git status
+          git commit -m "Bump version(s) for ${streamVersion} stream"
+          
+          fileList=$(git diff-tree --no-commit-id --name-only HEAD -r)
+          echo "file-list<<EOF" >> $GITHUB_OUTPUT
+          echo "$fileList" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          git format-patch -1 HEAD --no-prefix --no-stat --output 'version_increments.patch'
+          
+          #git remote add 'fork' https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git
+          #git remote -v
+          #git push 'fork' 'HEAD:refs/heads/${{ github.event.pull_request.head.ref }}'
+          git push \
+            "https://oauth2:${BOT_TOKEN}@github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
+            'HEAD:refs/heads/${{ github.event.pull_request.head.ref }}'
+          
+        else
+          echo 'No versions have to be incremented'
+          echo "version-incremented=false" >> $GITHUB_OUTPUT
+        fi
+      env:
+        BOT_TOKEN: ${{ secrets.githubBotPAT }}
 
     - name: Add information comment
       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-#TODO: Or use the gh CLI ? https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/using-github-cli-in-workflows
+      if: ${{ always() }} 
       with:
+        github-token: ${{ secrets.githubBotPAT }}
         script: |
-          let commentBody = 'Some projects are changed for the first time in this development cycle and therefore the following files need a version increment:\n'
-          commentBody += '```\n'
-          commentBody += ${{ steps.git-commit.outputs.file-list }}
-          commentBody += '```\n'
-          commentBody += 'An additional commit containing all necessary changes was pushed to the top of this PR's branch.'
-          commentBody += 'To obtain these changes (for example if you want to push more changes) either fetch from your fork or apply the following Git-patch:'
-          commentBody += ${{ steps.git-commit.outputs.git-patch }}
-          #TODO: Make the git-patch foldable!
-          #TODO: Can we use the bot that provides the PAT?
-          github.rest.issues.createComment({
-            issue_number: context.issue.number, ...context.repo, body: commentBody
-          })
-
-# Message:
-# Some projects are changed for the first time in this development cycle and therefore the following files need a version increment:
-# <File-list>
-# An additional commit containing all necessary changes was pushed to the top of this PR's branch.
-# To obtain these changes (for example if you want to push more changes) either fetch from your fork or apply the following Git-patch:
-# <Git-patch>
-
-#TODO: make version dynamic and mail and bot name configurable?!
-
-
-# See
-# https://github.com/actions/toolkit
-# https://github.com/actions/github-script
-# https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs
+          const fs = require('fs')
+          const fileList = `${{ steps.git-commit.outputs.file-list }}`
+          if (fileList) {
+            let commentBody = 
+            github.rest.issues.createComment({
+              issue_number: context.issue.number, ...context.repo, body: `
+          This pull request changes some projects for the first time in this development.
+          Therefore the following files need a version increment:
+          \`\`\`
+          ${fileList}
+          \`\`\`
+          An additional commit containing all the necessary changes was pushed to the top of this PR's branch. To obtain these changes (for example if you want to push more changes) either fetch from your fork or apply the _git patch_.
+          <details>
+          <summary>Git patch</summary>
+          
+          \`\`\`
+          ${ fs.readFileSync( process.env.GITHUB_WORKSPACE + '/version_increments.patch', {encoding: 'utf8'}).trim() }
+          \`\`\`
+          </details>
+          `.trim()
+            })
+          }
