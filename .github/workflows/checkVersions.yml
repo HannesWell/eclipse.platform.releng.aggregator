@@ -21,8 +21,9 @@ on:
         description: The personal access token (with scope 'public_repo') of the bot to push a required change to a PR branch in a fork.
         required: false
 
-permissions: write-all
-#  contents: read
+permissions:
+  contents: read
+  issues: write
 
 jobs:
   versions-check-and-increment:
@@ -88,13 +89,13 @@ jobs:
           echo 'No versions have to be incremented'
         fi
       env:
-        BOT_TOKEN: ${{ secrets.githubBotPAT }}
+        BOT_TOKEN: ${{ secrets.githubBotPAT || secrets.GITHUB_TOKEN }}
 
     - name: Add information comment
       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
       if: ${{ always() }} 
       with:
-        github-token: ${{ secrets.githubBotPAT }}
+        github-token: ${{ secrets.githubBotPAT || secrets.GITHUB_TOKEN }}
         script: |
           const fs = require('fs')
           const fileList = `${{ steps.git-commit.outputs.file-list }}`
