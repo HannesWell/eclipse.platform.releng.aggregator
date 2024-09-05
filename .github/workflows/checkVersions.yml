@@ -21,8 +21,8 @@ on:
         description: The personal access token (with scope 'public_repo') of the bot to push a required change to a PR branch in a fork.
         required: false
 
-permissions:
-  contents: read
+permissions: write-all
+#  contents: read
 
 jobs:
   versions-check-and-increment:
@@ -30,20 +30,11 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-    - name: Dump GitHub context
-      id: github_context_step
-      run: echo '${{ toJSON(github) }}'
-    - name: Dump job context
-      run: echo '${{ toJSON(job) }}'
-    - name: Dump steps context
-      run: echo '${{ toJSON(steps) }}'
     - uses: actions/checkout@v4
       with:
         ref: '${{ github.event.pull_request.head.sha }}'
         persist-credentials: false #Opt out from persisting the default Github-token authentication in order to enable use of the bot's PAT when pushing below
 #        token: ${{ secrets.githubBotPAT }} TODO: alternativly use this and and just add the fork without basic auth below.
-    - run: |
-        git config --list
     - name: Check and increment versions
       uses: Wandalen/wretry.action@6feedb7dedadeb826de0f45ff482b53b379a7844 # master
       with:
@@ -68,7 +59,6 @@ jobs:
       run: |
         if [[ $(git status --ignore-submodules --porcelain) != '' ]]; then
           # Workspace is not clean, i.e. some version were changed
-          echo "version-incremented=true" >> $GITHUB_OUTPUT
           
           # Read pom project parent version or project version as development stream version
           sudo apt-get install -qq -y libxml2-utils
@@ -96,7 +86,6 @@ jobs:
           
         else
           echo 'No versions have to be incremented'
-          echo "version-incremented=false" >> $GITHUB_OUTPUT
         fi
       env:
         BOT_TOKEN: ${{ secrets.githubBotPAT }}
@@ -109,7 +98,7 @@ jobs:
         script: |
           const fs = require('fs')
           const fileList = `${{ steps.git-commit.outputs.file-list }}`
-          if (fileList) {
+          if (fileList) { // if list is empty, no versions were changed
             let commentBody = 
             github.rest.issues.createComment({
               issue_number: context.issue.number, ...context.repo, body: `
@@ -129,3 +118,6 @@ jobs:
           `.trim()
             })
           }
+
+# TODO: Add an FAQ about version bumps?
+# TODO: make comment updatable
