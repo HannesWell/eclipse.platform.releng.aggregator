@@ -34,11 +34,9 @@ jobs:
     steps:
     - name: Dump GitHub context
       run: echo '${{ toJSON(github) }}'
-    - name: Dump job context
-      run: echo '${{ toJSON(job) }}'
 
-    - name: 'Download artifact'
-      uses: actions/github-script@v6
+    - name: Search version increment git patch
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
       id: search-git-patch
       with:
         script: |
@@ -47,52 +45,40 @@ jobs:
              repo: context.repo.repo,
              run_id: context.payload.workflow_run.id,
           });
-          let matchArtifact = allArtifacts.data.artifacts.find(artifact => artifact.name == 'versions-git-patch')
-          if (matchArtifact) {
-            core.info('Git patch available')
-            return true
-          } else {
-            core.info('Git patch available')
-            return false
-          }
+          return allArtifacts.data.artifacts.find(artifact => artifact.name == 'versions-git-patch')
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       if: steps.search-git-patch.outputs.result
       with:
-        ref: '${{ github.event.pull_request.head.sha }}'
+        ref: '${{ github.event.workflow_run.head_sha }}'
         persist-credentials: false #Opt out from persisting the default Github-token authentication in order to enable use of the bot's PAT when pushing below
 #        token: ${{ secrets.githubBotPAT }} TODO: alternativly use this and and just add the fork without basic auth below.
 
-    - name: 'Download git patch'
-      uses: actions/github-script@v6
+    - name: Download version increment git patch
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
       if: steps.search-git-patch.outputs.result
       with:
         script: |
           let matchArtifact = ${{ steps.search-git-patch.outputs.result }}
-          core.info('matchArtifact: ' + matchArtifact)
-          if (matchArtifact) {
-            core.info('Git patch available')
-            let download = await github.rest.actions.downloadArtifact({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               artifact_id: matchArtifact.id,
-               archive_format: 'zip',
-            });
-            let fs = require('fs');
-            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/patch.zip`, Buffer.from(download.data));
-            await exec.exec('unzip', ['patch.zip']);
-            await io.rmRF('patch.zip');
-            return true
-          } else {
-            core.info('Git patch available')
-            return false
-          }
+          let download = await github.rest.actions.downloadArtifact({
+             owner: context.repo.owner,
+             repo: context.repo.repo,
+             artifact_id: matchArtifact.id,
+             archive_format: 'zip',
+          });
+          let fs = require('fs');
+          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/patch.zip`, Buffer.from(download.data));
+          await exec.exec('unzip', ['patch.zip']);
+          await io.rmRF('patch.zip');
+
     - name: Apply version increment git patch
+      id: git-commit
       if: steps.search-git-patch.outputs.result
       run: |
           
           git config --global user.email '${{ inputs.botMail }}'
           git config --global user.name '${{ inputs.botName }}'
+
           git am version_increments.patch
           
           fileList=$(git diff-tree --no-commit-id --name-only HEAD -r)
@@ -100,12 +86,12 @@ jobs:
           echo "$fileList" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           
-          #git remote add 'fork' https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git
+          #git remote add 'fork' https://github.com/${{ github.event.workflow_run.head_repository.full_name }}.git
           #git remote -v
-          #git push 'fork' 'HEAD:refs/heads/${{ github.event.pull_request.head.ref }}'
+          #git push 'fork' 'HEAD:refs/heads/${{ github.event.workflow_run.head_branch }}'
           git push \
-            "https://oauth2:${BOT_TOKEN}@github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
-            'HEAD:refs/heads/${{ github.event.pull_request.head.ref }}'
+            "https://oauth2:${BOT_TOKEN}@github.com/${{ github.event.workflow_run.head_repository.full_name }}.git" \
+            'HEAD:refs/heads/${{ github.event.workflow_run.head_branch }}'
       env:
         BOT_TOKEN: ${{ secrets.githubBotPAT }}
 #    - name: 'Comment on PR'
@@ -126,16 +112,17 @@ jobs:
 
     - name: Add information comment
       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-      if: ${{ always() }} 
+      if: steps.search-git-patch.outputs.result
       with:
         github-token: ${{ secrets.githubBotPAT }}
         script: |
-          core.info('Context issue number: ' + context.issue.number)
+          let prNumber = context.payload.workflow_run.pull_requests[0].number
+          core.info('Context issue number: ' + prNumber)
           const fs = require('fs')
           const fileList = `${{ steps.git-commit.outputs.file-list }}`
           if (fileList) { // if list is empty, no versions were changed
             github.rest.issues.createComment({
-              issue_number: context.issue.number, ...context.repo, body: `
+              issue_number: prNumber, ...context.repo, body: `
           This pull request changes some projects for the first time in this development.
           Therefore the following files need a version increment:
           \`\`\`

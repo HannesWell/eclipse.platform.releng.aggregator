@@ -32,11 +32,20 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       #with:
         #ref: '${{ github.event.pull_request.head.sha }}'
         #persist-credentials: false #Opt out from persisting the default Github-token authentication in order to enable use of the bot's PAT when pushing below
 #        token: ${{ secrets.githubBotPAT }} TODO: alternativly use this and and just add the fork without basic auth below.
+
+    - name: Set up Java
+      uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+      with:
+        java-version: 17
+        distribution: 'temurin'
+        cache: maven
+
     - name: Check and increment versions
       uses: Wandalen/wretry.action@6feedb7dedadeb826de0f45ff482b53b379a7844 # master
       with:
@@ -56,8 +65,7 @@ jobs:
 # Or create a list of all eclipse-plugin and eclipse-feature projects and use it here as input for PL?! Could be done with java-script?!
 # Or check if one can just compute the build-qualifier and then run the baseline plugin?!
 
-    - id: git-commit
-      name: Commit and push version increments, if any
+    - name: Commit and push version increments, if any
       run: |
         if [[ $(git status --ignore-submodules --porcelain) != '' ]]; then
           # Workspace is not clean, i.e. some version were changed
@@ -77,7 +85,8 @@ jobs:
           #echo "file-list<<EOF" >> $GITHUB_OUTPUT
           #echo "$fileList" >> $GITHUB_OUTPUT
           #echo "EOF" >> $GITHUB_OUTPUT
-          git format-patch -1 HEAD --no-prefix --no-stat --output 'version_increments.patch'
+          git format-patch -1 HEAD --no-stat --output 'version_increments.patch'
+          # --no-prefix
           
           #git remote add 'fork' https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git
           #git remote -v
@@ -89,7 +98,8 @@ jobs:
         else
           echo 'No versions have to be incremented'
         fi
-    - uses: actions/upload-artifact@v4
+
+    - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
       with:
         name: versions-git-patch
         path: version_increments.patch

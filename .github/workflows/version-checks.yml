@@ -1,4 +1,4 @@
-name: Publish Unit Test Results
+name: Publish Version Check Results
 
 on:
   workflow_run:
