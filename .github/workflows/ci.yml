@@ -22,5 +22,3 @@ jobs:
     with:
       botName: Eclipse Releng Bot
       botMail: eclipse-releng-bot@eclipse.org
-    secrets:
-      githubBotPAT: ${{ secrets.HANNESWELL_PAT }}

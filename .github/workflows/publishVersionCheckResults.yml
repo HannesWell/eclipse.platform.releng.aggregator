@@ -1,6 +1,6 @@
 name: Publish Version Check Results
 on:
-  workflow_call
+  workflow_call:
     inputs:
       botName:
         description: The name of the bot that adds the necessary version increment changes
@@ -10,20 +10,17 @@ on:
         description: The name of the bot that adds the necessary version increment changes
         type: string
         required: true
-      excludedProjects:
-        description: The comma-separated list of projects that should not be skipped (e.g. products or repositories). Can speed-up the check
-        type: string
-        required: false
-        default: ''
     secrets:
       githubBotPAT:
         description: The personal access token (with scope 'public_repo') of the bot to push a required change to a PR branch in a fork.
         required: false
 
+# TODO: check if we can derive some inputs from the original workflow or the git-patch
+
 permissions: {}
 
 jobs:
-  unit-version-check-results:
+  versions-check-result:
     name: Publish Version Check Results
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion != 'skipped'
@@ -35,71 +32,108 @@ jobs:
       actions: read
 
     steps:
-       - uses: actions/checkout@v4
-         with:
-           ref: '${{ github.event.pull_request.head.sha }}'
-           persist-credentials: false #Opt out from persisting the default Github-token authentication in order to enable use of the bot's PAT when pushing below
+    - name: Dump GitHub context
+      run: echo '${{ toJSON(github) }}'
+    - name: Dump job context
+      run: echo '${{ toJSON(job) }}'
+
+    - name: 'Download artifact'
+      uses: actions/github-script@v6
+      id: search-git-patch
+      with:
+        script: |
+          let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+             owner: context.repo.owner,
+             repo: context.repo.repo,
+             run_id: context.payload.workflow_run.id,
+          });
+          let matchArtifact = allArtifacts.data.artifacts.find(artifact => artifact.name == 'versions-git-patch')
+          if (matchArtifact) {
+            core.info('Git patch available')
+            return true
+          } else {
+            core.info('Git patch available')
+            return false
+          }
+
+    - uses: actions/checkout@v4
+      if: steps.search-git-patch.outputs.result
+      with:
+        ref: '${{ github.event.pull_request.head.sha }}'
+        persist-credentials: false #Opt out from persisting the default Github-token authentication in order to enable use of the bot's PAT when pushing below
 #        token: ${{ secrets.githubBotPAT }} TODO: alternativly use this and and just add the fork without basic auth below.
 
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@82082dac68ad6a19d980f8ce817e108b9f496c2a # v2.17.1
-        id: test-results
-        with:
-          commit: ${{ github.event.workflow_run.head_sha }}
-          event_file: artifacts/Event File/event.json
-          event_name: ${{ github.event.workflow_run.event }}
-          files: "artifacts/**/*.xml"
+    - name: 'Download git patch'
+      uses: actions/github-script@v6
+      if: steps.search-git-patch.outputs.result
+      with:
+        script: |
+          let matchArtifact = ${{ steps.search-git-patch.outputs.result }}
+          core.info('matchArtifact: ' + matchArtifact)
+          if (matchArtifact) {
+            core.info('Git patch available')
+            let download = await github.rest.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            let fs = require('fs');
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/patch.zip`, Buffer.from(download.data));
+            await exec.exec('unzip', ['patch.zip']);
+            await io.rmRF('patch.zip');
+            return true
+          } else {
+            core.info('Git patch available')
+            return false
+          }
+    - name: Apply version increment git patch
+      if: steps.search-git-patch.outputs.result
+      run: |
+          
+          git config --global user.email '${{ inputs.botMail }}'
+          git config --global user.name '${{ inputs.botName }}'
+          git am version_increments.patch
+          
+          fileList=$(git diff-tree --no-commit-id --name-only HEAD -r)
+          echo "file-list<<EOF" >> $GITHUB_OUTPUT
+          echo "$fileList" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          #git remote add 'fork' https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git
+          #git remote -v
+          #git push 'fork' 'HEAD:refs/heads/${{ github.event.pull_request.head.ref }}'
+          git push \
+            "https://oauth2:${BOT_TOKEN}@github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
+            'HEAD:refs/heads/${{ github.event.pull_request.head.ref }}'
+      env:
+        BOT_TOKEN: ${{ secrets.githubBotPAT }}
+#    - name: 'Comment on PR'
+#      uses: actions/github-script@v6
+#      with:
+#        github-token: ${{ secrets.GITHUB_TOKEN }}
+#        script: |
+#          let fs = require('fs');
+#          let issue_number = Number(fs.readFileSync('./pr_number'));
+#          await github.rest.issues.createComment({
+#            owner: context.repo.owner,
+#            repo: context.repo.repo,
+#            issue_number: issue_number,
+#            body: 'Thank you for the PR!'
+#          });
 
-
-  - name: 'Download artifact'
-    uses: actions/github-script@v6
-    with:
-      script: |
-        let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
-           owner: context.repo.owner,
-           repo: context.repo.repo,
-           run_id: context.payload.workflow_run.id,
-        });
-        let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-          return artifact.name == "pr_number"
-        })[0];
-        let download = await github.rest.actions.downloadArtifact({
-           owner: context.repo.owner,
-           repo: context.repo.repo,
-           artifact_id: matchArtifact.id,
-           archive_format: 'zip',
-        });
-        let fs = require('fs');
-        fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/pr_number.zip`, Buffer.from(download.data));
-
-  - name: 'Unzip artifact'
-    run: unzip pr_number.zip
-
-  - name: 'Comment on PR'
-    uses: actions/github-script@v6
-    with:
-      github-token: ${{ secrets.GITHUB_TOKEN }}
-      script: |
-        let fs = require('fs');
-        let issue_number = Number(fs.readFileSync('./pr_number'));
-        await github.rest.issues.createComment({
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          issue_number: issue_number,
-          body: 'Thank you for the PR!'
-        });
 
 
     - name: Add information comment
       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
       if: ${{ always() }} 
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ secrets.githubBotPAT }}
         script: |
+          core.info('Context issue number: ' + context.issue.number)
           const fs = require('fs')
           const fileList = `${{ steps.git-commit.outputs.file-list }}`
           if (fileList) { // if list is empty, no versions were changed
-            let commentBody = 
             github.rest.issues.createComment({
               issue_number: context.issue.number, ...context.repo, body: `
           This pull request changes some projects for the first time in this development.
@@ -118,3 +152,7 @@ jobs:
           `.trim()
             })
           }
+
+
+  # TODO: Add an FAQ about version bumps?
+  # TODO: make comment updatable

@@ -20,6 +20,7 @@ on:
       githubBotPAT:
         description: The personal access token (with scope 'public_repo') of the bot to push a required change to a PR branch in a fork.
         required: false
+#TODO: revise inputs once done
 
 permissions:
   contents: read
@@ -32,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      with:
+      #with:
         #ref: '${{ github.event.pull_request.head.sha }}'
         #persist-credentials: false #Opt out from persisting the default Github-token authentication in order to enable use of the bot's PAT when pushing below
 #        token: ${{ secrets.githubBotPAT }} TODO: alternativly use this and and just add the fork without basic auth below.
@@ -72,26 +73,26 @@ jobs:
           git status
           git commit -m "Bump version(s) for ${streamVersion} stream"
           
-          fileList=$(git diff-tree --no-commit-id --name-only HEAD -r)
-          echo "file-list<<EOF" >> $GITHUB_OUTPUT
-          echo "$fileList" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          #fileList=$(git diff-tree --no-commit-id --name-only HEAD -r)
+          #echo "file-list<<EOF" >> $GITHUB_OUTPUT
+          #echo "$fileList" >> $GITHUB_OUTPUT
+          #echo "EOF" >> $GITHUB_OUTPUT
           git format-patch -1 HEAD --no-prefix --no-stat --output 'version_increments.patch'
           
           #git remote add 'fork' https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git
           #git remote -v
           #git push 'fork' 'HEAD:refs/heads/${{ github.event.pull_request.head.ref }}'
-#          git push \
-#            "https://oauth2:${BOT_TOKEN}@github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
-#            'HEAD:refs/heads/${{ github.event.pull_request.head.ref }}'
+          #git push \
+          #  "https://oauth2:${BOT_TOKEN}@github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
+          #  'HEAD:refs/heads/${{ github.event.pull_request.head.ref }}'
           
         else
           echo 'No versions have to be incremented'
         fi
-      - uses: actions/upload-artifact@v4
-          with:
-          name: version-increment-patch
-          path: version_increments.patch
+    - uses: actions/upload-artifact@v4
+      with:
+        name: versions-git-patch
+        path: version_increments.patch
 
 # TODO: Add an FAQ about version bumps?
 # TODO: make comment updatable
