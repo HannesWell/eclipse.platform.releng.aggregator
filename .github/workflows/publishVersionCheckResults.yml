@@ -17,19 +17,20 @@ on:
 
 # TODO: check if we can derive some inputs from the original workflow or the git-patch
 
-permissions: {}
+permissions: read-all
+#permissions: {}
 
 jobs:
   versions-check-result:
     name: Publish Version Check Results
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion != 'skipped'
-    permissions:
-      checks: write
-      pull-requests: write
-      contents: read
-      issues: read
-      actions: read
+#    permissions:
+#      checks: write
+#      pull-requests: write
+#      contents: read
+#      issues: read
+#      actions: read
 
     steps:
     - name: Dump GitHub context
@@ -41,11 +42,11 @@ jobs:
       with:
         script: |
           let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
-             owner: context.repo.owner,
-             repo: context.repo.repo,
              run_id: context.payload.workflow_run.id,
+             ...context.repo
           });
-          return allArtifacts.data.artifacts.find(artifact => artifact.name == 'versions-git-patch')
+          let artifact = allArtifacts.data.artifacts.find(artifact => artifact.name == 'versions-git-patch')
+          return artifact?.id
 
     - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       if: steps.search-git-patch.outputs.result
@@ -59,12 +60,11 @@ jobs:
       if: steps.search-git-patch.outputs.result
       with:
         script: |
-          let matchArtifact = ${{ steps.search-git-patch.outputs.result }}
+          let matchArtifactId = ${{ steps.search-git-patch.outputs.result }}
           let download = await github.rest.actions.downloadArtifact({
-             owner: context.repo.owner,
-             repo: context.repo.repo,
-             artifact_id: matchArtifact.id,
+             artifact_id: matchArtifactId,
              archive_format: 'zip',
+             ...context.repo
           });
           let fs = require('fs');
           fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/patch.zip`, Buffer.from(download.data));
