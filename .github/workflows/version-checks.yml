@@ -8,8 +8,5 @@ on:
 jobs:
     check:
        uses: HannesWell/eclipse.platform.releng.aggregator/.github/workflows/publishVersionCheckResults.yml@master
-       with:
-         botName: Eclipse Releng Bot
-         botMail: eclipse-releng-bot@eclipse.org
        secrets:
          githubBotPAT: ${{ secrets.HANNESWELL_PAT }}

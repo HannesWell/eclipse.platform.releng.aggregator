@@ -16,10 +16,6 @@ on:
         type: string
         required: false
         default: ''
-    secrets:
-      githubBotPAT:
-        description: The personal access token (with scope 'public_repo') of the bot to push a required change to a PR branch in a fork.
-        required: false
 #TODO: revise inputs once done
 
 permissions: read-all
@@ -31,14 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Dump GitHub context
-      run: echo '${{ toJSON(github) }}'
-
     - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      #with:
-        #ref: '${{ github.event.pull_request.head.sha }}'
-        #persist-credentials: false #Opt out from persisting the default Github-token authentication in order to enable use of the bot's PAT when pushing below
-#        token: ${{ secrets.githubBotPAT }} TODO: alternativly use this and and just add the fork without basic auth below.
 
     - name: Set up Java
       uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
@@ -68,6 +57,7 @@ jobs:
 
     - name: Commit version increments, if any
       run: |
+        set -x
         if [[ $(git status --ignore-submodules --porcelain) != '' ]]; then
           # Workspace is not clean, i.e. some version were changed
           
@@ -83,7 +73,7 @@ jobs:
           git commit -m "Bump version(s) for ${streamVersion} stream"
           
           git format-patch -1 HEAD --no-stat --output 'version_increments.patch'
-          # --no-prefix
+          
           echo '${{ github.event.pull_request.number }}' > 'github_pull_request_number.txt'
           
         else
