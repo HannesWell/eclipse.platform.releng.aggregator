@@ -66,7 +66,7 @@ jobs:
 # Or create a list of all eclipse-plugin and eclipse-feature projects and use it here as input for PL?! Could be done with java-script?!
 # Or check if one can just compute the build-qualifier and then run the baseline plugin?!
 
-    - name: Commit and push version increments, if any
+    - name: Commit version increments, if any
       run: |
         if [[ $(git status --ignore-submodules --porcelain) != '' ]]; then
           # Workspace is not clean, i.e. some version were changed
@@ -84,12 +84,15 @@ jobs:
           
           git format-patch -1 HEAD --no-stat --output 'version_increments.patch'
           # --no-prefix
+          echo '${{ github.event.pull_request.number }}' > 'github_pull_request_number.txt'
           
         else
-          echo 'No versions have to be incremented'
+          echo 'No version increments required'
         fi
 
     - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
       with:
         name: versions-git-patch
-        path: version_increments.patch
+        path: |
+          version_increments.patch
+          github_pull_request_number.txt
