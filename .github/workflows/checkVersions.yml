@@ -1,4 +1,4 @@
-name: Check for version increments and apply them if necessary 
+name: Check for version increments and commit if necessary
 
 on:
   workflow_call:
@@ -49,6 +49,7 @@ jobs:
     - name: Commit version increments, if any
       run: |
         set -x
+        #TODO: limit check to relevant files? Or simply check if there is something to commit?!
         if [[ $(git status --ignore-submodules --porcelain) != '' ]]; then
           # Workspace is not clean, i.e. some version were changed
           
@@ -57,7 +58,7 @@ jobs:
           
           git config --global user.email '${{ inputs.botMail }}'
           git config --global user.name '${{ inputs.botName }}'
-          git add --all
+          git add '*/META-INF/MANIFEST.MF' '*/feature.xml' '*/pom.xml'
           git status
           git commit -m "Version bump(s) for ${streamVersion} stream"
           
