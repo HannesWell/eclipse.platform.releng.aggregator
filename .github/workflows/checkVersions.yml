@@ -48,6 +48,10 @@ jobs:
 
     - name: Commit version increments, if any
       run: |
+        echo 'Hello World'>newFile.txt
+
+    - name: Commit version increments, if any
+      run: |
         set -x
         git add '*/META-INF/MANIFEST.MF' '*/feature.xml' '*/pom.xml'
         if [[ $(git diff --name-only --cached) != '' ]]; then
