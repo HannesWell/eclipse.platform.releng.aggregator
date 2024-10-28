@@ -45,11 +45,9 @@ pipeline {
               cleanWs() // workspace not cleaned by default
               sh \'\'\'#!/bin/bash -x
 RAW_DATE_START="$(date +%s )"
-
-echo -e "\\n\\tRAW Date Start: ${RAW_DATE_START} \\n"
-
-echo -e "\\n\\t whoami:  $( whoami )\\n"
-echo -e "\\n\\t uname -a: $(uname -a)\\n"
+echo "RAW Date Start: ${RAW_DATE_START}"
+echo " whoami:  $( whoami )"
+echo " uname -a: $(uname -a)"
 
 # unset commonly defined system variables, which we either do not need, or want to set ourselves.
 # (this is to improve consistency running on one machine versus another)
@@ -66,32 +64,29 @@ echo "umask explicitly set to 0002, old value was $oldumask"
 # we want java.io.tmpdir to be in $WORKSPACE, but must already exist, for Java to use it.
 mkdir -p tmp
 
-curl -o getEBuilder.xml https://download.eclipse.org/eclipse/relengScripts/production/testScripts/hudsonBootstrap/getEBuilder.xml 2>&1
-cat getEBuilder.xml
-curl -o buildProperties.sh https://download.eclipse.org/eclipse/downloads/drops4/$buildId/buildproperties.shsource
-cat getEBuilder.xml
-source buildProperties.sh
+curl -o getEBuilder.xml https://download.eclipse.org/eclipse/relengScripts/production/testScripts/hudsonBootstrap/getEBuilder.xml
+curl -o buildproperties.shsource https://download.eclipse.org/eclipse/downloads/drops4/${buildId}/buildproperties.shsource
+source buildproperties.shsource
 
 echo JAVA_HOME: $JAVA_HOME
 echo ANT_HOME: $ANT_HOME
 echo PATH: $PATH
 
-env  1>envVars.txt 2>&1
+env 1>envVars.txt 2>&1
 ant -diagnostics  1>antDiagnostics.txt 2>&1
-java -XshowSettings -version  1>javaSettings.txt 2>&1
+java -XshowSettings -version 1>javaSettings.txt 2>&1
 
 ant -f getEBuilder.xml -Djava.io.tmpdir=${WORKSPACE}/tmp -DbuildId=$buildId -DeclipseStream=$STREAM -DEBUILDER_HASH=${EBUILDER_HASH} \\
   -DdownloadURL=https://download.eclipse.org/eclipse/downloads/drops4/${buildId} \\
   -Dosgi.os=macosx -Dosgi.ws=cocoa -Dosgi.arch=${eclipseArch} \\
   -DtestSuite=all
+# For smaller test-suites see: https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/blob/be721e33c916b03c342e7b6f334220c6124946f8/production/testScripts/configuration/sdk.tests/testScripts/test.xml#L1893-L1903
 
 RAW_DATE_END="$(date +%s )"
-
-echo -e "\\n\\tRAW Date End: ${RAW_DATE_END} \\n"
+echo "RAW Date End: ${RAW_DATE_END}"
 
 TOTAL_TIME=$((${RAW_DATE_END} - ${RAW_DATE_START}))
-
-echo -e "\\n\\tTotal elapsed time: ${TOTAL_TIME} \\n"
+echo "Total elapsed time: ${TOTAL_TIME}"
               \'\'\'
               archiveArtifacts '**/eclipse-testing/results/**, **/eclipse-testing/directorLogs/**, *.properties, *.txt'
               junit keepLongStdio: true, testResults: '**/eclipse-testing/results/xml/*.xml'
