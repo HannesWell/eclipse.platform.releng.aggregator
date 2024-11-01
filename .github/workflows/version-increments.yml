@@ -1,0 +1,14 @@
+name: Publish Version Check Results
+
+on:
+  workflow_run:
+    workflows: [ 'Pull-Request Checks' ]
+    types: [ completed ]
+
+jobs:
+  publish-version-check-results:
+    uses: HannesWell/eclipse.platform.releng.aggregator/.github/workflows/publishVersionCheckResults.yml@master
+    with:
+      botGithubId: eclipse-platform-bot
+    secrets:
+      githubBotPAT: ${{ secrets.GITHUB_TOKEN }}

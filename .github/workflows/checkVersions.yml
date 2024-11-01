@@ -37,14 +37,9 @@ jobs:
         maven-version: 3.9.9
 
     - name: Check and increment versions
-      uses: Wandalen/wretry.action@f8754f79743ba113fedbba4499593f7d73b458eb # master
-      with:
-        attempt_delay: 200
-        attempt_limit: 10
-        command: >
-          mvn verify -DskipTests -Dcompare-version-with-baselines.skip=false
-          org.eclipse.tycho:tycho-versions-plugin:bump-versions -Dtycho.bump-versions.increment=100
-          --threads 1C --fail-at-end --batch-mode --no-transfer-progress --show-version
+      run: |
+        echo 'Comment: Hello World1' >>eclipse.platform.releng/bundles/org.eclipse.rcp/META-INF/MANIFEST.MF
+        echo 'Comment: Hello World2' >>eclipse.platform.releng/bundles/org.eclipse.test/META-INF/MANIFEST.MF
 
     - name: Commit version increments, if any
       run: |
@@ -57,8 +52,7 @@ jobs:
           # Relevant files were staged, i.e. some version were changed
           
           # Read 'releaseNumberSDK' property as stream version
-          mvn help:evaluate -Dexpression=releaseNumberSDK --quiet '-Doutput=releaseNumberSDK-value.txt'
-          streamVersion=$(<releaseNumberSDK-value.txt)
+          streamVersion='4.34'
           rm -f releaseNumberSDK-value.txt
           
           git config --global user.email '${{ inputs.botMail }}'
