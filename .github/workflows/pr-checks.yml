@@ -11,7 +11,7 @@ on:
 
 jobs:
   check-versions:
-    uses: eclipse-platform/eclipse.platform.releng.aggregator/.github/workflows/checkVersions.yml@master
+    uses: HannesWell/eclipse.platform.releng.aggregator/.github/workflows/checkVersions.yml@master
     with:
       botName: Eclipse Platform Bot
       botMail: platform-bot@eclipse.org

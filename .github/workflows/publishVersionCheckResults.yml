@@ -12,8 +12,6 @@ on:
         description: The personal access token (with scope 'public_repo') of the bot to push a required change to a PR branch in a fork.
         required: true
 
-permissions: {} # all none
-
 env:
   COMMENT_FIRST_LINE: 'This pull request changes some projects for the first time in this development cycle'
 

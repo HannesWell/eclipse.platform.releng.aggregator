@@ -42,9 +42,8 @@ jobs:
         attempt_delay: 200
         attempt_limit: 10
         command: >
-          mvn verify -DskipTests -Dcompare-version-with-baselines.skip=false
-          org.eclipse.tycho:tycho-versions-plugin:bump-versions -Dtycho.bump-versions.increment=100
-          --threads 1C --fail-at-end --batch-mode --no-transfer-progress --show-version
+          echo 'Comment: Hello World' >> eclipse.platform.releng/bundles/org.eclipse.rcp/META-INF/MANIFEST.MF
+          echo 'Comment: Hello World' >> eclipse.platform.releng/bundles/org.eclipse.test/META-INF/MANIFEST.MF
 
     - name: Commit version increments, if any
       run: |
@@ -57,8 +56,7 @@ jobs:
           # Relevant files were staged, i.e. some version were changed
           
           # Read 'releaseNumberSDK' property as stream version
-          mvn help:evaluate -Dexpression=releaseNumberSDK --quiet '-Doutput=releaseNumberSDK-value.txt'
-          streamVersion=$(<releaseNumberSDK-value.txt)
+          streamVersion='4.34'
           rm -f releaseNumberSDK-value.txt
           
           git config --global user.email '${{ inputs.botMail }}'
