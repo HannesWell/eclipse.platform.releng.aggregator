@@ -26,3 +26,4 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Export-Package: org.eclipse.test
 Automatic-Module-Name: org.eclipse.test
+Comment: Hello World2

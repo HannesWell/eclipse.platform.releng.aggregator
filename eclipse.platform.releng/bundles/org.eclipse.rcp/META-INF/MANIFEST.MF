@@ -6,3 +6,4 @@ Bundle-Version: 4.34.0.qualifier
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
 Bundle-ActivationPolicy: lazy
+Comment: Hello World1
