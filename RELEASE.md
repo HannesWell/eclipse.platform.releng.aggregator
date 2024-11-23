@@ -194,8 +194,12 @@ The release is scheduled for 10AM EST. Typically the jobs are scheduled beforeha
 #### **Create new Stream Repos:**
   - Run the [Create New Stream Repos](https://ci.eclipse.org/releng/job/Releng/job/newStreamRepos/) job to make an I-builds repo for the next release.
 
+#### **Prepare:**
+  - Run the [prepareRelease](https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/actions/workflows/prepareRelease.yml) GH workflow to create a PR
+  to preapre eclipse-platform-parent/pom.xml for for the next release.
+
 #### **Create Git Milestones for the next Release:**
-  - Milestones in git are created by running the create-milestones job in jenkins, usually after RC1 or RC2. Only specific users can access this job for security reasons. If milestones need to be created and have not please contact @sdawley @sravanlakkimsetti or @laeubi to run it.
+  - Milestones in git are created by running the `create-milestones` job in jenkins, usually after RC1 or RC2. Only specific users can access this job for security reasons. If milestones need to be created and have not please contact @sdawley @sravanlakkimsetti or @laeubi to run it.
 
 #### **Version Updates:**
   - Once the milestones are created (see above) the [Prepare Next Release](https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/actions/workflows/prepareRelease.yml) workflow will run, which will update pom and product versions for the Eclipse repositories and submit pull requests for the changes.  
