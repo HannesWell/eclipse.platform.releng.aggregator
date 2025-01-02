@@ -124,7 +124,7 @@ spec:
 		unsuccessful {
 			emailext subject: "Publication of Maven artifacts failed",
 				body: "Please go to ${BUILD_URL}console and check the build failure.", mimeType: 'text/plain',
-				to: 'platform-releng-dev@eclipse.org', from:'genie.releng@eclipse.org'
+				to: 'wellmann.hannes1@gmx.net', from:'genie.releng@eclipse.org' //TODO: restore original mail
 		}
 	}
 }
