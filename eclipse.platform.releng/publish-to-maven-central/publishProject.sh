@@ -22,6 +22,7 @@ for fpr in $(gpg --list-keys --with-colons  | awk -F: '/fpr:/ {print $10}' | sor
 	echo -e "5\ny\n" |  gpg --batch --command-fd 0 --expert --edit-key ${fpr} trust
 done
 
+#TODO: somehow obtain id's automatically?
 if [ ${PROJECT} == platform ]; then
 	GPG_KEY_ID=CC641282
 elif [ ${PROJECT} == pde ]; then
