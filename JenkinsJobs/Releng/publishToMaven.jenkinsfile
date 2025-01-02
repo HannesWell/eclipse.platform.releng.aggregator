@@ -89,6 +89,9 @@ pipeline {
 									cp ${GIT_REL_PATH}/project-pom.xml .
 									chmod 744 ${SCRIPT}
 									
+									# Stop maven from searching the multi-module root further up the directory tree
+									mkdir -p .mvn
+									
 									${SCRIPT}
 								'''
 							}
