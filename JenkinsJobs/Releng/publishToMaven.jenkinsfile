@@ -4,6 +4,7 @@ pipeline {
 		timestamps()
 		timeout(time: 120, unit: 'MINUTES')
 		buildDiscarder(logRotator(numToKeepStr:'10'))
+		checkoutToSubdirectory('git-repo')
 	}
 	agent {
 		label 'basic'
@@ -20,48 +21,17 @@ pipeline {
 		stage('Aggregate Maven repository') {
 			steps {
 				sh '''
-					SCRIPT="eclipse.platform.releng/publish-to-maven-central/CBIaggregator.sh"
+					SCRIPT='git-repo/eclipse.platform.releng/publish-to-maven-central/CBIaggregator.sh'
 					chmod +x ${SCRIPT}
 					${SCRIPT} ${snapshotOrRelease}
 				'''
-			}
-		}
-		stage('Validate repository') {
-			// It prunes down the set of artifacts to be published, e.g., eliminate test artifacts,
-			// and it tests that each to-be-published artifact can transitively resolve all its dependencies.  
-			steps {
-				dir('repo-validation') { // Do the work in a clean folder without a pom.xml
-					sh '''#!/bin/bash
-						workingDir=$(pwd)
-						pushd "${REPO}"
-						# Find all the version folders for pde, jdt, and platform.
-						# Filter out all the feature, test, and product IUs that are not published.
-						# And transform each path to a Maven artifact coordinate groupId:artifactId:version.
-						find org/eclipse/pde org/eclipse/jdt/ org/eclipse/platform/ -regextype posix-egrep -regex '.*/[0-9]+\\.[0-9]+[^/]*' \\
-							| grep -vE "\\.feature\\.group|\\.feature\\.jar|\\.executable|\\.test|\\.platform\\.ide|\\.platform\\.sdk|_root|\\.id/|\\.sdk\\.ide/" \\
-							| sed -e '1,$s#/#:#g; 1,$s/org:eclipse:/org.eclipse./g' > "${workingDir}/coordinates.txt"
-						
+				dir("${REPO}") {
+					sh '''#!/bin/bash -e
 						# Because the pom enhancer modified the poms the checksums are wrong which produces noisy warnings.
 						# So regenerate the sha1 for every pom.
-						set +x
-						for i in $(find  org -name *.pom); do
-							sha1sum  -b < $i | awk '{print $1}' > $i.sha1
-						done
-						set -x
-						popd
-						
-						cat coordinates.txt
-						
-						# Stop maven from searching the multi-module root further up the directory tree
-						mkdir -p ${GIT_REL_PATH}.mvn
-						
-						set -o pipefail
-						for i in $(cat coordinates.txt); do
-							# Get each artifact and all its transitive dependencies from the Mavenized repository.
-							# Because we've enhanced the poms without producing new md5/sha1 we get noisy warnings we'd rather not see.
-							# Also filter out out many noisy messages about checking artifact for updates.
-							mvn dependency:get --no-transfer-progress -Dosgi.platform=gtk.linux.x86_64 -Dartifact=$i -DremoteRepositories=file:${REPO} | \\
-							grep -v "\\[INFO\\] artifact .*: checking for updates from temp"
+						for i in $(find org -name *.pom); do
+							echo "Recalculate checksum of $i"
+							sha1sum -b < $i | awk '{print $1}' > $i.sha1
 						done
 					'''
 				}
@@ -76,6 +46,34 @@ pipeline {
 					}
 				}
 				stages {
+					stage('Validate repository') {
+						steps {
+							// It prunes down the set of artifacts to be published, e.g., eliminate test artifacts,
+							// and it tests that each to-be-published artifact can transitively resolve all its dependencies.
+							script {
+								def forbiddenNames = ['feature.group', 'feature.jar', '.executable', '.test', '.platform.ide','.platform.sdk'] as Set
+								def GAVs;
+								dir("${REPO}") {
+									GAVs = sh(script: "find org/eclipse/${PROJECT} -regextype posix-egrep -regex '.*/[0-9]+\\.[0-9]+[^/]*'", returnStdout: true)
+										.readLines().sort()
+										.findAll{l -> !forbiddenNames.any{n -> l.contains(n) }} //TODO: is the filtering even necessary? Everything in the repo is published?!
+										.collect{n ->
+											def elements = n.split('/') as List
+											return elements.subList(0, elements.size() - 2).join('.') + ':' + elements[-2] + ':' + elements[-1]
+										}
+								}
+								dir("validate-${PROJECT}"){
+									writeFile(file: 'coordinates.txt', text: GAVs.join('\n'))
+									sh '''#!/bin/bash -xe
+										# Get each artifact and all its transitive dependencies from the Mavenized repository.
+										for i in $(cat coordinates.txt); do
+											mvn dependency:get --no-transfer-progress -Dosgi.platform=gtk.linux.x86_64 -Dartifact=$i -DremoteRepositories=file://${REPO}
+										done
+									'''
+								}
+							}
+						}
+					}
 					stage('Publish project to Maven'){
 						environment {
 							SETTINGS = "/home/jenkins/.m2/settings-deploy-ossrh-${PROJECT == 'platform' ? 'releng': PROJECT}.xml"
@@ -86,15 +84,11 @@ pipeline {
 						steps {
 							dir("publish-${PROJECT}"){
 								sh '''
-									GIT_REL_PATH="${WORKSPACE}/eclipse.platform.releng/publish-to-maven-central"
+									GIT_REL_PATH="${WORKSPACE}/git-repo/eclipse.platform.releng/publish-to-maven-central"
 									SCRIPT=${GIT_REL_PATH}/publishProject.sh
 									
 									cp ${GIT_REL_PATH}/project-pom.xml .
 									chmod 744 ${SCRIPT}
-									
-									# Stop maven from searching the multi-module root further up the directory tree
-									mkdir -p .mvn
-									
 									${SCRIPT}
 								'''
 							}
@@ -108,7 +102,7 @@ pipeline {
 		always {
 			archiveArtifacts allowEmptyArchive: true, artifacts: '\
 				repo/**, baseline-next.txt, \
-				repo-validation/coordinates.txt,\
+				validate-*/coordinates.txt,\
 				publish-*/.log/*'
 		}
 		unsuccessful {
