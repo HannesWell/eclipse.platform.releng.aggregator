@@ -30,6 +30,7 @@ pipeline {
 			// It prunes down the set of artifacts to be published, e.g., eliminate test artifacts,
 			// and it tests that each to-be-published artifact can transitively resolve all its dependencies.  
 			steps {
+				//TODO: parallelize this in pipeline for each project?
 				dir('repo-validation') { // Do the work in a clean folder without a pom.xml
 					sh '''#!/bin/bash
 						workingDir=$(pwd)
@@ -111,7 +112,7 @@ pipeline {
 		unsuccessful {
 			emailext subject: "Publication of Maven artifacts failed",
 				body: "Please go to ${BUILD_URL}console and check the build failure.", mimeType: 'text/plain',
-				to: 'platform-releng-dev@eclipse.org', from:'genie.releng@eclipse.org'
+				to: 'wellmann.hannes1@gmx.net', from:'genie.releng@eclipse.org' //TODO: restore original mail
 		}
 	}
 }
