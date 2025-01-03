@@ -7,8 +7,24 @@ pipeline {
 		checkoutToSubdirectory('git-repo')
 	}
 	agent {
-		label 'basic'
-	}	
+		kubernetes {
+			inheritFrom 'basic'
+			yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: "jnlp"
+    resources:
+      limits:
+        memory: "8Gi"
+        cpu: "4000m"
+      requests:
+        memory: "4Gi"
+        cpu: "2000m"
+"""
+		}
+	}
 	tools {
 		jdk 'temurin-jdk21-latest'
 		maven 'apache-maven-latest'
