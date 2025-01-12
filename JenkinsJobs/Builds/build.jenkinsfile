@@ -13,20 +13,26 @@ def Y_TEST_CONFIGURATIONS = [
   [ os: 'macosx', ws: 'cocoa', arch: 'x86_64' , javaVersion: 21],
 ]
 def BUILD = {
-	def matcher = "$JOB_BASE_NAME" =~ '(?<type>[IY])-build-(?<major>\\d).(?<minor>\\d+)'
+	def matcher = 'I-build-4.35' =~ '(?<type>[IY])-build-(?<major>\\d).(?<minor>\\d+)'
 	if (matcher) {
 		def buildConfig = [ type: matcher.group('type'), testPrefix: "ep${matcher.group('major')}${matcher.group('minor')}${matcher.group('type')}-unit"]
 		switch(buildConfig.type) {
 			case 'I': return [*:buildConfig,
 				typeName: 'Integration' , branchLabel: 'master',
-				mailingList: 'platform-releng-dev@eclipse.org', testJobFolder:'AutomatedTests', testConfigurations: I_TEST_CONFIGURATIONS]
+				mailingList: 'wellmann.hannes1@gmx.net', testJobFolder:'AutomatedTests', testConfigurations: I_TEST_CONFIGURATIONS]
 			case 'Y': return [*:buildConfig,
 				typeName: 'Beta Java 24', branchLabel: 'java24',
-				mailingList: 'jdt-dev@eclipse.org'            , testJobFolder:'YPBuilds'      , testConfigurations: Y_TEST_CONFIGURATIONS]
+				mailingList: 'wellmann.hannes1@gmx.net'            , testJobFolder:'YPBuilds'      , testConfigurations: Y_TEST_CONFIGURATIONS]
+				//TODO: overwrite -Declipse-snapshots-repo.url=https://https://repo.eclipse.org/content/repositories/eclipse-snapshots to what-ever reasonable
 		}
 	}
 	error("Unsupported job: $JOB_BASE_NAME" )
 }()
+
+//TODO: add properties for:
+// 1. BUILD_ID for test-input
+// 2. test-configuration to run (as comma-separted list derived from the default)
+// 3. A silent mode where any publihsing/pushing is skipped and no mail is send (for debuggin).
 
 def testConfigurationsExpected = BUILD.testConfigurations.collect{c ->
 		"${BUILD.testPrefix}-${c.os}-${c.arch}-java${c.javaVersion}_${c.os}.${c.ws}.${c.arch}_${c.javaVersion}"
@@ -136,33 +142,6 @@ spec:
 				}
 			}
 		}
-	  stage('Tag Build Inputs'){
-          environment {
-            ABORT_IF_NO_CHANGES = "${!currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause').isEmpty()}" // true, if triggered by timer
-          }
-          steps {
-				dir("${CJE_ROOT}/mbscripts") {
-                  sshagent (['github-bot-ssh', 'projects-storage.eclipse.org-bot-ssh']) {
-                    sh '''
-                        set -xeo pipefail
-                        ./mb110_tagBuildInputs.sh $CJE_ROOT/buildproperties.shsource 2>&1 | tee $logDir/mb110_tagBuildInputs.sh.log
-                    '''
-                  }
-				}
-                  script {
-                    if (env.ABORT_IF_NO_CHANGES && fileExists("${WORKSPACE}/noChanges")) {
-						emailext subject: "${RELEASE_VER} ${BUILD_TYPE}-Build: ${BUILD_ID} - BUILD SKIPPED",
-							body: """\
-							No changes have been made since the last successful ${BUILD_TYPE}-Build and therefore this scheduled build was skipped:
-							${BUILD_URL}console
-							""".stripIndent(), mimeType: 'text/plain',
-							to: "${BUILD.mailingList}", from: 'genie.releng@eclipse.org'
-                      currentBuild.result = 'ABORTED'
-                      error('Abort scheduled build due to no changes')
-                    }
-                  }
-            }
-		}
 	  stage('Aggregator maven build'){
 	      environment {
                 KEYRING = credentials('secret-subkeys-releng.asc')
@@ -240,63 +219,6 @@ spec:
                     cp $CJE_ROOT/$DROP_DIR/$BUILD_ID/buildproperties.* $CJE_ROOT/$EQUINOX_DROP_DIR/$BUILD_ID
                 '''
             }
-		}
-	  stage('Promote Eclipse platform'){
-          steps {
-				dir("${CJE_ROOT}/mbscripts") {
-                  sshagent(['projects-storage.eclipse.org-bot-ssh']) {
-                      sh '''
-                        ./mb600_promoteEclipse.sh $CJE_ROOT/buildproperties.shsource
-                      '''
-                  }
-                build job: 'Releng/updateIndex', wait: false
-				}
-			}
-		}
-	  stage('Promote Equinox'){
-          steps {
-				dir("${CJE_ROOT}/mbscripts") {
-                  sshagent(['projects-storage.eclipse.org-bot-ssh']) {
-                      sh '''
-                        ./mb610_promoteEquinox.sh $CJE_ROOT/buildproperties.shsource
-                      '''
-                  }
-				}
-			}
-		}
-	  stage('Promote Update Site'){
-          steps {
-				dir("${CJE_ROOT}/mbscripts") {
-                  sshagent(['projects-storage.eclipse.org-bot-ssh']) {
-                      sh '''
-                        ./mb620_promoteUpdateSite.sh $CJE_ROOT/buildproperties.shsource
-                      '''
-                  }
-				}
-			}
-		}
-		stage('Trigger tests'){
-			steps {
-				script {
-					for (c in BUILD.testConfigurations) {
-						build job: "${BUILD.testJobFolder}/${BUILD.testPrefix}-${c.os}-${c.arch}-java${c.javaVersion}", parameters: [string(name: 'buildId', value: "${BUILD_ID}")], wait: false
-					}
-				}
-				build job: 'SmokeTests/Start-smoke-tests', parameters: [string(name: 'buildId', value: "${BUILD_ID}")], wait: false
-			}
-		}
-		stage('Trigger publication to Maven snapshots repo') {
-			when {
-				allOf {
-					environment name: 'BUILD_TYPE', value: 'I'
-					environment name: 'COMPARATOR_ERRORS_SUBJECT', value: ''
-				// On comparator-erros, skip the deployment of snapshot version to the 'eclipse-snapshots' maven repository to prevent that ECJ snapshot
-				// from being used in verification builds. Similar to how the p2-repository is not added to the I-build composite in that case.
-				}
-			}
-			steps {
-				build job: 'Releng/PublishToMaven', parameters: [string(name: 'snapshotOrRelease', value: '-snapshot')], wait: false
-			}
 		}
 	}
 	post {

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 #*******************************************************************************
 # Copyright (c) 2020 IBM Corporation and others.
@@ -24,8 +24,9 @@ source $CJE_ROOT/scripts/common-functions.shsource
 source $1
 
 git clone -b $BRANCH --recursive $GIT_ROOT$AGG_REPO ../$AGG_DIR
-git checkout $BRANCH
-git pull
+#TODO: checkout again shouldn't be necessary?!'
+#git checkout $BRANCH
+#git pull #FIXME: this remove possibility to test/build other branches?!
 pushd ../$AGG_DIR
 git submodule foreach 'git fetch; SUBMODULE_BRANCH=$(grep $name: ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt | cut -f2 -d\ ); SUBMODULE_BRANCH=${SUBMODULE_BRANCH:-$BRANCH}; echo Checking out $SUBMODULE_BRANCH; git checkout $SUBMODULE_BRANCH; git pull'
 popd

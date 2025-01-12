@@ -17,14 +17,15 @@
 # with # are considered comments and no spaces allowed in keys
 
 # CJE build variables
-BRANCH="master"
+#TODO: can't this just be just the branch of the initially checked-out repo?
+BRANCH="build-enhancements"
 RELEASE_VER="4.35"
 STREAM="4.35.0"
 STREAMMajor="4"
 STREAMMinor="35"
 STREAMService="0"
 GIT_ROOT="git@github.com:"
-AGG_REPO="eclipse-platform/eclipse.platform.releng.aggregator.git"
+AGG_REPO="HannesWell/eclipse.platform.releng.aggregator.git"
 AGG_DIR="gitCache/eclipse.platform.releng.aggregator"
 DROP_DIR="siteDir/eclipse/downloads/drops4"
 UPDATES_DIR="siteDir/eclipse/updates"
