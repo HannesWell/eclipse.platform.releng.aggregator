@@ -22,7 +22,7 @@ pipeline {
 	}
 	stages {
 		stage('Mark ''' + marker + ''''){
-			steps { // workspace is not always cleaned by default. Clean before custom tools are installed into workspace.
+			steps {
 				sshagent(['projects-storage.eclipse.org-bot-ssh']) {
 					sh \'''#!/bin/bash -xe
 						# this function executes command passed as command line parameter and 
@@ -56,6 +56,7 @@ pipeline {
 						ssh genie.releng@projects-storage.eclipse.org cd ${workspace}
 						
 						#get latest Eclipse platform product
+						#TODO: download it into the workspace and run the modification locally
 						epRelDir=$(ssh genie.releng@projects-storage.eclipse.org ls -d --format=single-column ${dropsPath}/R-*|sort|tail -1)
 						ssh genie.releng@projects-storage.eclipse.org tar -C ${workspace} -xzf ${epRelDir}/eclipse-platform-*-linux-gtk-x86_64.tar.gz
 						
