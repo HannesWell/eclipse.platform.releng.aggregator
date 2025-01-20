@@ -109,7 +109,7 @@ spec:
           steps {
               container('jnlp') {
                 script {
-                    env.BUILD_IID = sh(script:'echo $(source $CJE_ROOT/buildproperties.shsource;echo $BUILD_TYPE$TIMESTAMP)', returnStdout: true)
+                    env.BUILD_ID = sh(script:'echo $(source $CJE_ROOT/buildproperties.shsource;echo $BUILD_ID)', returnStdout: true)
                     env.RELEASE_VER = sh(script:'echo $(source $CJE_ROOT/buildproperties.shsource;echo $RELEASE_VER)', returnStdout: true)
                   }
                 }
@@ -183,16 +183,6 @@ spec:
                 }
             }
 		}
-	  stage('Export environment variables stage 2'){
-          steps {
-              container('jnlp') {
-                script {
-                    env.BUILD_IID = sh(script:'echo $(source $CJE_ROOT/buildproperties.shsource;echo $BUILD_TYPE$TIMESTAMP)', returnStdout: true)
-                    env.RELEASE_VER = sh(script:'echo $(source $CJE_ROOT/buildproperties.shsource;echo $RELEASE_VER)', returnStdout: true)
-                  }
-                }
-            }
-        }
 	  stage('Promote Update Site'){
           steps {
               container('jnlp') {
@@ -212,13 +202,13 @@ spec:
 		}
         failure {
             emailext body: "Please go to <a href='${BUILD_URL}console'>${BUILD_URL}console</a> and check the build failure.<br><br>",
-            subject: "${env.RELEASE_VER.trim()} P-Build: ${env.BUILD_IID.trim()} - BUILD FAILED", 
+            subject: "${env.RELEASE_VER.trim()} P-Build: ${env.BUILD_ID.trim()} - BUILD FAILED", 
             to: "rahul.mohanan@ibm.com jarthana@in.ibm.com Sheena.Sheena@ibm.com alshama.m.s@ibm.com elsa.zacharia@ibm.com suby.surendran@ibm.com gpunathi@in.ibm.com sravankumarl@in.ibm.com kalyan_prasad@in.ibm.com lshanmug@in.ibm.com manoj.palat@in.ibm.com niraj.modi@in.ibm.com noopur_gupta@in.ibm.com sarika.sinha@in.ibm.com vikas.chandra@in.ibm.com",
             from:"genie.releng@eclipse.org"
         }
         success {
-            emailext body: "Software site repository:<br>    <a href='https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-P-builds'>https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-P-builds</a><br><br>Specific (simple) site repository:<br>    <a href='https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-P-builds/${env.BUILD_IID.trim()}'>https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-P-builds/${env.BUILD_IID.trim()}</a><br><br>", 
-            subject: "${env.RELEASE_VER.trim()} P-Build: ${env.BUILD_IID.trim()}", 
+            emailext body: "Software site repository:<br>    <a href='https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-P-builds'>https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-P-builds</a><br><br>Specific (simple) site repository:<br>    <a href='https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-P-builds/${env.BUILD_ID.trim()}'>https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-P-builds/${env.BUILD_ID.trim()}</a><br><br>", 
+            subject: "${env.RELEASE_VER.trim()} P-Build: ${env.BUILD_ID.trim()}", 
             to: "rahul.mohanan@ibm.com jarthana@in.ibm.com Sheena.Sheena@ibm.com alshama.m.s@ibm.com elsa.zacharia@ibm.com suby.surendran@ibm.com gpunathi@in.ibm.com sravankumarl@in.ibm.com kalyan_prasad@in.ibm.com lshanmug@in.ibm.com manoj.palat@in.ibm.com niraj.modi@in.ibm.com noopur_gupta@in.ibm.com sarika.sinha@in.ibm.com vikas.chandra@in.ibm.com",
             from:"genie.releng@eclipse.org"
         }

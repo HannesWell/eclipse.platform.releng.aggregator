@@ -95,12 +95,7 @@ spec:
 		}
 		stage('Export environment variables stage 1'){
 			steps {
-				script {
-					def buildProps = readBuildProperties("${CJE_ROOT}/buildproperties.properties")
-					env.BUILD_IID = buildProps.BUILD_TYPE + buildProps.TIMESTAMP
-					env.STREAM = buildProps.STREAM
-					env.RELEASE_VER = buildProps.RELEASE_VER
-				}
+				exportEnvironmentVariablesFromProperties("${CJE_ROOT}/buildproperties.properties", [ 'BUILD_ID', 'STREAM', 'RELEASE_VER' ])
 			}
 		}
 	  stage('Create Base builder'){
@@ -156,7 +151,7 @@ spec:
 				}
                   script {
                     if (env.ABORT_IF_NO_CHANGES && fileExists("${WORKSPACE}/noChanges")) {
-						emailext subject: "${RELEASE_VER} ${BUILD_TYPE}-Build: ${BUILD_IID} - BUILD SKIPPED",
+						emailext subject: "${RELEASE_VER} ${BUILD_TYPE}-Build: ${BUILD_ID} - BUILD SKIPPED",
 							body: """\
 							No changes have been made since the last successful ${BUILD_TYPE}-Build and therefore this scheduled build was skipped:
 							${BUILD_URL}console
@@ -232,10 +227,7 @@ spec:
 		}
 		stage('Export environment variables stage 2'){
 			steps {
-				script {
-					def buildProps = readBuildProperties("${CJE_ROOT}/buildproperties.properties")
-					env.COMPARATOR_ERRORS_SUBJECT = buildProps.COMPARATOR_ERRORS_SUBJECT
-				}
+				exportEnvironmentVariablesFromProperties("${CJE_ROOT}/buildproperties.properties", [ 'COMPARATOR_ERRORS_SUBJECT' ])
 			}
 		}
 	  stage('Archive artifacts'){
@@ -287,10 +279,10 @@ spec:
 			steps {
 				script {
 					for (c in BUILD.testConfigurations) {
-						build job: "${BUILD.testJobFolder}/${BUILD.testPrefix}-${c.os}-${c.arch}-java${c.javaVersion}", parameters: [string(name: 'buildId', value: "${BUILD_IID}")], wait: false
+						build job: "${BUILD.testJobFolder}/${BUILD.testPrefix}-${c.os}-${c.arch}-java${c.javaVersion}", parameters: [string(name: 'buildId', value: "${BUILD_ID}")], wait: false
 					}
 				}
-				build job: 'SmokeTests/Start-smoke-tests', parameters: [string(name: 'buildId', value: "${BUILD_IID}")], wait: false
+				build job: 'SmokeTests/Start-smoke-tests', parameters: [string(name: 'buildId', value: "${BUILD_ID}")], wait: false
 			}
 		}
 		stage('Trigger publication to Maven snapshots repo') {
@@ -312,39 +304,42 @@ spec:
 			archiveArtifacts 'cje-production/siteDir/**'
 		}
 		failure {
-			emailext subject: "${RELEASE_VER} ${BUILD_TYPE}-Build: ${BUILD_IID} - BUILD FAILED",
+			emailext subject: "${RELEASE_VER} ${BUILD_TYPE}-Build: ${BUILD_ID} - BUILD FAILED",
 				body: "Please go to ${BUILD_URL}console and check the build failure.", mimeType: 'text/plain',
 				to: "${BUILD.mailingList}", from:'genie.releng@eclipse.org'
 		}
 		success {
-			emailext subject: "${RELEASE_VER} ${BUILD_TYPE}-Build: ${BUILD_IID} ${COMPARATOR_ERRORS_SUBJECT}",
+			emailext subject: "${RELEASE_VER} ${BUILD_TYPE}-Build: ${BUILD_ID} ${COMPARATOR_ERRORS_SUBJECT}",
 			body: ("""\
 			Eclipse downloads:
-			https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_IID}
+			https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_ID}
 			
 			Build logs and/or test results (eventually):
-			https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_IID}/testResults.php
+			https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_ID}/testResults.php
 			""" + (env.COMPARATOR_ERRORS_SUBJECT == '' ? '' : """
 			Check unanticipated comparator messages:
-			https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_IID}/buildlogs/comparatorlogs/buildtimeComparatorUnanticipated.log.txt
+			https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_ID}/buildlogs/comparatorlogs/buildtimeComparatorUnanticipated.log.txt
 			""") + """
 			Software site repository:
 			https://download.eclipse.org/eclipse/updates/${RELEASE_VER}-${BUILD_TYPE}-builds
 			
 			Specific (simple) site repository:
-			https://download.eclipse.org/eclipse/updates/${RELEASE_VER}-${BUILD_TYPE}-builds/${BUILD_IID}
+			https://download.eclipse.org/eclipse/updates/${RELEASE_VER}-${BUILD_TYPE}-builds/${BUILD_ID}
 			
 			Equinox downloads:
-			https://download.eclipse.org/equinox/drops/${BUILD_IID}
+			https://download.eclipse.org/equinox/drops/${BUILD_ID}
 			""").stripIndent(), mimeType: 'text/plain',
 			to: "${BUILD.mailingList}", from:'genie.releng@eclipse.org'
 		}
 	}
 }
 
-def readBuildProperties(String buildPropertiesFile){
-	return readProperties(file: buildPropertiesFile, charset: 'UTF-8').collectEntries{n, v ->
-			v = v.trim();
-			return [n, (v.startsWith('"') && v.endsWith('"') ? v.substring(1, v.length() - 1) : v)]
-		}
+@NonCPS
+def exportEnvironmentVariablesFromProperties(String propertiesFile, Collection<String> exportedEnvironmentVariables){
+	def properties = readProperties(file: propertiesFile, charset: 'UTF-8')
+	for (envVar in exportedEnvironmentVariables) {
+		def value = properties[envVar].trim()
+		env[envVar] = value.startsWith('"') && value.endsWith('"') ? value.substring(1, value.length() - 1) : value
+		echo "Exported environment variable '${envVar}=${env[envVar]}'"
+	}
 }
