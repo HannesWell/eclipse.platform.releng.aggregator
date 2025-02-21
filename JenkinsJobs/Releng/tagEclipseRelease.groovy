@@ -7,6 +7,7 @@ job('Releng/tagEclipseRelease'){
     numToKeep(5)
   }
 
+// TODO: convert to pipeline job with repository to checkout declarativly
   parameters {
     stringParam('tag', null, '''
 R is used for release builds. For example: R4_25
@@ -19,8 +20,6 @@ GitHub issue (or legacy bugzilla bug ID) to track tagging the release, for examp
     ''')
   }
 
-  jdk('oracle-jdk8-latest')
-
   label('basic')
 
   wrappers { //adds pre/post actions
@@ -30,8 +29,7 @@ GitHub issue (or legacy bugzilla bug ID) to track tagging the release, for examp
   }
   
   steps {
-    shell('''
-#!/bin/bash 
+    shell('''#!/bin/bash 
 
 # Strip spaces from the buildID and tag
 buildID=$(echo $buildID|tr -d ' ')

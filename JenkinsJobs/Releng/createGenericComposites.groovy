@@ -12,8 +12,7 @@ job('Releng/createGenericComposites'){
     stringParam('previousStream', null, 'Previous release stream, for example: 4.24')
   }
 
-  jdk('openjdk-jdk11-latest')
-
+//TODO: is this still called? Yes. But more to prepare release cycle
   label('basic')
 
   wrappers { //adds pre/post actions
@@ -44,13 +43,11 @@ ${ECLIPSE_EXE} --launcher.suppressErrors  -nosplash -console -data workspace-upd
 
 # remove existing generic repos 
 ssh genie.releng@projects-storage.eclipse.org rm -rf ${epDownloadDir}/updates/I-builds
-ssh genie.releng@projects-storage.eclipse.org rm -rf ${epDownloadDir}/updates/P-builds
 ssh genie.releng@projects-storage.eclipse.org rm -rf ${epDownloadDir}/updates/Y-builds
 ssh genie.releng@projects-storage.eclipse.org rm -rf ${epDownloadDir}/updates/latest
 
 #copy newly created generic repos
 scp -r I-builds genie.releng@projects-storage.eclipse.org:${epDownloadDir}/updates/.
-scp -r P-builds genie.releng@projects-storage.eclipse.org:${epDownloadDir}/updates/.
 scp -r Y-builds genie.releng@projects-storage.eclipse.org:${epDownloadDir}/updates/.
 scp -r latest genie.releng@projects-storage.eclipse.org:${epDownloadDir}/updates/.
     ''')

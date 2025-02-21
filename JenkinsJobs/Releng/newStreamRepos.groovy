@@ -18,6 +18,8 @@ job('Releng/newStreamRepos'){
     sshAgent('projects-storage.eclipse.org-bot-ssh')
   }
   
+  //TODO: move this to new prepareNextRelease job
+  
   steps {
     shell('''
 #!/bin/bash -x
@@ -27,7 +29,6 @@ epDownloadDir=/home/data/httpd/download.eclipse.org/eclipse/updates
 ssh genie.releng@projects-storage.eclipse.org cp -r ${epDownloadDir}/template_repo/ ${epDownloadDir}/${streamVersion}/
 ssh genie.releng@projects-storage.eclipse.org cp -r ${epDownloadDir}/template_repo/ ${epDownloadDir}/${streamVersion}-I-builds/
 ssh genie.releng@projects-storage.eclipse.org cp -r ${epDownloadDir}/template_repo/ ${epDownloadDir}/${streamVersion}-Y-builds/
-#ssh genie.releng@projects-storage.eclipse.org cp -r ${epDownloadDir}/template_repo/ ${epDownloadDir}/${streamVersion}-P-builds/
     ''')
   }
 }

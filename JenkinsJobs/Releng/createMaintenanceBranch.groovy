@@ -13,6 +13,7 @@ job('Releng/createMaintenanceBranch'){
   }
 
   label('basic')
+  // TODO: merge into prepare next release-cycle
 
   wrappers { //adds pre/post actions
     timestamps()

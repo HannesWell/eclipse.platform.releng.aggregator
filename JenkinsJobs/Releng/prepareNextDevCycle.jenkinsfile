@@ -1,0 +1,380 @@
+
+pipeline {
+	options {
+		timestamps()
+		timeout(time: 60, unit: 'MINUTES')
+		buildDiscarder(logRotator(numToKeepStr:'5'))
+		skipDefaultCheckout()
+	}
+	agent {
+		label 'basic' //TODO: check if basic is sufficient
+	}
+	tools {
+		jdk 'temurin-jdk21-latest'
+		maven 'apache-maven-latest'
+	}
+	//Parameters are defined in the job definition
+	stages {
+		stage('Process input') {
+			steps {
+				script {
+					def nextVersionMatcher = params.NEXT_RELEASE_VERSION =~ /(?<major>\d+)\.(?<minor>\d+)/
+					if (!nextVersionMatcher.matches()) {
+						error "Unexpected format for NEXT_RELEASE_VERSION: ${params.NEXT_RELEASE_VERSION}"
+					}
+					env.NEXT_RELEASE_VERSION_MAJOR = nextVersionMatcher.group('major')
+					env.NEXT_RELEASE_VERSION_MINOR = nextVersionMatcher.group('minor')
+					nextVersionMatcher = null
+					
+					def previousVersionMatcher = params.PREVIOUS_RELEASE_CANDIDATE =~ /(S|R)-(?<major>\d+)\.(?<minor>\d+)(M1|M2|M3|RC1|RC2)?-(?<timestamp>\d{12})/
+					if (!previousVersionMatcher.matches()) {
+						error "Unexpected format for PREVIOUS_RELEASE_CANDIDATE: ${params.PREVIOUS_RELEASE_CANDIDATE}"
+					}
+					env.PREVIOUS_RELEASE_VERSION_MAJOR = previousVersionMatcher.group('major')
+					env.PREVIOUS_RELEASE_VERSION_MINOR = previousVersionMatcher.group('minor')
+					env.PREVIOUS_RELEASE_VERSION = "{PREVIOUS_RELEASE_VERSION_MAJOR}.${PREVIOUS_RELEASE_VERSION_MINOR}"
+					def previousReleaseTimestamp = previousVersionMatcher.group('timestamp')
+					env.PREVIOUS_RELEASE_CANDIDATE_I_BUILD = "I-${previousReleaseTimestamp.substring(0,8)}-${previousReleaseTimestamp.substring(8,12)}"
+					previousVersionMatcher = null
+					
+					//TODO: Read the dates from the calender instead of provide a structured document somewhere?
+					// E.g. next to: https://github.com/eclipse-simrel/.github/blob/main/wiki/SimRel/2025-09.md
+					def m1Date = parseDate(params.M1_DATE)
+					def m2Date = parseDate(params.M2_DATE)
+					def m3Date = parseDate(params.M3_DATE)
+					def rc1Date = parseDate(params.RC1_DATE)
+					def rc2Date = parseDate(params.RC2_DATE)
+					def gaDate = parseDate(params.GA_DATE)
+					if (!(m1Date < m2Date && m2Date < m3Date && m3Date < rc1Date && rc1Date < rc2Date && rc1Date < gaDate)) {
+						error "Dates are not in strictly ascending order: ${params.M1_DATE}, ${params.M2_DATE}, ${params.M3_DATE}, ${params.RC1_DATE}, ${params.RC2_DATE}, ${params.GA_DATE}"
+					}
+					env.NEXT_RELEASE_YEAR = gaDate.year
+					env.NEXT_RELEASE_MONTH = String.format("%02d", gaDate.monthValue)
+					sh '''#!/bin/sh +x
+						echo 'Input parameters read successfully'
+						echo "NEXT_RELEASE_VERSION: $NEXT_RELEASE_VERSION"
+						echo "NEXT_RELEASE_VERSION_MAJOR: $NEXT_RELEASE_VERSION_MAJOR"
+						echo "NEXT_RELEASE_VERSION_MINOR: $NEXT_RELEASE_VERSION_MINOR"
+						echo ''
+						echo "PREVIOUS_RELEASE_CANDIDATE: $PREVIOUS_RELEASE_CANDIDATE"
+						echo "PREVIOUS_RELEASE_VERSION: $PREVIOUS_RELEASE_VERSION"
+						echo "PREVIOUS_RELEASE_VERSION_MAJOR: $PREVIOUS_RELEASE_VERSION_MAJOR"
+						echo "PREVIOUS_RELEASE_VERSION_MINOR: $PREVIOUS_RELEASE_VERSION_MINOR"
+						echo "PREVIOUS_RELEASE_CANDIDATE_I_BUILD: $PREVIOUS_RELEASE_CANDIDATE_I_BUILD"
+						echo ''
+						echo "M1_DATE: $M1_DATE"
+						echo "M2_DATE: $M2_DATE"
+						echo "M3_DATE: $M3_DATE"
+						echo "RC1_DATE: $RC1_DATE"
+						echo "RC2_DATE: $RC2_DATE"
+						echo "GA_DATE: $GA_DATE"
+						echo "NEXT_RELEASE_YEAR: $NEXT_RELEASE_YEAR"
+						echo "NEXT_RELEASE_MONTH: $NEXT_RELEASE_MONTH"
+					'''
+				}
+				sh '''
+					#today=$(TZ=UTC date "+%Y-%m-%d")
+					#tomorrow=$(TZ=UTC date -d "+1 days" "+%Y-%m-%d")
+					#calId="prfk26fdmpru1mptlb06p0jh4s@group.calendar.google.com"
+					#calURL="https://clients6.google.com/calendar/v3/calendars/group.calendar.google.com/events?calendarId=${calId}&singleEvents=true&timeZone=UTC&maxResults=250&sanitizeHtml=true&timeMin=${today}T00:00:00Z&timeMax=${tomorrow}T00:00:00Z&key=AIzaSyBNlYH01_9Hc5S1J9vuFmu2nUqBZJNAXxs"
+					#calUR2="https://www.googleapis.com/calendar/v3/calendars/${calId}/events?singleEvents=true&timeZone=UTC&maxResults=250&timeMin=${today}T00:00:00Z&timeMax=${tomorrow}T00:00:00Z"
+					#curl "${calURL}"
+				'''
+			}
+		}
+		stage('Checkout SCM') {
+			steps {
+				checkout scm
+				//TODO: set it globally
+				sh '''
+					git config user.email "eclipse-releng-bot@eclipse.org"
+					git config user.name "Eclipse Releng Bot"
+					git submodule foreach 'git config user.email "eclipse-releng-bot@eclipse.org"'
+					git submodule foreach 'git config user.name "Eclipse Releng Bot"'
+				'''
+			}
+		}
+		//- TODO: This can be avoided: https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/commit/f89d4df3ca93aae4d6ad5a8895759d6919ef707f
+		//TODO: run the maven build to bump versions and 'manually' Bump the versions in known locations like I-build-properties
+		// Create the posibility to inject a custom (sh?)script in each repository that is executed if available.
+		//This could be used e.g. to clean qualifier-bump files?
+		
+		// TODO: run the deployment of the parent pom and target immediatly and make sure the reference repos are available and set to the previous release, when the submodule updates are pushed.
+		//TODO: use the same curl+gh-api commands to create a PR like it's used to create milestones
+
+	//TODO: run the maven build to bump versions and 'manually' Bump the versions in known locations like I-build-properties
+	// Create the posibility to inject a custom (sh?)script in each repository that is executed if available.
+		//This could be used e.g. to clean qualifier-bump files?
+		
+		// TODO: run the deployment of the parent pom and target immediatly and make sure the reference repos are available and set to the previous release, when the submodule updates are pushed.
+
+		//TODO: checkout full SDK and prepare it for push. Use SSH URL?
+		stage('Update Maven parent version') { //TODO: it's not only parent, but also more
+			environment {
+				MAVEN_ARGS = '-U -B -ntp'
+			}
+			steps {
+				//TODO: check what has to be exeucted exactly. Maybe less is possible
+				/*Combines
+				 * https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/commit/ca857cc1bd921537bfce2ad02a18c2c4592a16ff
+				 * https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/commit/9c3fc8741a8ade0b0e7cc85db962c50d171eb94d
+				 */
+				sh '''
+					mvn org.eclipse.tycho:tycho-versions-plugin:set-version \
+						-DnewVersion=${NEXT_RELEASE_VERSION}.0-SNAPSHOT
+					mvn -f eclipse-platform-parent/pom.xml --non-recursive org.eclipse.tycho:tycho-versions-plugin:set-property \
+						-Dproperties=releaseVersion,releaseYear,releaseMonth \
+						-DnewReleaseVersion=${NEXT_RELEASE_VERSION} \
+						-DnewReleaseYear=${NEXT_RELEASE_YEAR} \
+						-DnewReleaseMonth=${NEXT_RELEASE_MONTH}
+					
+					git commit --all --message "Prepare Release ${NEXT_RELEASE_VERSION}"
+					git submodule foreach 'git commit --all --message "Update release version for ${NEXT_RELEASE_VERSION}" & echo done'
+				'''
+			}
+		}
+		stage('Update product version number across build scripts') {
+			steps {
+				//TODO: do https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/commit/d2543ae8b6d8e884dd6d4a8f265def0f6e38caa2
+				sh '''
+					sed --in-place \
+						--expression="s/RELEASE_VER=\"${PREVIOUS_RELEASE_VERSION}\"/RELEASE_VER=\"${NEXT_RELEASE_VERSION}\"/g" \
+						--expression="s/STREAM=\"${PREVIOUS_RELEASE_VERSION}.0\"/STREAM=\"${NEXT_RELEASE_VERSION}.0\"/g" \
+						--expression="s/STREAMMajor=\"${PREVIOUS_RELEASE_VERSION_MAJOR}\"/STREAMMajor=\"${NEXT_RELEASE_VERSION_MAJOR}\"/g" \
+						--expression="s/STREAMMinor=\"${PREVIOUS_RELEASE_VERSION_MINOR}\"/STREAMMinor=\"${NEXT_RELEASE_VERSION_MINOR}\"/g" \
+						'cje-production/buildproperties.txt'
+					sed --in-place --expression="s/${PREVIOUS_RELEASE_VERSION} Release/${NEXT_RELEASE_VERSION} Release/g" \
+						eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/*.p2.inf
+					sed --in-place --expression="s|for ${PREVIOUS_RELEASE_VERSION}.0 builds|for ${NEXT_RELEASE_VERSION}.0 builds|g" \
+						'production/testScripts/configuration/streamSpecific.properties'
+					sed --in-place --expression="s|s/[0-9]\\+.[0-9]\\+.0/[0-9]\\+.[0-9]\\+.0/g|s/${PREVIOUS_RELEASE_VERSION}.0/${NEXT_RELEASE_VERSION}.0/g|g" \
+						'scripts/updateProductVersion.sh'
+					
+					git commit --all --message "Update product version number to ${NEXT_RELEASE_VERSION} across build scripts"
+				'''
+				//TODO: commit it in the aggre repo
+			}
+		}
+		stage('Move previous version to current RC across build scripts ') {
+			steps {
+				//TODO: do https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/commit/c55ec02b5ed6a7691779117fc4767c9e393d4b8d
+				sh '''
+				'''
+				//TODO: commit it in the aggre repo
+			}
+		}
+		stage('Push updates') {
+		//TODO: check if new I-build repo has to exist in advance?!
+			steps {
+				// Deploy new parent first to ensure it's available when PRs for submodule updates are created.
+				sh '''
+					mvn clean deploy -f eclipse-platform-parent/pom.xml
+					mvn clean deploy -f eclipse.platform.releng.prereqs.sdk/pom.xml
+				'''
+				sh '''
+				function toPushRepo() {
+					from="$1"
+					if ! [[ "$from" == http* ]]; then
+						echo $from
+					else
+						echo $(sed -e 's,https://github.com/,git@github.com:,' <<< $from)
+					fi
+				}
+				# TODO: create function to push the current REpo via ssh, similar to mb110_tagBuildInputs.sh
+				export -f toPushRepo
+				git submodule foreach 'if grep "^${name}:" ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt > /dev/null; then git tag $BUILD_ID; PUSH_URL="$(toPushRepo $(git config --get remote.origin.url))"; git push --verbose $PUSH_URL $BUILD_ID; else echo Skipping $name; fi || :'
+				git tag $BUILD_ID
+				git push --verbose origin $BUILD_ID
+				#TODO: where does it change the URL of the main repo?!
+				
+				'''
+			}
+		}
+		stage('Create Github milestones') {
+			when {
+				expression { false } //FIXME: remove
+			}
+			environment {
+				GITHUB_BOT_TOKEN = credentials('github-bot-token')
+			}
+			steps {
+			//TODO: Check all slashes again and is -x necessary? I doubt it.
+			//TODO: unify this and use loops and variables and if-blocks to reduce repetition
+			//TODO: Consider to create the milestones just in the submodules? Is there a need to have them in the .efnd repo or .github or websites?
+				sh '''#!/bin/bash -x
+M1={\\"title\\":\\"${Main_Release}\\ M1\\",\\"state\\":\\"open\\",\\"description\\":\\"${Main_Release}\\ Milestone\\ 1\\",\\"due_on\\":\\"${Milestone_1_Due_Date}T23:59:59Z\\"}
+M2={\\"title\\":\\"${Main_Release}\\ M2\\",\\"state\\":\\"open\\",\\"description\\":\\"${Main_Release}\\ Milestone\\ 2\\",\\"due_on\\":\\"${Milestone_2_Due_Date}T23:59:59Z\\"}
+M3={\\"title\\":\\"${Main_Release}\\ M3\\",\\"state\\":\\"open\\",\\"description\\":\\"${Main_Release}\\ Milestone\\ 3\\",\\"due_on\\":\\"${Milestone_3_Due_Date}T23:59:59Z\\"}
+RC1={\\"title\\":\\"${Main_Release}\\ RC1\\",\\"state\\":\\"open\\",\\"description\\":\\"${Main_Release}\\ RC\\ 1\\",\\"due_on\\":\\"${RC1_Due_Date}T23:59:59Z\\"}
+RC2={\\"title\\":\\"${Main_Release}\\ RC2\\",\\"state\\":\\"open\\",\\"description\\":\\"${Main_Release}\\ RC\\ 2\\",\\"due_on\\":\\"${RC2_Due_Date}T23:59:59Z\\"}
+R={\\"title\\":\\"${Main_Release}\\",\\"state\\":\\"open\\",\\"description\\":\\"${Main_Release}\\ Release\\",\\"due_on\\":\\"${Main_Release_Due_Date}T23:59:59Z\\"}
+
+echo **************************************************************************************************************************************************
+echo $R
+echo $M1
+echo $M2
+echo $M3
+echo $RC1
+echo $RC2
+echo **************************************************************************************************************************************************
+
+#repo_name=eclipse-platform\\/.github
+#echo $repo_name
+#curl -sS -f -I -H "Authorization: token ${GITHUB_BOT_TOKEN}" https://api.github.com
+
+#Create script with curl commands
+milestone_script=${WORKSPACE}/milestone.sh
+
+#create script header
+echo "#!/bin/bash"> ${milestone_script}
+echo >> ${milestone_script}
+#add executable permissions
+chmod +x ${milestone_script}
+
+#Loop in each of the organisation
+for org in eclipse-platform eclipse-jdt eclipse-pde eclipse-equinox; do
+	rm -rf out.json
+	curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GITHUB_BOT_TOKEN}"  https://api.github.com/orgs/${org}/repos >out.json
+	cat out.json
+	#Loop each of the repositories in organisation
+	for repo_name in $(cat out.json |jq '.[] | .full_name'|sed 's/"//g'); do
+		echo curl -X POST -v \
+			 -H \\"Authorization: token ${GITHUB_BOT_TOKEN}\\" \
+			 -H \\"Content-Type: application/json\\" \
+		     -H \\"Accept: application/vnd.github.v3+json\\" \
+		     -d  \'${M1}\' \
+		     https://api.github.com/repos/$repo_name/milestones >> ${milestone_script}
+		echo curl -X POST -v \
+			 -H \\"Authorization: token ${GITHUB_BOT_TOKEN}\\" \
+			 -H \\"Content-Type: application/json\\" \
+		     -H \\"Accept: application/vnd.github.v3+json\\" \
+		     -d  \'${M2}\' \
+		     https://api.github.com/repos/$repo_name/milestones >> ${milestone_script}
+		echo curl -X POST -v \
+			 -H \\"Authorization: token ${GITHUB_BOT_TOKEN}\\" \
+			 -H \\"Content-Type: application/json\\" \
+		     -H \\"Accept: application/vnd.github.v3+json\\" \
+		     -d  \'${M3}\' \
+		     https://api.github.com/repos/$repo_name/milestones >> ${milestone_script}
+		echo curl -X POST -v \
+			 -H \\"Authorization: token ${GITHUB_BOT_TOKEN}\\" \
+			 -H \\"Content-Type: application/json\\" \
+		     -H \\"Accept: application/vnd.github.v3+json\\" \
+		     -d  \'${RC1}\' \
+		     https://api.github.com/repos/$repo_name/milestones >> ${milestone_script}
+		echo curl -X POST -v \
+			 -H \\"Authorization: token ${GITHUB_BOT_TOKEN}\\" \
+			 -H \\"Content-Type: application/json\\" \
+		     -H \\"Accept: application/vnd.github.v3+json\\" \
+		     -d  \'${RC2}\' \
+		     https://api.github.com/repos/$repo_name/milestones >> ${milestone_script}
+		echo curl -X POST -v \
+			 -H \\"Authorization: token ${GITHUB_BOT_TOKEN}\\" \
+			 -H \\"Content-Type: application/json\\" \
+		     -H \\"Accept: application/vnd.github.v3+json\\" \
+		     -d  \'${R}\' \
+		     https://api.github.com/repos/$repo_name/milestones >> ${milestone_script}
+	done
+	#end of repo loop
+done
+#end of org loop
+
+#Actual milestone creation happens here
+${milestone_script} | tee log.txt
+				'''
+			}
+		}
+	}
+//	post {
+//		always {
+			//TODO: what to archive?
+//			archiveArtifacts allowEmptyArchive: true, artifacts: '\
+//				coordinates*.txt, artifacts*.txt'
+//		}
+//	}
+}
+
+//TODO: Clean-up and remove unused methods
+
+@NonCPS
+def parseDate(String dateString) {
+	return java.time.LocalDate.parse(dateString.trim()) // expects format 'yyyy-MM-dd'
+}
+
+def tryAPICalls() { //FIXME: remove this!
+	//TODO: test what happens if the MS already exists
+	def mainRelease = '4.36'
+	def m1DueDate = '2025-05-31'
+	createMilestone('HannesWell', 'eclipse.pde', "${mainRelease} M1", """\
+	${mainRelease} Milestone 1
+	Line2
+	""".stripIndent(), m1DueDate)
+	def prRes = createPullRequest('HannesWell', 'eclipse.pde', 'A dummy PR', """\
+		This is just a dummy change created for testing.
+		A second line.
+		""".stripIndent(), 'dummy-change')
+	echo "prRes: ${prRes}"
+}
+
+//TODO: combine orga and repo?
+/**
+ * Create a new milestone.
+ * @param msDueDay the milestone's due-date, format: YYYY-MM-DD
+ */
+def createMilestone(String orga, String repo, String msTitle, String msDescription, String msDueDay) {
+	echo "In ${orga}/${repo} create milestone: ${msTitle} due on ${msDueDay}"
+	def params = [title: msTitle, description: msDescription, due_on: "${msDueDay}T23:59:59Z"]
+	// M1={\\"title\\":\\"${Main_Release}\\ M1\\",\\"state\\":\\"open\\",\\"description\\":\\"${Main_Release}\\ Milestone\\ 1\\",\\"due_on\\":\\"${Milestone_1_Due_Date}T23:59:59Z\\"}
+	def response = queryGithubAPI('-X POST', "repos/${orga}/${repo}/milestones", params)
+	if (response.errors || (response.status && response.status != 201)) {
+		if (response.errors && response.errors[0]?.code == 'already_exists') {
+			echo 'Milestone already exists and is not modified'
+			//TODO: update milestone in this case: https://docs.github.com/en/rest/issues/milestones?apiVersion=2022-11-28#update-a-milestone
+			// Usefull if e.g. the dates are wrongly read from the calendar
+		} else {
+			error "Response contains errors:\n${response}"
+		}
+	} else {
+		echo 'Created successfully'
+	}
+}
+
+/**
+ * Create a PR in the specified repo, from a branch that is expected to reside in the same repository.
+ */
+def createPullRequest(String orga, String repo, String prTitle, String prBody, String headBranch, String baseBranch = 'master') {
+	def params = [title: prTitle, body: prBody, head: headBranch, base: baseBranch]
+	def response = queryGithubAPI('-X POST',"repos/${orga}/${repo}/pulls", params)
+	if (response.errors || (response.status && response.status != 201)) {
+		error "Response contains errors:\n${response}"
+	}
+	return response.html_url
+}
+
+def queryGithubAPI(String method, String endpoint, Map<String, String> queryParameters) {
+	def params = writeJSON(json: queryParameters, returnText: true)
+	def response = sh(script: """
+		curl -L ${method} \
+			-H "Accept: application/vnd.github+json" \
+			-H "Authorization: Bearer \${GITHUB_BOT_TOKEN}" \
+			-H "X-GitHub-Api-Version: 2022-11-28" \
+			https://api.github.com/${endpoint} \
+			-d '${params}'
+		""", returnStdout: true)
+	if (response == null || response.isEmpty()) {
+		error 'Response is null or empty. This commonly indicates: HTTP/1.1 500 Internal Server Error'
+	}
+	return readJSON(text: response)
+}
+
+def installLatestCbiAggr(){
+	return install('cbiAggr', "https://download.eclipse.org/cbi/updates/p2-aggregator/products/nightly/latest/org.eclipse.cbi.p2repo.cli.product-linux.gtk.x86_64.tar.gz") + '/cbiAggr'
+}
+
+def install(String toolType, String url) {
+	dir("${WORKSPACE}/tools/${toolType}") {
+		sh "curl -L ${url} | tar -xzf -"
+		return "${pwd()}/" + sh(script: 'ls', returnStdout: true).trim()
+	}
+}
+
