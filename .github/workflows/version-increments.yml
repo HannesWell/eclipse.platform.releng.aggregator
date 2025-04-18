@@ -5,10 +5,14 @@ on:
     workflows: [ 'Pull-Request Checks' ]
     types: [ completed ]
 
+permissions: # all others are none
+  pull-requests: write
+  contents: write
+
 jobs:
   publish-version-check-results:
     uses: ./.github/workflows/publishVersionCheckResults.yml
     with:
       botGithubId: eclipse-platform-bot
     secrets:
-      githubBotPAT: ${{ secrets.PLATFORM_BOT_PAT }}
+      githubBotPAT: ${{ secrets.GITHUB_TOKEN }}

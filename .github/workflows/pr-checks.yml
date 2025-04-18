@@ -10,13 +10,20 @@ on:
     branches: [ master ]
 
 jobs:
+  dump_contexts_to_log:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
   check-freeze-period:
     uses: ./.github/workflows/verifyFreezePeriod.yml
   check-merge-commits:
     uses: ./.github/workflows/checkMergeCommits.yml
   check-versions:
     # Run this check only for PRs from forks and not for changes from bots created on branches in this repository
-    if: github.event.pull_request.head.repo.full_name != github.repository
+    if: github.event.pull_request.head.repo.full_name != 'eclipse.platform/eclipse.platform.releng.aggregator'
     uses: ./.github/workflows/checkVersions.yml
     with:
       botName: Eclipse Platform Bot
