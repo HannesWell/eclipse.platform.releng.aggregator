@@ -15,7 +15,7 @@ pipeline {
 	}
 	//Parameters are defined in the job definition
 	stages {
-		stage('Process input') {
+		stage('Process Input') {
 			steps {
 				script {
 					def nextVersionMatcher = params.NEXT_RELEASE_VERSION =~ /(?<major>\d+)\.(?<minor>\d+)/
@@ -24,18 +24,19 @@ pipeline {
 					}
 					env.NEXT_RELEASE_VERSION_MAJOR = nextVersionMatcher.group('major')
 					env.NEXT_RELEASE_VERSION_MINOR = nextVersionMatcher.group('minor')
-					nextVersionMatcher = null
+					nextVersionMatcher = null // release matcher as it's not serializable
 					
-					def previousVersionMatcher = params.PREVIOUS_RELEASE_CANDIDATE =~ /(S|R)-(?<major>\d+)\.(?<minor>\d+)(M1|M2|M3|RC1|RC2)?-(?<timestamp>\d{12})/
+					def previousVersionMatcher = params.PREVIOUS_RELEASE_CANDIDATE =~ /(S|R)-(?<major>\d+)\.(?<minor>\d+)(?<kind>M1|M2|M3|RC1|RC2)?-(?<timestamp>\d{12})/
 					if (!previousVersionMatcher.matches()) {
 						error "Unexpected format for PREVIOUS_RELEASE_CANDIDATE: ${params.PREVIOUS_RELEASE_CANDIDATE}"
 					}
 					env.PREVIOUS_RELEASE_VERSION_MAJOR = previousVersionMatcher.group('major')
 					env.PREVIOUS_RELEASE_VERSION_MINOR = previousVersionMatcher.group('minor')
-					env.PREVIOUS_RELEASE_VERSION = "{PREVIOUS_RELEASE_VERSION_MAJOR}.${PREVIOUS_RELEASE_VERSION_MINOR}"
+					env.PREVIOUS_RELEASE_VERSION = "${PREVIOUS_RELEASE_VERSION_MAJOR}.${PREVIOUS_RELEASE_VERSION_MINOR}"
+					env.PREVIOUS_RELEASE_CANDIDATE_TAG = "${PREVIOUS_RELEASE_VERSION}" + previousVersionMatcher.group('kind')
 					def previousReleaseTimestamp = previousVersionMatcher.group('timestamp')
-					env.PREVIOUS_RELEASE_CANDIDATE_I_BUILD = "I-${previousReleaseTimestamp.substring(0,8)}-${previousReleaseTimestamp.substring(8,12)}"
-					previousVersionMatcher = null
+					env.PREVIOUS_RELEASE_CANDIDATE_I_BUILD = "I${previousReleaseTimestamp.substring(0,8)}-${previousReleaseTimestamp.substring(8,12)}"
+					previousVersionMatcher = null // release matcher as it's not serializable
 					
 					//TODO: Read the dates from the calender instead of provide a structured document somewhere?
 					// E.g. next to: https://github.com/eclipse-simrel/.github/blob/main/wiki/SimRel/2025-09.md
@@ -52,24 +53,25 @@ pipeline {
 					env.NEXT_RELEASE_MONTH = String.format("%02d", gaDate.monthValue)
 					sh '''#!/bin/sh +x
 						echo 'Input parameters read successfully'
-						echo "NEXT_RELEASE_VERSION: $NEXT_RELEASE_VERSION"
-						echo "NEXT_RELEASE_VERSION_MAJOR: $NEXT_RELEASE_VERSION_MAJOR"
-						echo "NEXT_RELEASE_VERSION_MINOR: $NEXT_RELEASE_VERSION_MINOR"
+						echo "NEXT_RELEASE_VERSION='$NEXT_RELEASE_VERSION'"
+						echo "NEXT_RELEASE_VERSION_MAJOR='$NEXT_RELEASE_VERSION_MAJOR'"
+						echo "NEXT_RELEASE_VERSION_MINOR='$NEXT_RELEASE_VERSION_MINOR'"
 						echo ''
-						echo "PREVIOUS_RELEASE_CANDIDATE: $PREVIOUS_RELEASE_CANDIDATE"
-						echo "PREVIOUS_RELEASE_VERSION: $PREVIOUS_RELEASE_VERSION"
-						echo "PREVIOUS_RELEASE_VERSION_MAJOR: $PREVIOUS_RELEASE_VERSION_MAJOR"
-						echo "PREVIOUS_RELEASE_VERSION_MINOR: $PREVIOUS_RELEASE_VERSION_MINOR"
-						echo "PREVIOUS_RELEASE_CANDIDATE_I_BUILD: $PREVIOUS_RELEASE_CANDIDATE_I_BUILD"
+						echo "PREVIOUS_RELEASE_CANDIDATE='$PREVIOUS_RELEASE_CANDIDATE'"
+						echo "PREVIOUS_RELEASE_VERSION='$PREVIOUS_RELEASE_VERSION'"
+						echo "PREVIOUS_RELEASE_VERSION_MAJOR='$PREVIOUS_RELEASE_VERSION_MAJOR'"
+						echo "PREVIOUS_RELEASE_VERSION_MINOR='$PREVIOUS_RELEASE_VERSION_MINOR'"
+						echo "PREVIOUS_RELEASE_CANDIDATE_TAG='$PREVIOUS_RELEASE_CANDIDATE_TAG'"
+						echo "PREVIOUS_RELEASE_CANDIDATE_I_BUILD='$PREVIOUS_RELEASE_CANDIDATE_I_BUILD'"
 						echo ''
-						echo "M1_DATE: $M1_DATE"
-						echo "M2_DATE: $M2_DATE"
-						echo "M3_DATE: $M3_DATE"
-						echo "RC1_DATE: $RC1_DATE"
-						echo "RC2_DATE: $RC2_DATE"
-						echo "GA_DATE: $GA_DATE"
-						echo "NEXT_RELEASE_YEAR: $NEXT_RELEASE_YEAR"
-						echo "NEXT_RELEASE_MONTH: $NEXT_RELEASE_MONTH"
+						echo "M1_DATE='$M1_DATE'"
+						echo "M2_DATE='$M2_DATE'"
+						echo "M3_DATE='$M3_DATE'"
+						echo "RC1_DATE='$RC1_DATE'"
+						echo "RC2_DATE='$RC2_DATE'"
+						echo "GA_DATE='$GA_DATE'"
+						echo "NEXT_RELEASE_YEAR='$NEXT_RELEASE_YEAR'"
+						echo "NEXT_RELEASE_MONTH='$NEXT_RELEASE_MONTH'"
 					'''
 				}
 				sh '''
@@ -85,8 +87,9 @@ pipeline {
 		stage('Checkout SCM') {
 			steps {
 				checkout scm
-				//TODO: set it globally
 				sh '''
+					git submodule update --init --recursive
+					#TODO: set identity globally
 					git config user.email "eclipse-releng-bot@eclipse.org"
 					git config user.name "Eclipse Releng Bot"
 					git submodule foreach 'git config user.email "eclipse-releng-bot@eclipse.org"'
@@ -94,6 +97,12 @@ pipeline {
 				'''
 			}
 		}
+		/*TODO: Test:
+			- If deploying the parent POM works
+			- If pushing works to aggr and submodules (e.g. pde)
+			- if creation of milestones works in aggr-repo and submodules (e.g. PDE)
+			- if PR createion works in aggr-repo and submodules (e.g. PDE)
+		*/
 		//- TODO: This can be avoided: https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/commit/f89d4df3ca93aae4d6ad5a8895759d6919ef707f
 		//TODO: run the maven build to bump versions and 'manually' Bump the versions in known locations like I-build-properties
 		// Create the posibility to inject a custom (sh?)script in each repository that is executed if available.
@@ -108,8 +117,7 @@ pipeline {
 		
 		// TODO: run the deployment of the parent pom and target immediatly and make sure the reference repos are available and set to the previous release, when the submodule updates are pushed.
 
-		//TODO: checkout full SDK and prepare it for push. Use SSH URL?
-		stage('Update Maven parent version') { //TODO: it's not only parent, but also more
+		stage('Update Maven Version') {
 			environment {
 				MAVEN_ARGS = '-U -B -ntp'
 			}
@@ -133,15 +141,15 @@ pipeline {
 				'''
 			}
 		}
-		stage('Update product version number across build scripts') {
+		stage('Update build scripts') {
 			steps {
 				//TODO: do https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/commit/d2543ae8b6d8e884dd6d4a8f265def0f6e38caa2
 				sh '''
 					sed --in-place \
-						--expression="s/RELEASE_VER=\"${PREVIOUS_RELEASE_VERSION}\"/RELEASE_VER=\"${NEXT_RELEASE_VERSION}\"/g" \
-						--expression="s/STREAM=\"${PREVIOUS_RELEASE_VERSION}.0\"/STREAM=\"${NEXT_RELEASE_VERSION}.0\"/g" \
-						--expression="s/STREAMMajor=\"${PREVIOUS_RELEASE_VERSION_MAJOR}\"/STREAMMajor=\"${NEXT_RELEASE_VERSION_MAJOR}\"/g" \
-						--expression="s/STREAMMinor=\"${PREVIOUS_RELEASE_VERSION_MINOR}\"/STREAMMinor=\"${NEXT_RELEASE_VERSION_MINOR}\"/g" \
+						--expression="s/RELEASE_VER=\\"${PREVIOUS_RELEASE_VERSION}\\"/RELEASE_VER=\\"${NEXT_RELEASE_VERSION}\\"/g" \
+						--expression="s/STREAM=\\"${PREVIOUS_RELEASE_VERSION}.0\\"/STREAM=\\"${NEXT_RELEASE_VERSION}.0\\"/g" \
+						--expression="s/STREAMMajor=\\"${PREVIOUS_RELEASE_VERSION_MAJOR}\\"/STREAMMajor=\\"${NEXT_RELEASE_VERSION_MAJOR}\\"/g" \
+						--expression="s/STREAMMinor=\\"${PREVIOUS_RELEASE_VERSION_MINOR}\\"/STREAMMinor=\\"${NEXT_RELEASE_VERSION_MINOR}\\"/g" \
 						'cje-production/buildproperties.txt'
 					sed --in-place --expression="s/${PREVIOUS_RELEASE_VERSION} Release/${NEXT_RELEASE_VERSION} Release/g" \
 						eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/*.p2.inf
@@ -150,50 +158,110 @@ pipeline {
 					sed --in-place --expression="s|s/[0-9]\\+.[0-9]\\+.0/[0-9]\\+.[0-9]\\+.0/g|s/${PREVIOUS_RELEASE_VERSION}.0/${NEXT_RELEASE_VERSION}.0/g|g" \
 						'scripts/updateProductVersion.sh'
 					
-					git commit --all --message "Update product version number to ${NEXT_RELEASE_VERSION} across build scripts"
+					#Commit all changes, except for the updated sub-modules here
+					git add --all
+					git restore --staged $(git submodule foreach --quiet 'echo $sm_path')
+					git commit --message "Update versions to ${NEXT_RELEASE_VERSION} in build scripts"
 				'''
-				//TODO: commit it in the aggre repo
 			}
 		}
-		stage('Move previous version to current RC across build scripts ') {
+		stage('Move previous version to current RC') {
 			steps {
 				//TODO: do https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/commit/c55ec02b5ed6a7691779117fc4767c9e393d4b8d
 				sh '''
+					mvn -f eclipse-platform-parent/pom.xml --non-recursive org.eclipse.tycho:tycho-versions-plugin:set-property \
+						-Dproperties=previous-release.baseline \
+						"-DnewPrevious-release.baseline=https://download.eclipse.org/eclipse/updates/${PREVIOUS_RELEASE_VERSION}-I-builds/${PREVIOUS_RELEASE_CANDIDATE_I_BUILD}/"
+					sed --in-place \
+						--expression="s|PREVIOUS_RELEASE_VER=\\".*\\"|PREVIOUS_RELEASE_VER=\\"${PREVIOUS_RELEASE_CANDIDATE_TAG}\\"|g" \
+						--expression="s|PREVIOUS_RELEASE_REPO_ID=\\".*\\"|PREVIOUS_RELEASE_REPO_ID=\\"${PREVIOUS_RELEASE_VERSION}-I-builds\\"|g" \
+						--expression="s|BASEBUILD_ID=\\".*\\"|BASEBUILD_ID=\\"${PREVIOUS_RELEASE_CANDIDATE_I_BUILD}\\"|g" \
+						--expression="s|PREVIOUS_RELEASE_ID=\\".*\\"|PREVIOUS_RELEASE_ID=\\"${PREVIOUS_RELEASE_ID}\\"|g" \
+						'cje-production/buildproperties.txt'
+					sed --in-place \
+						--expression="s|eclipse-platform-[0-9]\\+.[0-9]\\+-|eclipse-platform-${PREVIOUS_RELEASE_CANDIDATE_TAG}-|g" \
+						--expression="s|org.eclipse.equinox.p2.tests.last.release.build.repo=.*|org.eclipse.equinox.p2.tests.last.release.build.repo=https://download.eclipse.org/equinox/drops/${PREVIOUS_RELEASE_CANDIDATE}/|g" \
+						'eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/resources/equinoxp2tests.properties'
+					sed --in-place \
+						--expression="s|previousReleaseVersion=.*|previousReleaseVersion=${PREVIOUS_RELEASE_CANDIDATE_TAG}|g" \
+						'eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/resources/label.properties'
+					sed --in-place \
+						--expression="s|previousReleaseLocation=.*|previousReleaseLocation=https://\\${DOWNLOAD_HOST}/eclipse/downloads/drops4/${PREVIOUS_RELEASE_CANDIDATE}/|g" \
+						--expression="s|previousReleaseVersion=.*|previousReleaseVersion=${PREVIOUS_RELEASE_CANDIDATE_TAG}|g" \
+						--expression="s|previousReleaseVersionRepo=.*|previousReleaseVersionRepo=${PREVIOUS_RELEASE_VERSION}-I-builds|g" \
+						'production/testScripts/configuration/streamSpecific.properties'
+					
+					#Commit all changes, except for the updated sub-modules here
+					git add --all
+					git restore --staged $(git submodule foreach --quiet 'echo $sm_path')
+					git commit --message "Move previous version to ${PREVIOUS_RELEASE_CANDIDATE_TAG} in build scripts"
 				'''
-				//TODO: commit it in the aggre repo
 			}
 		}
-		stage('Push updates') {
-		//TODO: check if new I-build repo has to exist in advance?!
+		stage('Deploy parent-pom and SDK-target') {
+			// Deploy new parent first to ensure it's available when PRs for submodule updates are created.
 			steps {
-				// Deploy new parent first to ensure it's available when PRs for submodule updates are created.
 				sh '''
 					mvn clean deploy -f eclipse-platform-parent/pom.xml
 					mvn clean deploy -f eclipse.platform.releng.prereqs.sdk/pom.xml
 				'''
-				sh '''
-				function toPushRepo() {
-					from="$1"
-					if ! [[ "$from" == http* ]]; then
-						echo $from
-					else
-						echo $(sed -e 's,https://github.com/,git@github.com:,' <<< $from)
-					fi
+			}
+		}
+		stage('Push preparation branches') {
+			//TODO: check if new I-build repo has to exist in advance?!
+			steps {
+				sshagent (['github-bot-ssh']) {
+					sh '''
+						function pushAllNewCommitsToPreparationBranch() {
+							pushURL=$(git config --get remote.origin.url)
+							# Switch to SSH, if the configured URL uses HTTPS (we can only push with SSH)
+							if [[ "$pushURL" == http* ]]; then
+								pushURL=$(echo $pushURL|sed -e 's|https://github.com/|git@github.com:|')
+							fi
+							git push $pushURL HEAD:refs/heads/prepare_R${NEXT_RELEASE_VERSION}
+						}
+						pushAllNewCommitsToPreparationBranch
+						export -f pushAllNewCommitsToPreparationBranch
+						git submodule foreach 'pushAllNewCommitsToPreparationBranch'
+					'''
 				}
-				# TODO: create function to push the current REpo via ssh, similar to mb110_tagBuildInputs.sh
-				export -f toPushRepo
-				git submodule foreach 'if grep "^${name}:" ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt > /dev/null; then git tag $BUILD_ID; PUSH_URL="$(toPushRepo $(git config --get remote.origin.url))"; git push --verbose $PUSH_URL $BUILD_ID; else echo Skipping $name; fi || :'
-				git tag $BUILD_ID
-				git push --verbose origin $BUILD_ID
-				#TODO: where does it change the URL of the main repo?!
-				
-				'''
+			}
+		}
+		stage('Create preparation Pull-Requests') {
+			environment {
+				GITHUB_BOT_TOKEN = credentials('github-bot-token')
+			}
+			steps {
+				script {
+					def prHeadline = "Prepare ${NEXT_RELEASE_VERSION} development"
+					def prBranch = "prepare_R${NEXT_RELEASE_VERSION}"
+					def aggregatorPreparationPR = createPullRequest('eclipse-platform/eclipse.platform.releng.aggregator', prHeadline, """\
+						Prepare the development of Eclipse ${NEXT_RELEASE_VERSION}.
+						This includes (besides others)
+						- Updating the version of the Maven parent and the Eclipse products to `${NEXT_RELEASE_VERSION}`
+						- Updating the release version to `${NEXT_RELEASE_VERSION}` across build scripts
+						- Updating the previous release version to the current Release-Candidate: `${PREVIOUS_RELEASE_CANDIDATE}`
+						""".stripIndent(), prBranch)
+						
+					def submoduleURLs = sh(script: "git submodule foreach --quiet 'git config --get remote.origin.url'", returnStdout: true).trim().split(' ')
+					for (submoduleURL in submoduleURLs) {
+						// Extract repository path from e.g.: https://github.com/eclipse-platform/eclipse.platform.git
+						def expectedPrefix = 'https://github.com/'
+						def expectedSuffix = '.git'
+						if (!submoduleURL.startsWith(expectedPrefix) || !submoduleURL.endsWith(expectedSuffix)) {
+							error "Unexpected of submodule URL: ${submoduleURL}"
+						}
+						def repoName = submoduleURL.substring(expectedPrefix.length(), submoduleURL.length() - expectedSuffix.length())
+						createPullRequest(repoName, prHeadline, """\
+							Prepare the development of Eclipse ${NEXT_RELEASE_VERSION}.
+							Complements
+							- ${aggregatorPreparationPR}
+							""".stripIndent(), prBranch)
+					}
+				}
 			}
 		}
 		stage('Create Github milestones') {
-			when {
-				expression { false } //FIXME: remove
-			}
 			environment {
 				GITHUB_BOT_TOKEN = credentials('github-bot-token')
 			}
@@ -309,7 +377,7 @@ def tryAPICalls() { //FIXME: remove this!
 	${mainRelease} Milestone 1
 	Line2
 	""".stripIndent(), m1DueDate)
-	def prRes = createPullRequest('HannesWell', 'eclipse.pde', 'A dummy PR', """\
+	def prRes = createPullRequest('HannesWell/eclipse.pde', 'A dummy PR', """\
 		This is just a dummy change created for testing.
 		A second line.
 		""".stripIndent(), 'dummy-change')
@@ -342,9 +410,9 @@ def createMilestone(String orga, String repo, String msTitle, String msDescripti
 /**
  * Create a PR in the specified repo, from a branch that is expected to reside in the same repository.
  */
-def createPullRequest(String orga, String repo, String prTitle, String prBody, String headBranch, String baseBranch = 'master') {
+def createPullRequest(String orgaSlashRepo, String prTitle, String prBody, String headBranch, String baseBranch = 'master') {
 	def params = [title: prTitle, body: prBody, head: headBranch, base: baseBranch]
-	def response = queryGithubAPI('-X POST',"repos/${orga}/${repo}/pulls", params)
+	def response = queryGithubAPI('-X POST',"repos/${orgaSlashRepo}/pulls", params)
 	if (response.errors || (response.status && response.status != 201)) {
 		error "Response contains errors:\n${response}"
 	}

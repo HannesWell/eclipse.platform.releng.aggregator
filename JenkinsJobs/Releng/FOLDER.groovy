@@ -2,8 +2,6 @@ folder('Releng') {
   description('Jobs related to routine releng tasks. Some are periodic, some are "manual" jobs ran only when needed.')
 }
 
-//TODO: declare the name, descriptions parameters etc. in the jenkins-files as groovy variables and load it via a convention?
-
 pipelineJob('Releng/PublishToMaven'){
 	displayName('Publish to Maven')
 	description('''\
@@ -67,7 +65,6 @@ pipelineJob('Releng/prepareNextDevCycle'){
 	displayName('Prepare next Development Cycle')
 	description('Perform all steps to prepare the next development cycle of Eclipse.')
 	parameters {
-		//TODO: Add labels. FIXME: Remove defaults!
 		stringParam('NEXT_RELEASE_VERSION', null, 'Id of the prepared release, for example: 4.37')
 		stringParam('PREVIOUS_RELEASE_CANDIDATE', null, 'Id of the current release-candiate for the previous release, for example: S-4.36RC1-202505231100')
 		stringParam('M1_DATE', null, 'Milestone 1 end date in the format yyyy-mm-dd, for example: 2025-07-04')
@@ -76,7 +73,6 @@ pipelineJob('Releng/prepareNextDevCycle'){
 		stringParam('RC1_DATE', null, 'Release-Candidate 1 end date in the format yyyy-mm-dd, for example: 2025-08-22')
 		stringParam('RC2_DATE', null, 'Release-Candidate 2 end date in the format yyyy-mm-dd, for example: 2025-08-29')
 		stringParam('GA_DATE', null, 'Final general availability release date in the format yyyy-mm-dd, for example: 2025-09-10')
-		//TODO: derive as much as possible from that?
 	}
 	definition {
 		cpsScm {
