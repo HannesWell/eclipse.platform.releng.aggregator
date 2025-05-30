@@ -33,21 +33,9 @@
 
     <module>eclipse.platform.releng.prereqs.sdk</module>
 
-    <module>eclipse.jdt/</module>
-    <module>eclipse.jdt.core</module>
-    <module>eclipse.jdt.core.binaries</module>
-    <module>eclipse.jdt.debug</module>
-    <module>eclipse.jdt.ui</module>
-
     <module>eclipse.pde</module>
 
-    <module>eclipse.platform</module>
-    <module>eclipse.platform.ui</module>
     <module>eclipse.platform.common</module>
-    <module>eclipse.platform.swt</module>
-
-    <module>equinox</module>
-    <module>equinox.p2</module>
 
     <module>eclipse.platform.releng</module>
     <module>eclipse.platform.releng.tychoeclipsebuilder</module>

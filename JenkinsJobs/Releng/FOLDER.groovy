@@ -67,20 +67,22 @@ pipelineJob('Releng/prepareNextDevCycle'){
 	displayName('Prepare next Development Cycle')
 	description('Perform all steps to prepare the next development cycle of Eclipse.')
 	parameters {
-		stringParam('NEXT_RELEASE_VERSION', null, 'Id of the prepared release, for example: 4.37')
-		stringParam('PREVIOUS_RELEASE_CANDIDATE', null, 'Id of the current release-candiate for the previous release, for example: S-4.36RC1-202505231100')
-		stringParam('M1_DATE', null, 'Milestone 1 end date in the format yyyy-mm-dd, for example: 2025-07-04')
-		stringParam('M2_DATE', null, 'Milestone 2 end date in the format yyyy-mm-dd, for example: 2025-07-25')
-		stringParam('M3_DATE', null, 'Milestone 3 end date in the format yyyy-mm-dd, for example: 2025-08-15')
-		stringParam('RC1_DATE', null, 'Release-Candidate 1 end date in the format yyyy-mm-dd, for example: 2025-08-22')
-		stringParam('RC2_DATE', null, 'Release-Candidate 2 end date in the format yyyy-mm-dd, for example: 2025-08-29')
-		stringParam('GA_DATE', null, 'Final general availability release date in the format yyyy-mm-dd, for example: 2025-09-10')
+		//TODO: Add labels. FIXME: Remove defaults!
+		stringParam('NEXT_RELEASE_VERSION', '4.37', 'Id of the prepared release, for example: 4.37')
+		stringParam('PREVIOUS_RELEASE_CANDIDATE', 'S-4.36RC1-202505231100', 'Id of the current release-candiate for the previous release, for example: S-4.36RC1-202505231100')
+		stringParam('M1_DATE', '2025-07-04', 'Milestone 1 end date in the format yyyy-mm-dd, for example: 2025-07-04')
+		stringParam('M2_DATE', '2025-07-25', 'Milestone 2 end date in the format yyyy-mm-dd, for example: 2025-07-25')
+		stringParam('M3_DATE', '2025-08-15', 'Milestone 3 end date in the format yyyy-mm-dd, for example: 2025-08-15')
+		stringParam('RC1_DATE', '2025-08-22', 'Release-Candidate 1 end date in the format yyyy-mm-dd, for example: 2025-08-22')
+		stringParam('RC2_DATE', '2025-08-29', 'Release-Candidate 2 end date in the format yyyy-mm-dd, for example: 2025-08-29')
+		stringParam('GA_DATE', '2025-09-10', 'Final general availability release date in the format yyyy-mm-dd, for example: 2025-09-10')
 	}
 	definition {
 		cpsScm {
 			lightweight(true)
 			scm {
-				github('eclipse-platform/eclipse.platform.releng.aggregator', 'master')
+				//FIXME: github('eclipse-platform/eclipse.platform.releng.aggregator', 'master')
+				github('HannesWell/eclipse.platform.releng.aggregator', 'release-preparation-jenkins-job')
 			}
 			scriptPath('JenkinsJobs/Releng/prepareNextDevCycle.jenkinsfile')
 		}
