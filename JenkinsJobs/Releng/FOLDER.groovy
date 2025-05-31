@@ -2,6 +2,8 @@ folder('Releng') {
   description('Jobs related to routine releng tasks. Some are periodic, some are "manual" jobs ran only when needed.')
 }
 
+//TODO: declare the name, descriptions parameters etc. in the jenkins-files as groovy variables and load it via a convention?
+
 pipelineJob('Releng/PublishToMaven'){
 	displayName('Publish to Maven')
 	description('''\
