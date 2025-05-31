@@ -209,7 +209,7 @@ pipeline {
 		stage('Push preparation branches') {
 			//TODO: check if new I-build repo has to exist in advance?!
 			steps {
-//				sshagent (['github-bot-ssh']) {
+//				sshagent (['github-HannesWell']) {
 					sh '''
 						function pushAllNewCommitsToPreparationBranch() {
 							pushURL=$(git config --get remote.origin.url)
@@ -217,12 +217,15 @@ pipeline {
 							if [[ "$pushURL" == http* ]]; then
 								pushURL=$(echo $pushURL|sed -e 's|https://github.com/|git@github.com:|')
 							fi
-							#FIXME: remove --dry-run after testing has completed 
-							git push --dry-run $pushURL HEAD:refs/heads/prepare_R${NEXT_RELEASE_VERSION} || true
+							#FIXME: remove --dry-run after testing has completed
+							git push $pushURL HEAD:refs/heads/prepare_R${NEXT_RELEASE_VERSION} || true
 						}
 						pushAllNewCommitsToPreparationBranch
 						export -f pushAllNewCommitsToPreparationBranch
-						git submodule foreach 'pushAllNewCommitsToPreparationBranch'
+						#git submodule foreach 'pushAllNewCommitsToPreparationBranch'
+						pushd eclipse.pde
+						pushAllNewCommitsToPreparationBranch
+						popd
 					'''
 //				}
 			}
@@ -253,11 +256,15 @@ pipeline {
 							error "Unexpected of submodule URL: ${submoduleURL}"
 						}
 						def repoName = submoduleURL.substring(expectedPrefix.length(), submoduleURL.length() - expectedSuffix.length())
+						if ('HannesWell/eclipse.pde'.equals(repoName)) {
 						createPullRequest(repoName, prHeadline, """\
 							Prepare the development of Eclipse ${NEXT_RELEASE_VERSION}.
 							Complements
 							- ${aggregatorPreparationPR}
 							""".stripIndent(), prBranch)
+						} else {
+							echo "skip ${repoName}"
+						}
 					}
 				}
 			}
@@ -426,7 +433,7 @@ def createPullRequest(String orgaSlashRepo, String prTitle, String prBody, Strin
 def queryGithubAPI(String method, String endpoint, Map<String, String> queryParameters) {
 	def params = writeJSON(json: queryParameters, returnText: true)
 	def response = sh(script: """
-		echo -L ${method} \
+		curl -L ${method} \
 			-H "Accept: application/vnd.github+json" \
 			-H "Authorization: Bearer \${GITHUB_BOT_TOKEN}" \
 			-H "X-GitHub-Api-Version: 2022-11-28" \
