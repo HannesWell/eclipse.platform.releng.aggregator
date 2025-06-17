@@ -33,6 +33,7 @@ jobs:
              run_id: context.payload.workflow_run.id,
              ...context.repo
           })
+          console.log(allArtifacts)
           let artifact = allArtifacts.data.artifacts.find(artifact => artifact.name == 'versions-git-patch')
           return artifact?.id
 
@@ -115,10 +116,12 @@ jobs:
           if (fileList) { // if list is empty, no versions were changed
             const prNumber = '${{ steps.fetch-patch.outputs.pull_request_number }}'
             const pr = await github.rest.pulls.get({
-               ...context.repo,
-               pull_number: prNumber
+               pull_number: prNumber,
+               ...context.repo
             })
-            const applyChangeMessagePart = pr.data.maintainer_can_modify
+            console.log(pr.data)
+            console.log("maintainer_can_modify: " + pr.data.maintainer_can_modify)
+            const applyChangeMessagePart = !(pr.data.maintainer_can_modify)
               ? "An additional commit containing all the necessary changes was pushed to the top of this PR's branch. To obtain these changes (for example if you want to push more changes) either fetch from your fork or apply the _git patch_."
               : ":warning: :construction: **This PR cannot be modified by maintainers** because edits are disabled or it is created from an organization repository. To obtain the required changes apply the _git patch_ manually as additional commit."
             const commentBody = `

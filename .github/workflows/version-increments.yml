@@ -11,4 +11,4 @@ jobs:
     with:
       botGithubId: eclipse-platform-bot
     secrets:
-      githubBotPAT: ${{ secrets.PLATFORM_BOT_PAT }}
+      githubBotPAT: ${{ secrets.HANNESWELL_PAT }}
