@@ -17,6 +17,11 @@ pipeline {
 		GIT_BRANCH = 'master'
 	}
 	//Parameters are defined in the job definition
+	
+	// 5. add validation (that's working)
+	// 5. Consider scripts from submodules and execute them for their customized release procedure (SWT, maybe PDE).
+	// 4. Try to reduce modified files (in tests, update script, platform-source-parent, ...)
+	// 2. parallelize and speed-up
 	stages {
 		stage('Process Input') {
 			steps {
@@ -85,7 +90,7 @@ pipeline {
 			steps {
 				checkout scm
 				sh '''
-					git submodule update --init --recursive
+					git submodule update --init --recursive --remote
 					git config --global user.email 'releng-bot@eclipse.org'
 					git config --global user.name 'Eclipse Releng Bot'
 				'''

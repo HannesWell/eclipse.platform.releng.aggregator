@@ -20,16 +20,16 @@
   branch = master
 [submodule "eclipse.pde"]
   path = eclipse.pde
-  url = https://github.com/eclipse-pde/eclipse.pde.git
-  branch = master
+  url = https://github.com/HannesWell/eclipse.pde.git
+  branch = replace-sdk.test.ide
 [submodule "eclipse.platform"]
   path = eclipse.platform
   url = https://github.com/eclipse-platform/eclipse.platform.git
   branch = master
 [submodule "eclipse.platform.swt"]
   path = eclipse.platform.swt
-  url = https://github.com/eclipse-platform/eclipse.platform.swt.git
-  branch = master
+  url = https://github.com/HannesWell/eclipse.platform.swt.git
+  branch = release-preparation-swt
 [submodule "eclipse.platform.ui"]
   path = eclipse.platform.ui
   url = https://github.com/eclipse-platform/eclipse.platform.ui.git
