@@ -237,10 +237,17 @@ pipeline {
 			environment {
 				GITHUB_BOT_TOKEN = credentials('github-bot-token')
 			}
-			steps {
-				script {
-					def organisations = [ 'eclipse-platform', 'eclipse-jdt', 'eclipse-pde', 'eclipse-equinox' ]
-					for (organisation in organisations) {
+			matrix {
+				axes {
+					axis {
+						name 'ORGANISATION'
+						values 'eclipse-platform', 'eclipse-jdt', 'eclipse-pde', 'eclipse-equinox'
+					}
+				}
+				stages {
+					stage("Create milestones") {
+						steps { script {
+						def organisation = "${ORGANISATION}"
 						def repositories = listReposOfOrganization(organisation)
 						echo "${organisation} repositories: ${repositories.name}"
 						for (repositoryData in repositories) {
@@ -259,6 +266,7 @@ pipeline {
 							createMilestone(organisation, repository, "${NEXT_RELEASE_VERSION} RC2", "${NEXT_RELEASE_VERSION} Release Candidate 2", "${RC2_DATE}")
 							createMilestone(organisation, repository, "${NEXT_RELEASE_VERSION}",     "${NEXT_RELEASE_VERSION} Release",             "${GA_DATE}")
 						}
+						} }
 					}
 				}
 			}
