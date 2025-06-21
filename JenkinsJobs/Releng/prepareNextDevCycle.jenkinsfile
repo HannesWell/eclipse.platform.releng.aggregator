@@ -13,6 +13,9 @@ pipeline {
 		jdk 'temurin-jdk21-latest'
 		maven 'apache-maven-latest'
 	}
+	environment {
+		GIT_BRANCH = 'master'
+	}
 	//Parameters are defined in the job definition
 	stages {
 		stage('Process Input') {
@@ -128,9 +131,6 @@ pipeline {
 				replaceInFile('production/testScripts/configuration/streamSpecific.properties', [
 					"for ${PREVIOUS_RELEASE_VERSION}.0 builds" : "for ${NEXT_RELEASE_VERSION}.0 builds",
 				])
-				replaceAllInFile('scripts/updateProductVersion.sh', [
-					's/\\d+.\\d+.0/\\d+.\\d+.0/g' : "g|s/${PREVIOUS_RELEASE_VERSION}.0/${NEXT_RELEASE_VERSION}.0/g",
-				])
 				
 				commitAllChangesExcludingSubmodules("Update versions to ${NEXT_RELEASE_VERSION} in build scripts")
 			}
@@ -142,6 +142,7 @@ pipeline {
 						-Dproperties=previous-release.baseline \
 						"-DnewPrevious-release.baseline=https://download.eclipse.org/eclipse/updates/${PREVIOUS_RELEASE_VERSION}-I-builds/${PREVIOUS_RELEASE_CANDIDATE_I_BUILD}/"
 				'''
+				//TODO: check what has to be adjusted if a current mile-stone is already used as previous release
 				replaceAllInFile('cje-production/buildproperties.txt', [
 					'PREVIOUS_RELEASE_VER=".*"' : "PREVIOUS_RELEASE_VER=\"${PREVIOUS_RELEASE_CANDIDATE_TAG}\"",
 					'PREVIOUS_RELEASE_REPO_ID=".*"' : "PREVIOUS_RELEASE_REPO_ID=\"${PREVIOUS_RELEASE_VERSION}-I-builds\"",
@@ -161,6 +162,38 @@ pipeline {
 					'previousReleaseVersionRepo=.*' : "previousReleaseVersionRepo=${PREVIOUS_RELEASE_VERSION}-I-builds",
 				])
 				commitAllChangesExcludingSubmodules("Move previous version to ${PREVIOUS_RELEASE_CANDIDATE_TAG} in build scripts")
+			}
+		}
+		stage('Validate and list changes') {
+			steps {
+				sh '''
+					function printCommits() {
+						git log origin/${GIT_BRANCH}..HEAD --stat
+						git diff origin/${GIT_BRANCH}..HEAD
+					}
+					printCommits
+					export -f printCommits
+					git submodule foreach 'printCommits'
+				'''
+				// Run simple clean build to verify that at least all parent versions are updated correctly
+				sh 'mvn clean'
+				// search for left over occurances of the previous release version
+				sh '''#!/bin/bash
+					matchingFiles=$(grep --recursive --files-with-matches \
+						--include pom.xml \
+						--include MANIFEST.MF \
+						--include feature.xml \
+						--include \\*.product \
+						--fixed-strings "${PREVIOUS_RELEASE_VERSION}")
+					# The eclipse-platform-parent/pom.xml contains the previous version in the baseline repository variable
+					if [[ -z "${matchingFiles}" ]] || [[ "${matchingFiles}" == 'eclipse-platform-parent/pom.xml' ]]; then
+						exit 0
+					else
+						echo 'References to previous verion found in:'
+						echo ${matchingFiles}
+						exit 1
+					fi
+				'''
 			}
 		}
 		stage ('Create New Stream Repos') {
@@ -251,7 +284,7 @@ pipeline {
 						
 					def submodulePaths = sh(script: "git submodule --quiet foreach 'echo \$sm_path'", returnStdout: true).trim().split('\\s')
 					for (submodulePath in submodulePaths) {
-						def diff = sh(script:"cd ${submodulePath} && git diff HEAD origin/master --shortstat", returnStdout: true).trim()
+						def diff = sh(script:"cd ${submodulePath} && git diff HEAD origin/${GIT_BRANCH} --shortstat", returnStdout: true).trim()
 						if (diff.isEmpty()) {
 							echo "Skipping submodule without changes: ${submodulePath}"
 							continue
@@ -327,7 +360,11 @@ def replaceInFile(String filePath, Map<String,String> replacements) {
 def replaceAllInFile(String filePath, Map<String,String> replacements) {
 	def content = readFile(filePath)
 	for (entry in replacements) {
-		content = content.replaceAll(entry.key, entry.value)
+		def newContent = content.replaceAll(entry.key, entry.value)
+		if (newContent == content && !(content =~ entry.key)) { // pattern can match, but the replacement is equal to the present content
+			error("Pattern not found in file '${filePath}': ${entry.key}")
+		}
+		content = newContent
 	}
 	writeFile(file:filePath, text: content)
 }
@@ -389,7 +426,7 @@ def createMilestone(String orga, String repo, String msTitle, String msDescripti
 /**
  * Create a PR in the specified repo, from a branch that is expected to reside in the same repository.
  */
-def createPullRequest(String orgaSlashRepo, String prTitle, String prBody, String headBranch, String baseBranch = 'master') {
+def createPullRequest(String orgaSlashRepo, String prTitle, String prBody, String headBranch, String baseBranch = "${GIT_BRANCH}") {
 	echo "In ${orgaSlashRepo} create PR: '${prTitle}' on branch ${headBranch}"
 	def params = [title: prTitle, body: prBody, head: headBranch, base: baseBranch]
 	def response = queryGithubAPI('-X POST',"repos/${orgaSlashRepo}/pulls", params)
