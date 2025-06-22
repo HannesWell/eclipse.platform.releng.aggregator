@@ -1,0 +1,42 @@
+pipeline {
+	options {
+		timestamps()
+		timeout(time: 15, unit: 'MINUTES')
+		buildDiscarder(logRotator(numToKeepStr:'5'))
+		skipDefaultCheckout()
+	}
+	agent {
+		label 'basic'
+	}
+	stages {
+		stage('Clean up Equinox builds') {
+			steps {
+				sshagent (['projects-storage.eclipse.org-bot-ssh']) {
+					sh '''
+						ssh genie.releng@projects-storage.eclipse.org '
+							equinoxBuilds=/home/data/httpd/download.eclipse.org/equinox/drops
+							cd $equinoxBuilds
+							
+							clean() {
+								prefix=$1
+								
+								builds=$( ls --format=single-column -d $prefix* | sort | head -n-3 )
+								if [ -n "$builds" ]; then
+									for f in $builds; do
+										rm -rf $f
+									done
+								else
+									echo 'Nothing to clean.'
+								fi
+							}
+							
+							echo -e "Removing drops from downloads server at ${equinoxBuilds}"
+							clean I
+							clean Y
+						'
+					'''
+				}
+			}
+		}
+	}
+}
