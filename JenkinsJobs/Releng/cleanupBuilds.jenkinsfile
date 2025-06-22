@@ -1,0 +1,97 @@
+pipeline {
+	options {
+		timestamps()
+		timeout(time: 15, unit: 'MINUTES')
+		buildDiscarder(logRotator(numToKeepStr:'5'))
+		skipDefaultCheckout()
+	}
+	agent {
+		label 'basic'
+	}
+	environment {
+		// Download Server locations (would very seldom change)
+		EP_ROOT = '/home/data/httpd/download.eclipse.org'
+		EP_ECLIPSE_DROPS = "${EP_ROOT}/eclipse/downloads/drops4"
+		EP_EQUINOX_DROPS = "${EP_ROOT}/equinox/drops"
+		
+		SSH = 'ssh genie.releng@projects-storage.eclipse.org'
+	}
+	stages {
+		stage('Clean up builds') {
+			parallel {
+				stage('Equinox') {
+					steps {
+						sshagent (['projects-storage.eclipse.org-bot-ssh']) {
+							sh '''#!/bin/bash -xe
+								$SSH '
+									cd ${EP_EQUINOX_DROPS}
+									buildTypes=(I Y)
+									for prefix in "${buildTypes[@]}"; do
+										builds=$( ls --format=single-column -d $prefix* | sort | head -n-3 )
+										if [ -n "$builds" ]; then
+											for f in $builds; do
+												rm -rf $f
+											done
+										else
+											echo 'Nothing to clean.'
+										fi
+									done
+								'
+							'''
+						}
+					}
+				}
+				stage('Eclipse') {
+					steps {
+						sshagent (['projects-storage.eclipse.org-bot-ssh']) {
+							// Among all I-builds older than five days, keep only the first stable build per week (starting Monday) and delete all others
+							// But keep at least the last four builds regardless of their age and all of those younger than five days.
+							script {
+								def buildType = 'I'
+								def oldIBuilds = sh(script: "\$SSH find ${EP_ECLIPSE_DROPS} -maxdepth 1 -type d -ctime +5 -name '${buildType}*'", returnStdout: true)
+									.trim().split('\\s+').sort()
+								echo "Old I-Builds: ${oldIBuilds}"
+								def allIBuilds = sh(script: "\$SSH find ${EP_ECLIPSE_DROPS} -maxdepth 1 -type d -name '${buildType}*'", returnStdout: true)
+									.trim().split('\\s+').sort().reversed()
+								def toRetain = allIBuilds.subList(0, Math.min(allIBuilds.size(), 4)).toSet() // Retain at least the four most recent builds
+								echo "Minimally retained I-Builds: ${toRetain}"
+								def Set<Integer> retainedWeeks = []
+								for (oldIBuild in oldIBuilds) {
+									if (toRetain.contains(oldIBuild)) {
+										echo "Not removed (since one of 4 newest, even though old): ${oldIBuild}"
+										continue;
+									}
+									def weekOfYear = parseWeekOfYear(oldIBuild)
+									if (!retainedWeeks.contains(weekOfYear)) {
+										def isUnstable = sh(script: "\$SSH if [ -f '${EP_ECLIPSE_DROPS}/${oldIBuild}/buildUnstable' ]; then echo 'true'; fi", returnStdout: true).toBoolean()
+										if (!isUnstable) {
+											retainedWeeks.add(weekOfYear) // Retain the first stable build of a week
+											echo "Retain stable build ${oldIBuild} for week ${weekOfYear}"
+											continue;
+										} else {
+											echo "Ignore unstable build ${oldIBuild} to be retained for week ${weekOfYear}"
+										}
+									}
+									sh "\$SSH rm -rf ${EP_ECLIPSE_DROPS}/${oldIBuild}"
+								}
+							}
+						}
+					}
+					build job: 'Releng/updateIndex', wait: false
+				}
+			}
+		}
+	}
+}
+
+@NonCPS
+private int parseWeekOfYear(String iBuildId) {
+	def idMatcher = iBuildId =~ /I(?<date>\d{8})-(?<time>\d{4})/
+	if (!idMatcher.matches()) {
+		error "buildID: ${iBuildId}, does not match the expected pattern."
+	}
+	def date = idMatcher.group('date')
+	def localDate = LocalDate.of(date.substring(0, 4), date.substring(4, 6), date.substring(6, 8))
+	def WEEK_OF_YEAR = java.time.temporal.WeekFields.ISO.weekOfWeekBasedYear();
+	return localDate.get(WEEK_OF_YEAR)
+}
