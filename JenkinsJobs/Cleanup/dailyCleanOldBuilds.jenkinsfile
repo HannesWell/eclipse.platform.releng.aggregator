@@ -26,6 +26,7 @@ pipeline {
 						ssh genie.releng@projects-storage.eclipse.org cd ${workspace}
 						
 						#get latest Eclipse platform product
+						#TODO: check if this is even used?!
 						epRelDir=$(ssh genie.releng@projects-storage.eclipse.org ls -d --format=single-column ${dropsPath}/R-*|sort|tail -1)
 						ssh genie.releng@projects-storage.eclipse.org tar -C ${workspace} -xzf ${epRelDir}/eclipse-platform-*-linux-gtk-x86_64.tar.gz
 						

@@ -189,25 +189,6 @@ function cleanRepo ()
       if [[ -z "${dryRun}" ]]
       then
         $eclipseexe -nosplash --launcher.suppressErrors -data "${devWorkspace}" -application  ${antRunner} -f $antBuildFile -vm ${javaexe}
-        RC=$?
-      fi
-      if [[ $RC == 0 ]]
-      then
-        # we only clean N-build directories, others need to be manually cleaned
-        # after every milestone, or after every release
-        if [[ $buildType == "N" ]]
-        then
-          for file in "${reposToRemove[@]}"
-          do
-            echo -e "\tDEBUG: directories to remove: ${eclipseRepo}/${file}"
-            if [[ -z "${dryRun}" ]]
-            then
-              rm -rf ${eclipseRepo}/${file}
-            fi
-          done
-          else
-            echo -e "\n\tReminder: only composite cleaned. For $buildType builds must cleanup simple repos ever milestone or release".
-        fi
       fi
       if [[ -n "${dryRun}" ]]
       then
@@ -218,14 +199,16 @@ function cleanRepo ()
   fi
 }
 
+#TODO: check why the absolute path is not removed and simply do this, when a new child is added? 
+# Use xpath (from the composite file that doesn't contain the categories') to list all children, sort them or just mark the first ones exceeding the desired limit of three.
+# Then call the ant script for each repo to remove. Unstable builds are not part of the repo.
+
 
 workspace=$1
 remoteBase="/home/data/httpd/download.eclipse.org"
 
 eclipseIRepo="${remoteBase}/eclipse/updates/4.37-I-builds"
-eclipseYRepo="${remoteBase}/eclipse/updates/4.36-I-builds"
 eclipseYRepo="${remoteBase}/eclipse/updates/4.37-Y-builds"
-eclipsePRepo="${remoteBase}/eclipse/updates/4.36-Y-builds"
 eclipseBuildTools="${remoteBase}/eclipse/updates/buildtools"
 
 doDryrun=
@@ -234,8 +217,6 @@ declare -a reposToRemove=()
 cleanRepo $eclipseIRepo I 2 $doDryrun
 declare -a reposToRemove=()
 cleanRepo $eclipseYRepo Y 2 $doDryrun
-declare -a reposToRemove=()
-cleanRepo $eclipsePRepo P 2 $doDryrun
 declare -a reposToRemove=()
 cleanRepo $eclipseBuildTools I 2 $doDryrun
 
