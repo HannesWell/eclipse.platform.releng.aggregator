@@ -272,14 +272,15 @@ spec:
 				}
 			}
 		}
-	  stage('Promote Update Site'){
-          steps {
+		stage('Promote Update Site'){
+			steps {
 				dir("${CJE_ROOT}/mbscripts") {
-                  sshagent(['projects-storage.eclipse.org-bot-ssh']) {
-                      sh '''
+					sshagent(['projects-storage.eclipse.org-bot-ssh']) {
+						//TODO: Inline this script
+						sh '''
                         ./mb620_promoteUpdateSite.sh $CJE_ROOT/buildproperties.shsource
-                      '''
-                  }
+						'''
+					}
 				}
 			}
 		}

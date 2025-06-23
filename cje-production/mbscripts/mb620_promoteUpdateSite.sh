@@ -48,6 +48,21 @@ epRelDir=$(ssh genie.releng@projects-storage.eclipse.org ls -d --format=single-c
 ssh genie.releng@projects-storage.eclipse.org tar -C ${workspace} -xzf ${epRelDir}/eclipse-platform-*-linux-gtk-x86_64.tar.gz
 
 #get requisite tools
+#TODO: what's the local working directory?!
+curl -o addToComposite.xml https://download.eclipse.org/eclipse/relengScripts/cje-production/scripts/addToComposite.xml
+
+scp genie.releng@projects-storage.eclipse.org:${dropsPath}/compositeArtifacts.jar compositeArtifacts.jar
+#TODO: unzip compositeArtifacts.xml and read from it
+
+children=$(xmllint --xpath 'string(/repository/children/child/@location)' compositeArtifacts.xml)
+#TODO: remove the first elements from that list that are exceeding the target size
+# TODO: Then enhance the addToComposite.xml to add these elements to be deleted (maybe add a marker comment to that script? or just run the removeFromCOmposite script?)
+
+scp addToComposite.xml genie.releng@projects-storage.eclipse.org:${workspace}/addToComposite.xml
+
+#TODO: enhance script to remove children that are outdated
+# Sort only those that start with I/Y/P and accept the other ones in their order? If sorting is necessary at all?
+
 ssh genie.releng@projects-storage.eclipse.org wget -O ${workspace}/addToComposite.xml https://download.eclipse.org/eclipse/relengScripts/cje-production/scripts/addToComposite.xml
 
 #triggering ant runner
@@ -63,3 +78,4 @@ extraArgs="addToComposite -Drepodir=${dropsPath} -Dcomplocation=${BUILD_ID}"
 ssh genie.releng@projects-storage.eclipse.org  ${javaCMD} -jar ${launcherJar} -nosplash -consolelog -debug -data $devworkspace -application org.eclipse.ant.core.antRunner -file ${workspace}/addToComposite.xml ${extraArgs} -vmargs $devArgs
 
 ssh genie.releng@projects-storage.eclipse.org rm -rf ${workingDir}/${JOB_NAME}*
+
