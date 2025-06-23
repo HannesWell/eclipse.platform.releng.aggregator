@@ -78,14 +78,16 @@ Tasks that need to be completed before Friday
     Currently this is handled by @lshanmug who will
     - Create a tracking issue in the [eclipse.platform.common](https://github.com/eclipse-platform/eclipse.platform.common) repo (see [N&N for 4.26](https://github.com/eclipse-platform/eclipse.platform.common/pull/93) as an example).
     - Update the WhatsNew files and folders for the doc bundles.
+    <!-- TODO: change to just adding the links! -->
   * **Readme**
     Currently handled by @SarikaSinha
     - Create a tracking issue in [www.eclipse.org-eclipse](https://github.com/eclipse-platform/www.eclipse.org-eclipse) (see [Readme file for 4.26](https://github.com/eclipse-platform/www.eclipse.org-eclipse/issues/24) as an example).
     - Add Readme files and update generatation scripts.
   * **Acknowledgements**
     - Create a tracking issue in [www.eclipse.org-eclipse](https://github.com/eclipse-platform/www.eclipse.org-eclipse) and link it to the main release issue in eclipse.platform.releng.aggregator.
-    - Create a new acknowledgements file for the current release and add it to [www.eclipse.org-eclipse/development](https://github.com/eclipse-platform/www.eclipse.org-eclipse/tree/master/development).
-    - The previous acknowledgement files are there for reference.
+    - Run the [Generate Acknowledgements](https://github.com/eclipse-platform/www.eclipse.org-eclipse/actions/workflows/generateAcknowledgements.yml) workflow with the to be released version as argument
+      and check and submit the PR created from it.
+      <!-- TODO: this could be automated! -->
   * **Migration Guide**
     - Create a tracking issue in [eclipse.platform.common](https://github.com/eclipse-platform/eclipse.platform.common) and link it to the main release issue in eclipse.platform.releng.aggregator.
     - Every release a new porting guide and folder need to be added to [eclipse.platform.common/bundles/org.eclipse.jdt.doc.isv/porting](https://github.com/eclipse-platform/eclipse.platform.common/tree/master/bundles/org.eclipse.jdt.doc.isv/porting), named with the version being migrated *to*.
@@ -96,6 +98,7 @@ Tasks that need to be completed before Friday
     Currently handled by @niraj-modi 
     - Create a tracking issue in [eclipse.platform.swt](https://github.com/eclipse-platform/eclipse.platform.swt).
     - The javadoc bash tool needs to be run on SWT sources to make it consistent.
+     <!-- Automate this!-->
 
 ### **Release**: 
 The actual steps to release
@@ -190,27 +193,12 @@ The release is scheduled for 10AM EST. Typically the jobs are scheduled beforeha
 #### **Create new Stream Repos:**
   - Run the [Create New Stream Repos](https://ci.eclipse.org/releng/job/Releng/job/newStreamRepos/) job to make an I-builds repo for the next release.
 
-#### **Create Git Milestones for the next Release:**
+#### **Run preparation for the next Release:**
 
-Milestones are already created by running [`Prepare Next Development Cycle`](https://ci.eclipse.org/releng/job/Releng/job/prepareNextDevCycle/) job.
-Previously they were created in ther own job:
-  - Milestones in git are created by running the create-milestones job in jenkins, usually after RC1 or RC2. Only specific users can access this job for security reasons. If milestones need to be created and have not please contact @sdawley @sravanlakkimsetti or @laeubi to run it.
+Run the [`Prepare Next Development Cycle`](https://ci.eclipse.org/releng/job/Releng/job/prepareNextDevCycle/) job, with suitable arguments
+and check and submit the Pull-Requests created by it in the `eclipse.platform.releng.aggregator` repository and all its submodules.
+<!-- TODO: describe the arguments? -->
 
-#### **Version Updates:**
-  - Running the [`Prepare Next Development Cycle`](https://ci.eclipse.org/releng/job/Releng/job/prepareNextDevCycle/) job will update pom and product versions for the Eclipse repositories and submit pull requests for the changes.  
-  This is still a work in progress so if there are any issues or a repo gets missed you can fall back to the old process below:   
-  If you cloned eclipse.platform.releng.aggregator's submodules you can fix the set version and run [updateProductVersion.sh](scripts/updateProductVersion.sh) to update most of the versions.  
-  Once that's done it's easiest to just grep for the previous release version or stream number to find the remaining instances that need to be updated, then commit the changes in a new branch for each repo.   
-  - **Update version number in mac's Eclipse.app**
-    - In [eclipse-equinox/equinox](https://github.com/eclipse-equinox/equinox) update the versions in the Info.plist for both architectures under `eclipse-equinox/equinox/features/org.eclipse.equinox.executable.feature/bin/cocoa/macosx`
-  - **Update comparator repo and eclipse run repo**
-    - Update the ECLIPSE_RUN_REPO in the [cje-production](cje-production) buildproperties.txt files
-  - **Set Previous Version to RC2** 
-    - RC2 becomes the new baseline for the week before the GA release.
-    - Update previous-release.baseline in [eclipse-platform-parent/pom.xml](eclipse-platform-parent/pom.xml)
-    - Update the last release build versions in [eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/resources/equinoxp2tests.properties](eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/resources/equinoxp2tests.properties)
-    - Update the previousReleaseVersion in [eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/resources/label.properties](eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/resources/label.properties)
-    - Update the name of the copied files in [eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/scripts/getPreviousRelease.sh](eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/scripts/getPreviousRelease.sh)
 **General Cleanup**
   - In [eclipse.platform.common] search for and clear out all of the forceQualifierUpdate.txt files.  
     The context here is that the doc builds only check for changes in this repo and so these files need to be changed to trigger a full rebuild.

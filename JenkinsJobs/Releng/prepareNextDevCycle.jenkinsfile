@@ -124,9 +124,6 @@ pipeline {
 				replaceInFile('production/testScripts/configuration/streamSpecific.properties', [
 					"for ${PREVIOUS_RELEASE_VERSION}.0 builds" : "for ${NEXT_RELEASE_VERSION}.0 builds",
 				])
-				replaceAllInFile('scripts/updateProductVersion.sh', [
-					's/\\d+.\\d+.0/\\d+.\\d+.0/g' : "g|s/${PREVIOUS_RELEASE_VERSION}.0/${NEXT_RELEASE_VERSION}.0/g",
-				])
 				
 				commitAllChangesExcludingSubmodules("Update versions to ${NEXT_RELEASE_VERSION} in build scripts")
 			}
