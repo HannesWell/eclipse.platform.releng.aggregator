@@ -32,7 +32,7 @@ I-builds promote to 'S' until 'R'.
 
   wrappers { //adds pre/post actions
     timestamps()
-    sshAgent('projects-storage.eclipse.org-bot-ssh', 'git.eclipse.org-bot-ssh', 'github-bot-ssh')
+    sshAgent('projects-storage.eclipse.org-bot-ssh', 'github-bot-ssh')
     timeout {
       absolute(60)
     }
@@ -48,6 +48,27 @@ chmod +x makeVisible.sh
 
 ${WORKSPACE}/makeVisible.sh
     ''')
+    conditionalSteps {
+      condition {
+          stringsMatch('${DL_TYPE}', 'R', false)
+      }
+      runner('Fail') //TODO: check?
+      steps {
+        downstreamParameterized {
+          trigger('Releng/modifyP2CompositeRepository') {
+            block {
+              buildStepFailure('FAILURE')
+              failure('FAILURE')
+              unstable('UNSTABLE')
+            }
+            parameters {
+              predefinedProp('repositoryPath', 'eclipse/updates/${STREAM}-I-builds') //TODO: is this exactly the version we want?
+              predefinedProp('add', '$DROP_ID')
+            }
+          }
+        }
+      }
+    }
   }
 
   publishers {

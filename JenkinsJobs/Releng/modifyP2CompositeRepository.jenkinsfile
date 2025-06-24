@@ -1,0 +1,143 @@
+pipeline {
+	options {
+		timestamps()
+		timeout(time: 15, unit: 'MINUTES')
+		disableConcurrentBuilds() // prevent concurrent updates of the same repository
+		skipDefaultCheckout()
+	}
+	//TODO: move parameters to job definition
+	parameters {
+		string(name: 'repositoryPath', defaultValue: 'eclipse/updates/4.37-I-builds', description: "Relative repository path from https://download.eclipse.org/. E.g. 'eclipse/updates/4.37-I-builds'")
+		string(name: 'add', defaultValue: 'I20250616-1800', description: 'Comma separated list of children to add. May be empty')
+		string(name: 'remove', description: 'Comma separated list of children to remove. May be empty')
+		string(name: 'sizeLimit', defaultValue: '3', description: 'The maximum number of childrem of the modified composite. If the')
+	}
+	agent {
+		label 'ubuntu-2404'
+	}
+	tools {
+		jdk 'temurin-jdk21-latest'
+		//TODO: try to use a Tycho eclipse-run task! and just use the releng-aggr parent as file and only run the eclipserun goal.
+		// This would also solve the question how to get the eclipse platform product
+	}
+	environment {
+		//TODO: use latest release automatically? How to determine the version?
+		ECLIPSE_EXE = installLatestReleasedEclipsePlatformProduct()
+		ANT_TASK_NAME = 'modifyComposite'
+	}
+	stages {
+		stage('Check Composites Validity') {
+			steps {
+				sh '''
+					repository="https://download.eclipse.org/${repositoryPath}"
+					echo "Validate consistency of content at: ${repository}"
+					${ECLIPSE_EXE} -nosplash -consolelog --launcher.suppressErrors -application org.eclipse.equinox.p2.director -repository "${repository}" -list
+				'''
+			}
+		}
+		stage('Update composite repository') {
+			steps {
+				checkout scmGit(userRemoteConfigs: [[url: 'https://github.com/eclipse-platform/eclipse.platform.releng.aggregator.git']],
+					branches: [[name: 'refs/heads/master']], extensions: [
+						sparseCheckout([[path: 'eclipse-platform-parent/pom.xml']]),
+						cloneOption(depth: 1, honorRefspec: true, noTags: true, shallow: true)
+					])
+				script {
+					def toAdd = parseList(params.add, ',')
+					def toRemove = parseList(params.remove, ',')
+					if (params.sizeLimit) {
+						def sizeLimit = Integer.parseInt(params.sizeLimit)
+						//TODO: copy this via SSH to avoid caching issues.
+						sh "curl -o compositeArtifacts.jar https://download.eclipse.org/${REPOSITORY_PATH}/compositeArtifacts.jar"
+						def compositeChildren = parseList(sh(script: '''
+							unzip -p compositeArtifacts.jar compositeArtifacts.xml |\
+								xmllint - --xpath '/repository/children/child/@location'
+							''', returnStdout: true), '\\s')
+							.collect{c -> c.startsWith('location="') && v.endsWith('"') ? c.substring(10, v.length() - 1) : c}
+						
+						toAdd.unique()
+						toRemove.unique()
+						toRemove = toRemove.findAll{e -> compositeChildren.contains(e)}
+						def removals = compositeChildren.size() + toAdd.size() - toRemove.size() - sizeLimit
+						if (removals > 0) {
+							// TODO: add check if repo becomes empty! or add automatism to add other children instead?
+							if (removals > compositeChildren.size()) {
+								//TODO: this can atually not happen. Filter out removals that are not im composite.
+								error('More children to be removed than available.')
+							}
+							toRemove += compositeChildren.subList(0, removals)
+						}
+					}
+					//TODO: clean-up the script to remove unncessary checks and leverage capabilities for local execution
+					def modifyComposite_xml = """\
+					<?xml version="1.0" encoding="UTF-8"?>
+					<project default="${ANT_TASK_NAME}" basedir=".">
+						<target name="${ANT_TASK_NAME}">
+							<p2.composite.repository>
+								<sourcelocation="https://download.eclipse.org/${repositoryPath}" />
+								<repository location="./output-repository" />
+					""".stripIndent() //FIXME: check if the local path works as desired
+					for (child in toAdd) {
+						modifyComposite_xml += """<add><repository location="${child}"/></add>
+						""".trimIndentation() //TODO: check indentation
+					}
+					for (child in toRemove) {
+						modifyComposite_xml += """<remove><repository location="${child}"/></remove>
+						""".trimIndentation() //TODO: check indentation
+					}
+					modifyComposite_xml+= '''\
+							</p2.composite.repository>
+						</target>
+					</project>
+					'''.stripIndent()
+					writeFile(file: "${ANT_TASK_NAME}.xml", text: modifyComposite_xml)
+					sh '''
+						${ECLIPSE_EXE} -nosplash -consolelog --launcher.suppressErrors -debug -data ./eclipse-ws \
+							-application org.eclipse.ant.core.antRunner -file "${ANT_TASK_NAME}.xml" "${ANT_TASK_NAME}"
+					'''
+					sshagent(['projects-storage.eclipse.org-bot-ssh']) {
+						sh '''
+							epDownloadsDir='/home/data/httpd/download.eclipse.org'
+							echo -r 'output-repository' "genie.releng@projects-storage.eclipse.org:${epDownloadsDir}/${repositoryPath}"
+							#TODO: activate copying
+							#scp -r 'output-repository' "genie.releng@projects-storage.eclipse.org:${epDownloadsDir}/${repositoryPath}"
+						'''
+					}
+				}
+			}
+		}
+	}
+	post {
+		always {
+			archiveArtifacts allowEmptyArchive: true, artifacts: '\
+				**/*,\
+				'
+		}
+	}
+}
+
+@NonCPS
+def parseList(String str, String delimiterPattern) {
+	return str !=null && !str.trim().isEmpty() ? str.split(delimiterPattern).collect{c -> c.trim()} : []
+}
+
+def installLatestReleasedEclipsePlatformProduct() {
+	sh '''#!/bin/sh -xe
+		curl -o buildproperties.txt https://download.eclipse.org/eclipse/relengScripts/cje-production/buildproperties.txt
+	'''
+	def eclipseURL = sh(script: '''#!/bin/sh +xe
+		source buildproperties.txt
+		#TODO: Remove this after the next release!
+		PREVIOUS_RELEASE_ID="I20250629-1800"
+		PREVIOUS_RELEASE_VER="I20250629-1800"
+		echo "https://download.eclipse.org/eclipse/downloads/drops4/${PREVIOUS_RELEASE_ID}/eclipse-platform-${PREVIOUS_RELEASE_VER}-linux-gtk-x86_64.tar.gz"
+	''', returnStdout: true)
+	return install('eclipse-platform', eclipseURL) + '/eclipse'
+}
+
+def install(String toolType, String url) {
+	dir("${WORKSPACE}/target/tools/${toolType}") {
+		sh "curl -L ${url} | tar -xzf -"
+		return "${pwd()}/" + sh(script: 'ls', returnStdout: true).trim()
+	}
+}

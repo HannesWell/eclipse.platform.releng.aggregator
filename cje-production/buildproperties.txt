@@ -38,11 +38,13 @@ LOCAL_REPO="localMavenRepo"
 BASEBUILDER_TAG="4.36"
 API_PREV_REF_LABEL="4.36"
 
+#TODO: change this to M1 and check all users?!
 PREVIOUS_RELEASE_VER="4.36"
 PREVIOUS_RELEASE_REPO_ID="4.36"
 #build id for getting repo
 BASEBUILD_ID="R-4.36-202505281830"
 #release id for downloading eclipse
+#TODO: change this to M1?
 PREVIOUS_RELEASE_ID="R-4.36-202505281830"
 
 BUILDTOOLS_REPO="https://download.eclipse.org/eclipse/updates/buildtools/snapshots"
