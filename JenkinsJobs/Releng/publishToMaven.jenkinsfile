@@ -173,8 +173,8 @@ pipeline {
 										--header "Authorization: Bearer $(printf "${username}:${password}" | base64)" \
 										--header 'accept: text/plain' \
 										--header 'Content-Type: multipart/form-data' \
-										--form "bundle=@${zipFileName};type=application/octet-stream" \
-										"https://central.sonatype.com/api/v1/publisher/upload?publishingType=USER_MANAGED&name=Eclipse-${PROJECT}%${simRel}"
+										--form "bundle=@${zipFileName}" \
+										"https://central.sonatype.com/api/v1/publisher/upload"
 								fi
 								'''
 							}
