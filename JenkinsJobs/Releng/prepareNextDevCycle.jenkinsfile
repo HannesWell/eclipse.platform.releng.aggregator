@@ -164,6 +164,14 @@ pipeline {
 				commitAllChangesExcludingSubmodules("Move previous version to ${PREVIOUS_RELEASE_CANDIDATE_TAG} in build scripts")
 			}
 		}
+		stage('Apply project specific updates') {
+			steps {
+				sh '''
+					export updateScript='prepareNextDevCycle.sh'
+					git submodule foreach 'if [ -f ${updateScript} ]; then chmod +x ./${updateScript} && ./${updateScript}; fi'
+				'''
+			}
+		}
 		stage('Validate and list changes') {
 			steps {
 				sh '''
