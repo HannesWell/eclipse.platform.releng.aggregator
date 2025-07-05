@@ -32,8 +32,6 @@ pipeline {
 			}
 			steps {
 				script {
-					//TODO: test this with the empty template repository
-					//TODO: copy this via SSH to avoid caching issues.
 					sh "curl -o compositeArtifacts.jar https://download.eclipse.org/${repositoryPath}/compositeArtifacts.jar"
 					def childenXPathSet = sh(script: '''#!/bin/sh +xe
 						unzip -p compositeArtifacts.jar compositeArtifacts.xml |\
@@ -90,7 +88,6 @@ pipeline {
 						sh '''
 							epDownloadsDir='/home/data/httpd/download.eclipse.org'
 							echo -r "${OUTPUT_PATH}" "genie.releng@projects-storage.eclipse.org:${epDownloadsDir}/${repositoryPath}"
-							#TODO: activate copying
 							#scp -r "${OUTPUT_PATH}" "genie.releng@projects-storage.eclipse.org:${epDownloadsDir}/${repositoryPath}"
 						'''
 					}
