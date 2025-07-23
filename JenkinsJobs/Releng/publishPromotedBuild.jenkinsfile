@@ -60,7 +60,7 @@ pipeline {
 				sshagent(['projects-storage.eclipse.org-bot-ssh']) {
 					sh '''#!/bin/bash -xe
 						# Build machine locations (would very seldom change)
-						DOWNLOAD_ROOT=${DOWNLOAD_ROOT:-/home/data/httpd/download.eclipse.org}
+						DOWNLOAD_ROOT=${DOWNLOAD_ROOT:-/home/data/httpd/download.eclipse.org/eclipse/try-outs}
 						ARCHIVE_ROOT=${ARCHIVE_ROOT:-/home/data/httpd/archive.eclipse.org} 
 						ROOT_LOCATIONS=("${DOWNLOAD_ROOT}")
 						if [[ "${RELEASE_TYPE}" == 'R' ]]; then
@@ -84,21 +84,25 @@ pipeline {
 			}
 			steps {
 				build job: 'Releng/modifyP2CompositeRepository', wait: true, propagate: true, parameters: [
-					string(name: 'repositoryPath', value: "eclipse/updates/${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"),
+					string(name: 'repositoryPath', value: "eclipse/try-outs/eclipse/updates/${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"),
 					string(name: 'add', value: "${RELEASE_BUILD_ID}")
 				]
 				// Update generic composite repositories for latest release (clearing all previous children)
 				// Note: The stream number is not in the 'name', because once a 'name' is defined in Eclipse's UI, it does not change.
 				build job: 'Releng/modifyP2CompositeRepository', wait: true, propagate: true, parameters: [
-					string(name: 'repositoryPath', value: "eclipse/updates/latest"),
+					string(name: 'repositoryPath', value: "eclipse/try-outs/eclipse/updates/latest"),
 					string(name: 'repositoryName', value: "Eclipse latest release"),
 					string(name: 'sizeLimit', value: '1'), // Clear all previous children
-					string(name: 'add', value: "https://download.eclipse.org/eclipse/updates/${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}/"),
+					string(name: 'add', value: "https://download.eclipse.org/eclipse/try-outs/eclipse/updates/${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}/"),
 				]
 			}
 		}
 		stage('Send announcement mail') {
 			steps {
+				echo "Causes1: ${currentBuild.getBuildCauses()}"
+				//echo "Causes: ${currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')[0].getUpstreamCauses()}"
+				echo "Causes2: ${currentBuild.getBuildCauses('org.jenkinsci.plugins.workflow.support.steps.build.BuildUpstreamCause')}"
+				echo "Causes3: ${currentBuild.getBuildCauses('hudson.model.Cause.UpstreamCause')}"
 				emailext subject: "Eclipse and Equinox ${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR} (${TRAIN_NAME}) ${CHECKPOINT} is available",
 					body: ("""\
 					Hello everyone,
@@ -126,7 +130,7 @@ pipeline {
 					
 					The Eclipse contributors
 					""").stripIndent(), mimeType: 'text/plain', from:'genie.releng@eclipse.org',
-					to: "platform-releng-dev@eclipse.org eclipse-dev@eclipse.org platform-dev@eclipse.org equinox-dev@eclipse.org jdt-dev@eclipse.org pde-dev@eclipse.org"
+					to: "hanneswellmann@gmx.de wellmann.hannes1@gmx.net"
 			}
 		}
 	}
