@@ -42,7 +42,7 @@ pipeline {
 					assignEnvVariable('REPO_ID', "I${idMatcher.group('date')}-${idMatcher.group('time')}")
 					idMatcher = null // release matcher as it's not serializable
 					
-					sh 'curl -o buildproperties.shsource --fail https://download.eclipse.org/eclipse/downloads/drops4/${DROP_ID}/buildproperties.shsource'
+					sh 'curl -o buildproperties.shsource --fail https://download.eclipse.org/eclipse/try-outs/eclipse/downloads/drops4/${DROP_ID}/buildproperties.shsource'
 					def STREAM = sh(returnStdout: true, script: 'source ./buildproperties.shsource && echo ${STREAM}').trim()
 					def versionMatcher = STREAM =~ /(?<major>\d+)\.(?<minor>\d+).(?<service>\d+)/
 					if (!versionMatcher.matches()) {
@@ -78,10 +78,12 @@ pipeline {
 					}
 					assignEnvVariable('SIGNOFF_BUG_LABEL', env.SIGNOFF_BUG.replace('https://github.com/','').replace('/issues/','#'))
 					
-					sshagent(['projects-storage.eclipse.org-bot-ssh']) {
-						sh '''
-							ssh genie.releng@projects-storage.eclipse.org "rm -rf ${EP_ROOT}/eclipse/try-outs/"
-						'''
+//					sshagent(['projects-storage.eclipse.org-bot-ssh']) {
+//						sh """
+//							ssh genie.releng@projects-storage.eclipse.org "rm -rf ${EP_ROOT}/eclipse/try-outs/eclipse/downloads/drops4/${DL_DROP_ID}"
+//							ssh genie.releng@projects-storage.eclipse.org "rm -rf ${EP_ROOT}/eclipse/try-outs/equinox/drops/${DL_DROP_ID}"
+//							ssh genie.releng@projects-storage.eclipse.org "rm -rf ${EP_ROOT}/eclipse/try-outs/eclipse/updates/${BUILD_MAJOR}.${BUILD_MINOR}/${DL_DROP_ID}"
+//						"""
 //						dir("${WORKSPACE}/archive") {
 //							sh '''
 //								scp genie.releng@projects-storage.eclipse.org:${EP_ROOT}/eclipse/downloads/drops4/R-4.36-202505281830/buildproperties.php R-4.36-buildproperties.php
@@ -89,7 +91,7 @@ pipeline {
 //								scp genie.releng@projects-storage.eclipse.org:${EP_ROOT}/eclipse/downloads/drops4/I20250820-1800/buildproperties.php I20250814-1800-buildproperties.php
 //							'''
 //						}
-					}
+//					}
 				}
 			}
 		}
@@ -235,7 +237,7 @@ pipeline {
 }
 
 def renameBuildDrop(String baseDropPath, String oldDropID, String oldBuildLabel, String newDropID, String newBuildLabel, Closure extraTasks=null) {
-	def sourcePath="${EP_ROOT}/${baseDropPath}/${oldDropID}"
+	def sourcePath="${EP_ROOT}/eclipse/try-outs/${baseDropPath}/${oldDropID}"
 	def targetPath="${EP_ROOT}/eclipse/try-outs/${baseDropPath}/${newDropID}"
 	
 	sh """#!/bin/bash -xe
