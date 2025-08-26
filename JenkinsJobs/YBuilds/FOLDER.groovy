@@ -9,21 +9,18 @@ for (STREAM in config.Streams){
 	def BRANCH = config.Branches[STREAM]
 
 	pipelineJob('YPBuilds/Y-build-' + STREAM){
+		//TODO: disable job initially if it doesn't exist before?
 		description('Daily Maintenance Builds.')
 		properties {
 			pipelineTriggers {
 				triggers {
 					cron {
 						spec('''TZ=America/Toronto
-# format: Minute Hour Day Month Day of the week (0-7)
-
-#Daily Y-build
-0 10 * * *
-#milestone week
-#0 6 * * 2
-#0 6 * * 4
-#
-#0 2 21 7 4
+# format: Minute Hour Day Month Day-of-week (1-7)
+# Normal Schedule: 10 AM every second day
+0 10 * * 2,4,6
+# RC Schedule: 10 AM every day
+0 10 15-29 8 *
 ''')
 					}
 				}

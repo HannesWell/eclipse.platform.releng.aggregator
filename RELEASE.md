@@ -5,7 +5,6 @@
 ## Milestone and RC Releases
 
 ### Friday before release week:
- * Update [I-builds job definition](JenkinsJobs/Builds/FOLDER.groovy) to build on the milestone schedule (Twice daily at 06:00 EST and 18:00 EST except Thursday).
  * Create or update prerequisite issues for tracking ECF, EMF and Orbit
  * Send reminder email for upcoming RC week to platform-releng-dev@eclipse.org, platform-dev@eclipse.org, eclipse-dev@eclipse.org and equinox-dev@eclipse.org
    * [Example from 4.30 RC1](https://www.eclipse.org/lists/platform-dev/msg03924.html) but the usual schedule:
@@ -49,9 +48,7 @@
            4. Update the Location property to the "Specific repository for building against" in the mailtemplate.txt from promotion.
            5. Commit Simrel updates to Gerrit
               - Message should use year-month format, i.e "Simrel updates for Eclipse and Equinox for 2022-06 M1"
-       * For **Milestone builds** return the I-builds to the normal schedule.
      * **After RC1**
-       * Leave the I-builds running on the milestone schedule for RC2. 
        * Comment on EMF, ECF and Orbit issues to ask for final release builds.
      * **After RC2**
        * (optional) Disable the automatic [nightly cleanup](https://ci.eclipse.org/releng/job/Cleanup/job/dailyCleanOldBuilds/) of I-builds

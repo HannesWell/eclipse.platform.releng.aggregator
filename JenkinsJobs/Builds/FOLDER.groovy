@@ -8,24 +8,20 @@ for (STREAM in config.Streams){
 	def BRANCH = config.Branches[STREAM]
 
 	pipelineJob('Builds/I-build-' + STREAM){
+		//TODO: disable job initially if it doesn't exist before?
 		description('Daily Eclipse Integration builds.')
 		properties {
 			pipelineTriggers {
 				triggers {
 					cron {
 						spec('''TZ=America/Toronto
-# format: Minute Hour Day Month Day of the week (0-7)
-
+# format: Minute Hour Day Month Day-of-week (1-7)
 # - - - Integration Eclipse SDK builds - - - 
-# 2025-09 Release Schedule
-# Normal : 6 PM every day (11/6 - 27/8)
+# Normal Schedule: 6 PM every day
 0 18 * * *
 
-
-# RC Schedule 
-# Post M3, no nightlies, I-builds only. (Be sure to "turn off" for tests and sign off days)
-0 6 15-27 8 5-7,1-3
-0 18 15-27 8 5-7,1-3
+# RC Schedule: Additional build at 6 AM every day
+0 6 15-29 8 *
 ''')
 					}
 				}
