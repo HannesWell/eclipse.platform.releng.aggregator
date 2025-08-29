@@ -47,10 +47,9 @@ pipeline {
 					// E.g. next to: https://github.com/eclipse-simrel/.github/blob/main/wiki/SimRel/2025-09.md
 					def m1Date = parseDate(readParameter('M1_DATE'))
 					def m2Date = parseDate(readParameter('M2_DATE'))
-					//TODO: do we still need this?
 					def m3Date = parseDate(readParameter('M3_DATE'))
 					def rc1Date = parseDate(readParameter('RC1_DATE'))
-					rc2Date = parseDate(readParameter('RC2_DATE'))
+					def rc2Date = parseDate(readParameter('RC2_DATE'))
 					def gaDate = parseDate(readParameter('GA_DATE'))
 					if (!(m1Date < m2Date && m2Date < m3Date && m3Date < rc1Date && rc1Date < rc2Date && rc2Date < gaDate)) {
 						error "Dates are not in strictly ascending order: ${M1_DATE}, ${M2_DATE}, ${M3_DATE}, ${RC1_DATE}, ${RC2_DATE}, ${GA_DATE}"
@@ -59,6 +58,22 @@ pipeline {
 					assignEnvVariable('NEXT_RELEASE_MONTH', String.format("%02d", gaDate.monthValue))
 					assignEnvVariable('NEXT_RELEASE_NAME', "${NEXT_RELEASE_YEAR}-${NEXT_RELEASE_MONTH}")
 					assignEnvVariable('MAINTENANCE_BRANCH', "R${PREVIOUS_RELEASE_VERSION_MAJOR}_${PREVIOUS_RELEASE_VERSION_MINOR}_maintenance")
+					
+					// Compute new build schedule
+					def now = java.time.LocalDate.now()
+					def rcEnd = rc2Date.minusDays(2) // Wednesday before RC2 is the last planned I-build and the cron-triggers should stop after
+					// if (rcEnd < now || now.until(rcEnd).toTotalMonths() > 10) {
+					// 	// This enire logic is based on the assumption that the rc-end is (clearly) less then a year ahead (and not in the past).
+					// 	// Fail to make callers aware that this part has to be reworked, in case the release schedule changes that much.
+					// 	error "RC end is in the past or almost a year (or more) ahead."
+					// }
+					def lastCompleteMonth = rcEnd.monthValue - 1
+					// Consider end-of-year overflows
+					def completeMonths = (now.monthValue < lastCompleteMonth) ? "${now.monthValue}-${lastCompleteMonth}" : "${now.monthValue}-12,1-${lastCompleteMonth}"
+					assignEnvVariable('I_BUILD_SCHEDULE', """\
+						0 18 * ${completeMonths} *
+						0 18 1-${rcEnd.dayOfMonth} ${rcEnd.monthValue} *
+					""".stripIndent().trim())
 				}
 			}
 		}
@@ -140,27 +155,9 @@ pipeline {
 				replaceInFile('JenkinsJobs/JobDSL.json', [
 					/"${PREVIOUS_RELEASE_VERSION}"/ : /"${NEXT_RELEASE_VERSION}"/,
 				])
-				script {
-					def now = java.time.LocalDate.now()
-					def rcEnd = rc2Date.minusDays(2) // Wednesday before RC2 is the last planned I-build
-					// if (rcEnd < now || now.until(rcEnd).toTotalMonths() > 10) {
-					// 	// This enire logic is based on the assumption that the rc-end is (clearly) less then a year ahead (and not in the past).
-					// 	// Fail to make callers aware that this part has to be reworked, in case the release schedule changes that much.
-					// 	error "RC end is in the past or almost a year (or more) ahead."
-					// }
-					def completeMonthsStart = now.monthValue
-					def completeMonthsEnd = rcEnd.monthValue - 1
-					// Consider end-of-year overflows
-					def completeMonths = (completeMonthsStart < completeMonthsEnd) ? "${completeMonthsStart}-${completeMonthsEnd}" : "${completeMonthsStart}-12,1-${completeMonthsEnd}"
-					def rcSchedule = """\
-						0 18 * ${completeMonths} *
-						0 18 1-${rcEnd.dayOfMonth} ${rcEnd.monthValue} *
-					""".stripIndent().trim()
-					echo "RC schedule:\n${rcSchedule}"
-					replaceAllInFile('JenkinsJobs/Builds/FOLDER.groovy', [
-						"(?<prefix># Schedule:.*\\R)(?s).*(?<suffix>\\R'''\\))" : '${prefix}'+rcSchedule+'${suffix}',
-					])
-				}
+				replaceAllInFile('JenkinsJobs/Builds/FOLDER.groovy', [
+					"(?<prefix># Schedule:.*\\R)(?s).*(?<suffix>\\R'''\\))" : "\${prefix}${I_BUILD_SCHEDULE}\${suffix}",
+				])
 				
 				commitAllChangesExcludingSubmodules("Update versions to ${NEXT_RELEASE_VERSION} in build scripts")
 			}
@@ -433,8 +430,6 @@ pipeline {
 
 @groovy.transform.Field
 def githubAPI = null
-@groovy.transform.Field
-def rc2Date = null
 
 // --- utility methods
 
