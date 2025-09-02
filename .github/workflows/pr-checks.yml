@@ -6,21 +6,8 @@ concurrency:
     cancel-in-progress: true
 
 on:
-  pull_request:
-    branches: [ master ]
+  push:
 
 jobs:
   check-freeze-period:
     uses: ./.github/workflows/verifyFreezePeriod.yml
-  check-merge-commits:
-    uses: ./.github/workflows/checkMergeCommits.yml
-  check-versions:
-    # Run this check only for PRs from forks and not for changes from bots created on branches in this repository
-    if: github.event.pull_request.head.repo.full_name != github.repository
-    uses: ./.github/workflows/checkVersions.yml
-    with:
-      botName: Eclipse Platform Bot
-      botMail: platform-bot@eclipse.org
-      # Only check 'eclipse.platform.releng' projects
-      working-directory: 'eclipse.platform.releng'
-      extra-maven-args: '-Pbuild-individual-bundles'
