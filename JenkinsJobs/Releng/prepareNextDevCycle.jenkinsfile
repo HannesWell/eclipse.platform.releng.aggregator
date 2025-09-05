@@ -360,9 +360,6 @@ pipeline {
 			}
 		}
 		stage('Create preparation Pull-Requests') {
-			environment {
-				GITHUB_BOT_TOKEN = credentials('github-bot-token')
-			}
 			steps {
 				script {
 					def prHeadline = "Prepare ${NEXT_RELEASE_VERSION} development"
@@ -408,9 +405,6 @@ pipeline {
 			}
 		}
 		stage('Create Github milestones') {
-			environment {
-				GITHUB_BOT_TOKEN = credentials('github-bot-token')
-			}
 			steps {
 				script {
 					def organisations = [ 'eclipse-platform', 'eclipse-jdt', 'eclipse-pde', 'eclipse-equinox' ]
@@ -426,6 +420,7 @@ pipeline {
 								echo "Skipping .eclipsefdn repository of : ${organisation}"
 								continue
 							}
+							//TODO: bulk milestone creation?!
 							githubAPI.createMilestone(organisation, repository, "${NEXT_RELEASE_VERSION} M1",  "${NEXT_RELEASE_VERSION} Milestone 1",         "${M1_DATE}")
 							githubAPI.createMilestone(organisation, repository, "${NEXT_RELEASE_VERSION} M2",  "${NEXT_RELEASE_VERSION} Milestone 2",         "${M2_DATE}")
 							githubAPI.createMilestone(organisation, repository, "${NEXT_RELEASE_VERSION} M3",  "${NEXT_RELEASE_VERSION} Milestone 3",         "${M3_DATE}")

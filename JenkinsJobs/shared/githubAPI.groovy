@@ -68,14 +68,14 @@ def queryGithubAPI(String method, String endpoint, Map<String, Object> queryPara
 		def params = writeJSON(json: queryParameters, returnText: true)
 		query += "-d '" + params + "'"
 	}
-	if (IS_DRY_RUN && !method.isEmpty()) {
-		if (!env.GITHUB_BOT_TOKEN) {
-			error 'Required GITHUB_BOT_TOKEN not set'
+	def response = null
+	withCredentials([string(credentialsId: 'github-bot-token', variable: 'GITHUB_BOT_TOKEN')]) {
+		if (IS_DRY_RUN && !method.isEmpty()) {
+			echo "Query (not send): ${query}"
+			return null
 		}
-		echo "Query (not send): ${query}"
-		return null
+		response = sh(script: query, returnStdout: true)
 	}
-	def response = sh(script: query, returnStdout: true)
 	if (response == null || response.isEmpty()) {
 		if (allowEmptyReponse) {
 			return null
