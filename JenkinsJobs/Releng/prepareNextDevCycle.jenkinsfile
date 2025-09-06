@@ -100,14 +100,11 @@ pipeline {
 			}
 		}
 		stage('Update Maven Version') {
-			environment {
-				MAVEN_ARGS = '-U -B -ntp'
-			}
 			steps {
 				sh '''
 					mvn org.eclipse.tycho:tycho-versions-plugin:set-version \
 						-DnewVersion=${NEXT_RELEASE_VERSION}.0-SNAPSHOT
-					mvn -f eclipse-platform-parent/pom.xml --non-recursive org.eclipse.tycho:tycho-versions-plugin:set-property \
+					mvn -f eclipse-platform-parent/pom.xml org.eclipse.tycho:tycho-versions-plugin:set-property \
 						-Dproperties=releaseVersion,releaseYear,releaseMonth \
 						-DnewReleaseVersion=${NEXT_RELEASE_VERSION} \
 						-DnewReleaseYear=${NEXT_RELEASE_YEAR} \
@@ -155,13 +152,13 @@ pipeline {
 					"(?<prefix># Schedule:.*\\R)(?s).*(?<suffix>\\R'''\\))" : "\${prefix}${I_BUILD_SCHEDULE}\${suffix}",
 				])
 				
-				utilities.commitAllChangesExcludingSubmodules("Update versions to ${NEXT_RELEASE_VERSION} in build scripts")
+				commitAllChangesExcludingSubmodules("Update versions to ${NEXT_RELEASE_VERSION} in build scripts")
 			}
 		}
 		stage('Move previous version to current RC') {
 			steps {
 				sh '''
-					mvn -f eclipse-platform-parent/pom.xml --non-recursive org.eclipse.tycho:tycho-versions-plugin:set-property \
+					mvn -f eclipse-platform-parent/pom.xml org.eclipse.tycho:tycho-versions-plugin:set-property \
 						-Dproperties=previous-release.baseline \
 						"-DnewPrevious-release.baseline=https://download.eclipse.org/eclipse/updates/${PREVIOUS_RELEASE_VERSION}-I-builds/${PREVIOUS_RELEASE_CANDIDATE_I_BUILD}/"
 				'''
@@ -183,7 +180,8 @@ pipeline {
 					'previousReleaseVersion=.*' : "previousReleaseVersion=${PREVIOUS_RELEASE_CANDIDATE_TAG}",
 					'previousReleaseVersionRepo=.*' : "previousReleaseVersionRepo=${PREVIOUS_RELEASE_VERSION}-I-builds",
 				])
-				utilities.commitAllChangesExcludingSubmodules("Move previous version to ${PREVIOUS_RELEASE_CANDIDATE_TAG} in build scripts")
+				
+				commitAllChangesExcludingSubmodules("Move previous version to ${PREVIOUS_RELEASE_CANDIDATE_TAG} in build scripts")
 			}
 		}
 		stage('Clear Qualifier-update files') {
@@ -243,7 +241,7 @@ pipeline {
 				])
 				sh "mv cje-production/streams/repositories_master.txt cje-production/streams/repositories_${MAINTENANCE_BRANCH}.txt"
 				
-				utilities.commitAllChangesExcludingSubmodules("Move ${PREVIOUS_RELEASE_VERSION}-I builds to ${MAINTENANCE_BRANCH} branch")
+				commitAllChangesExcludingSubmodules("Move ${PREVIOUS_RELEASE_VERSION}-I builds to ${MAINTENANCE_BRANCH} branch")
 				
 				// Switch back to master for subsequent parts of this pipeline
 				sh 'git checkout master'
@@ -474,4 +472,8 @@ def replaceInFile(String filePath, Map<String,String> replacements) {
 
 def replaceAllInFile(String filePath, Map<String,String> replacements) {
 	utilities.replaceAllInFile(filePath, replacements)
+}
+
+def commitAllChangesExcludingSubmodules(String commitMessage) {
+	utilities.commitAllChangesExcludingSubmodules(commitMessage)
 }
