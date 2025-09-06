@@ -28,6 +28,7 @@ pipeline {
 					assignEnvVariable('NEXT_RELEASE_VERSION_MINOR', nextVersionMatcher.group('minor'))
 					nextVersionMatcher = null // release matcher as it's not serializable
 					
+					// For testing you can use any stable build like milestones (and at the time before M1 one can push an M0 tag to one's fork).
 					env.PREVIOUS_RELEASE_CANDIDATE_ID = readParameter('PREVIOUS_RELEASE_CANDIDATE_ID')
 					def previousIdMatcher = env.PREVIOUS_RELEASE_CANDIDATE_ID =~ /(?<type>[SR])-(?<major>\d+)\.(?<minor>\d+)(\.(?<service>\d+))?(?<checkpoint>(M|RC)\d+[a-z]?)?-(?<date>\d{8})(?<time>\d{4})/
 					if (!previousIdMatcher.matches()) {
@@ -97,6 +98,13 @@ pipeline {
 					export -f createBranches
 					git submodule foreach 'createBranches'
 				'''
+				script {
+					def organisations = [ 'eclipse-platform', 'eclipse-jdt', 'eclipse-pde', 'eclipse-equinox' ]
+					for (organisation in organisations) {
+						def repositories = githubAPI.listReposOfOrganization(organisation)
+						echo "${organisation} repositories: ${repositories.name}"
+					}
+				}
 			}
 		}
 		stage('Update Maven Version') {
