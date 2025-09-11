@@ -1,9 +1,9 @@
 pipeline {
 	options {
+		skipDefaultCheckout()
 		timestamps()
 		timeout(time: 15, unit: 'MINUTES')
 		buildDiscarder(logRotator(numToKeepStr:'5'))
-		skipDefaultCheckout()
 	}
 	agent {
 		label 'basic'
@@ -27,7 +27,7 @@ pipeline {
 									cd ${EP_EQUINOX_DROPS}
 									buildTypes=(I Y)
 									for prefix in "${buildTypes[@]}"; do
-										builds=$( ls --format=single-column -d $prefix* | sort | head -n-3 )
+										builds=$( find . -maxdepth 1 -type d -name $prefix* | sort | head -n-3 )
 										if [ -n "$builds" ]; then
 											for f in $builds; do
 												echo "__rm -rf $f"
@@ -52,7 +52,7 @@ pipeline {
 									.trim().split('\\s+').sort()
 								echo "Old I-Builds: ${oldIBuilds}"
 								def allIBuilds = sh(script: "\$SSH find ${EP_ECLIPSE_DROPS} -maxdepth 1 -type d -name '${buildType}*'", returnStdout: true)
-									.trim().split('\\s+').sort().reversed()
+									.trim().split('\\s+').toList().sort().reversed()
 								def toRetain = allIBuilds.subList(0, Math.min(allIBuilds.size(), 4)).toSet() // Retain at least the four most recent builds
 								echo "Minimally retained I-Builds: ${toRetain}"
 								def Set<Integer> retainedWeeks = []
@@ -76,8 +76,8 @@ pipeline {
 								}
 							}
 						}
+						build job: 'Releng/updateIndex', wait: false
 					}
-					build job: 'Releng/updateIndex', wait: false
 				}
 			}
 		}

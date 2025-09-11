@@ -1,9 +1,9 @@
 pipeline {
 	options {
+		skipDefaultCheckout()
 		timestamps()
 		timeout(time: 30, unit: 'MINUTES')
 		buildDiscarder(logRotator(numToKeepStr:'5'))
-		skipDefaultCheckout()
 	}
 	agent {
 		label 'basic'
@@ -62,9 +62,7 @@ pipeline {
 						if (!latestReleaseMatcher.matches()) {
 							error "releaseID: ${latestRelease}, does not match the expected pattern."
 						}
-						def latestReleaseMajor = latestReleaseMatcher.group('major')
-						def latestReleaseMinor = latestReleaseMatcher.group('minor')
-						env.RELEASE_TO_CLEAN = "${latestReleaseMajor}.${latestReleaseMinor}"
+						env.RELEASE_TO_CLEAN = "${latestReleaseMatcher.group('major')}.${latestReleaseMatcher.group('minor')}"
 						env.RELEASE_BUILD_DATE = latestReleaseMatcher.group('date').toInteger()
 						latestReleaseMatcher = null
 						
