@@ -27,6 +27,7 @@ pipeline {
 									cd ${EP_EQUINOX_DROPS}
 									buildTypes=(I Y)
 									for prefix in "${buildTypes[@]}"; do
+										find . -maxdepth 1 -type d -name $prefix*
 										builds=$( find . -maxdepth 1 -type d -name $prefix* | sort | head -n-3 )
 										if [ -n "$builds" ]; then
 											for f in $builds; do
