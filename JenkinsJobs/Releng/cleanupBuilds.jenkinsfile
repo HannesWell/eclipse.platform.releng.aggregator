@@ -30,7 +30,7 @@ pipeline {
 										builds=$( ls --format=single-column -d $prefix* | sort | head -n-3 )
 										if [ -n "$builds" ]; then
 											for f in $builds; do
-												rm -rf $f
+												echo "__rm -rf $f"
 											done
 										else
 											echo 'Nothing to clean.'
@@ -72,7 +72,7 @@ pipeline {
 											echo "Ignore unstable build ${oldIBuild} to be retained for week ${weekOfYear}"
 										}
 									}
-									sh "\$SSH rm -rf ${EP_ECLIPSE_DROPS}/${oldIBuild}"
+									sh "\$SSH  echo '__rm -rf ${EP_ECLIPSE_DROPS}/${oldIBuild}'"
 								}
 							}
 						}
