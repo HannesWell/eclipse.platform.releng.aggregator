@@ -43,7 +43,7 @@ pipeline {
 								def builds = utilities.listSubDirectoriesOnRemote("${EP_EQUINOX_DROPS}", "-name '${buildType}*'") // sorted in ascending order
 								if (env.EQUINOX_RETENTION_COUNT.toInteger() < builds.size()) {
 									for (buildDir in builds.subList(0, builds.size() - env.EQUINOX_RETENTION_COUNT.toInteger())) {
-										sh "$SSH rm -rf ${EP_EQUINOX_DROPS}/${buildDir}"
+										sh "$SSH echo '__rm -rf ${EP_EQUINOX_DROPS}/${buildDir}'"
 									}
 								} else {
 									echo 'Nothing to clean.'
@@ -118,7 +118,7 @@ def cleanUpBuildDropsOfCurrentStream(String buildType) {
 				echo "Ignore unstable build ${oldBuild} to be retained for week ${weekOfYear}"
 			}
 		}
-		sh "$SSH rm -rf ${EP_ECLIPSE_DROPS}/${oldBuild}"
+		sh "$SSH echo '__rm -rf ${EP_ECLIPSE_DROPS}/${oldBuild}'"
 	}
 	def nbuilds = utilities.listSubDirectoriesOnRemote("${EP_ECLIPSE_DROPS}", "-name '${buildType}*'", devVersionMajor, devVersionMinor, devVersionService).size()
 	echo "Number of ${buildType}-builds after cleaning: ${nbuilds}"
