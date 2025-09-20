@@ -65,7 +65,17 @@ pipeline {
 					assignEnvVariable('NEXT_RELEASE_NAME', "${NEXT_SIMREL_NAME}")
 					simRelMatcher = null // release matcher as it's not serializable
 					
-					def simRelDatesRaw = sh(script: "curl --fail https://raw.githubusercontent.com/eclipse-simrel/.github/refs/heads/machine-readable-dates/wiki/SimRel/${NEXT_SIMREL_NAME}_dates.json", returnStdout: true)
+					def simRelDatesRaw = sh(script: "curl --fail https://raw.githubusercontent.com/eclipse-simrel/.github/refs/heads/machine-readable-dates/wiki/SimRel/2025-12_dates.json", returnStdout: true)
+					simRelDatesRaw = '''
+						{
+							"M1": "2026-01-10",
+							"M2": "2026-01-31",
+							"M3": "2026-02-21",
+							"RC1": "2026-02-28",
+							"RC2": "2026-03-05",
+							"GA": "2026-03-10"
+						}
+					'''
 					def simRelDates = readJSON(text: simRelDatesRaw)
 					def eclipseReleaseDates = releaseEvents.collectEntries{ name, _ ->
 						def date = parseDate(simRelDates[name]).minusDays(name == 'GA' ? 0 : 7) // All Eclipse-TLPs have offset -7 days
