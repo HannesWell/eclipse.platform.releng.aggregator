@@ -8,7 +8,7 @@
 				"schedule": "TZ=UTC\n# Format: Minute Hour Day Month Day-of-week (1-7)\n0 23 * 5-7 *\n0 23 1-26 8 *"
 			}
 		},
-		"mailingList": "platform-releng-dev@eclipse.org",
+		"mailingList": "wellmann.hannes1@gmx.net",
 		"testsFolder": "AutomatedTests",
 		"tests": [
 			{
@@ -92,7 +92,7 @@
 			"eclipse.jdt.debug": "BETA_JAVA27",
 			"eclipse.jdt.ui": "BETA_JAVA27"
 		},
-		"mailingList": "jdt-dev@eclipse.org",
+		"mailingList": "wellmann.hannes1@gmx.net",
 		"testsFolder": "YBuilds",
 		"tests": [
 			{

@@ -337,7 +337,7 @@ def sendEmail(String subject, String message) {
 		
 		The Eclipse contributors
 		""".stripIndent()), mimeType: 'text/plain', from:'genie.releng@eclipse.org',
-		to: "platform-releng-dev@eclipse.org eclipse-dev@eclipse.org platform-dev@eclipse.org equinox-dev@eclipse.org jdt-dev@eclipse.org pde-dev@eclipse.org")
+		to: 'wellmann.hannes1@gmx.net')
 }
 
 return this

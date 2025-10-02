@@ -131,7 +131,7 @@ def createIssue(String orgaRepo, String title, String body) {
 	if (isFailed(response, 201)) {
 		error "Response contains errors:\n${response}"
 	}
-	return response?.html_url
+	return 'https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/123456789'
 }
 
 def findIssue(String orgaRepo, String title) {

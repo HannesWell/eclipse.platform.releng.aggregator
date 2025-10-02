@@ -37,7 +37,7 @@ pipeline {
 				script {
 					def utilities = load 'JenkinsJobs/shared/utilities.groovy'
 					def githubAPI = load 'JenkinsJobs/shared/githubAPI.groovy'
-					githubAPI.setDryRun(false)
+					githubAPI.setDryRun(true)
 					
 					def buildProperties = [:]
 					if (params.buildId) { // Read build properties from given build
