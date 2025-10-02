@@ -18,6 +18,9 @@ pipeline {
 		''')
 	}
 	agent none
+	environment {
+		JOB_BASE_NAME = 'ep439I-unit-win32-x86_64-java21'
+	}
 	stages {
 		stage('Fetch test configuration') {
 			when {

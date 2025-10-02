@@ -7,6 +7,15 @@ def setDryRun(boolean isDryRun) {
 	IS_DRY_RUN = isDryRun
 }
 
+def namedGroups(java.util.regex.Pattern pattern) {
+	def matcher = "${pattern}" =~ /\(\?<(?<name>\w+)>/
+	def groups = [:]
+	while(matcher.find()){
+		groups["${matcher.group('name')}".toString()] = -1
+	}
+	return groups
+}
+
 def Map<String, String> matchPattern(String stringName, String string, List<String> patterns, List<Closure> handlers = null) {
 	for (int i = 0; i < patterns.size(); i++) {
 		def matcher = (string =~ patterns[i])

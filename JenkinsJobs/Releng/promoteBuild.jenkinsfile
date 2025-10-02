@@ -105,12 +105,6 @@ pipeline {
 					} else if ("${SIGNOFF_ISSUE}" ==~ '\\d+') {
 						assignEnvVariable('SIGNOFF_ISSUE', "https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/issues/${SIGNOFF_ISSUE}")
 					}
-					
-					if (params.DRY_RUN) { // Clear 'try-outs' area on the starge server
-						sshagent(['projects-storage.eclipse.org-bot-ssh']) {
-							sh 'ssh genie.releng@projects-storage.eclipse.org "rm -rf ${EP_ROOT}/eclipse/try-outs/"'
-						}
-					}
 				}
 			}
 		}
@@ -190,7 +184,7 @@ pipeline {
 				dir("${WORKSPACE}/updates") {
 					sshagent(['projects-storage.eclipse.org-bot-ssh']) {
 						sh '''#!/bin/bash -xe
-							sourceRepo="eclipse/updates/${BUILD_MAJOR}.${BUILD_MINOR}-I-builds/${REPO_ID}"
+							sourceRepo="${DRY_RUN_PREFIX}eclipse/updates/${BUILD_MAJOR}.${BUILD_MINOR}-I-builds/${REPO_ID}"
 							targetRepo="${DRY_RUN_PREFIX}eclipse/updates/${BUILD_MAJOR}.${BUILD_MINOR}/${DL_DROP_ID}"
 							ssh genie.releng@projects-storage.eclipse.org mkdir -p "${EP_ROOT}/${targetRepo}/.."
 							ssh genie.releng@projects-storage.eclipse.org cp -r "${EP_ROOT}/${sourceRepo}/." "${EP_ROOT}/${targetRepo}"
@@ -336,7 +330,7 @@ pipeline {
 }
 
 def renameBuildDrop(String baseDropPath, String oldDropID, String oldBuildLabel, String newDropID, String newBuildLabel, Closure extraModification = null) {
-	def sourcePath="${EP_ROOT}/${baseDropPath}/${oldDropID}"
+	def sourcePath="${EP_ROOT}/${env.DRY_RUN_PREFIX ?: ''}${baseDropPath}/${oldDropID}"
 	def targetPath="${EP_ROOT}/${env.DRY_RUN_PREFIX ?: ''}${baseDropPath}/${newDropID}"
 	
 	sh """#!/bin/bash -xe
