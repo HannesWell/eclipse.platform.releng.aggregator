@@ -22,7 +22,7 @@ fi
 source $CJE_ROOT/scripts/common-functions.shsource
 source $1
 
-epUpdateDir=/home/data/httpd/download.eclipse.org/eclipse/updates
+epUpdateDir=/home/data/httpd/download.eclipse.org/eclipse/try-outs/eclipse/updates
 dropsPath=${epUpdateDir}/${STREAMMajor}.${STREAMMinor}-${BUILD_TYPE}-builds
 
 pushd $CJE_ROOT/$UPDATES_DIR

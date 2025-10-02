@@ -4,9 +4,7 @@ pipeline {
 		timeout(time: 5, unit: 'MINUTES')
 		buildDiscarder(logRotator(numToKeepStr:'5'))
 	}
-	agent {
-		label 'basic'
-	}
+	agent any
 	stages {
 		stage('Create Jobs') {
 			environment {
@@ -57,7 +55,7 @@ pipeline {
 								'''.stripIndent() + config.schedule).trim() : null]
 						}
 						
-						jobDsl(additionalParameters: [FOLDER_DEFINITIONS: folderDefinitions,  PIPELINE_JOB_DEFINITIONS: pipelineJobDefinitions], sandbox: true, scriptText : '''\
+						jobDsl(additionalParameters: [FOLDER_DEFINITIONS: folderDefinitions,  PIPELINE_JOB_DEFINITIONS: pipelineJobDefinitions], sandbox: false, scriptText : '''\
 							FOLDER_DEFINITIONS.each{ folderName, folderDef ->
 								folder(folderName) {
 									if (folderDef.displayName != null) {
@@ -120,7 +118,7 @@ pipeline {
 								}
 							}
 							'''.stripIndent(), removedJobAction: 'IGNORE', removedViewAction: 'IGNORE', unstableOnDeprecation: true, failOnMissingPlugin: true)
-						jobDsl(targets: '**/*.groovy', sandbox: true, removedJobAction: 'IGNORE', removedViewAction: 'IGNORE', unstableOnDeprecation: true, failOnMissingPlugin: true)
+						jobDsl(targets: '**/*.groovy', sandbox: false, removedJobAction: 'IGNORE', removedViewAction: 'IGNORE', unstableOnDeprecation: true, failOnMissingPlugin: true)
 					}
 				}
 			}

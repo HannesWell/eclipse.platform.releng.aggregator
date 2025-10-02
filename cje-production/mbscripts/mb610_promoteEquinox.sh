@@ -29,7 +29,7 @@ then
         touch ${BUILD_ID}/buildUnstable
         echo "<p>This build has been marked unstable due to <a href='https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_ID}/buildlogs/comparatorlogs/buildtimeComparatorUnanticipated.log.txt'>unanticipated comparator errors</a></p>">> ${BUILD_ID}/buildUnstable
 fi
-epDownloadDir=/home/data/httpd/download.eclipse.org/equinox
+epDownloadDir=/home/data/httpd/download.eclipse.org/eclipse/try-outs/equinox
 dropsPath=${epDownloadDir}/drops
 scp -r ${BUILD_ID} genie.releng@projects-storage.eclipse.org:${dropsPath}/.
 popd
