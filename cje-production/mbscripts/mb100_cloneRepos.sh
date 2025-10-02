@@ -23,10 +23,11 @@ fi
 source $CJE_ROOT/scripts/common-functions.shsource
 source $1
 
-git clone -b $BRANCH --recursive $GIT_ROOT$AGG_REPO ../$AGG_DIR
-git checkout $BRANCH
-git pull
+#TODO: clone the branch/repo from the job definition?! This should make the $BRANCH variable obsolete
+git clone -b test-result-collection-reworked --recursive https://github.com/HannesWell/eclipse.platform.releng.aggregator.git ../$AGG_DIR
 pushd ../$AGG_DIR
+git checkout test-result-collection-reworked
+git pull
 git submodule foreach 'git fetch; SUBMODULE_BRANCH=$(grep $name: ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt | cut -f2 -d\ ); SUBMODULE_BRANCH=${SUBMODULE_BRANCH:-$BRANCH}; echo Checking out $SUBMODULE_BRANCH; git checkout $SUBMODULE_BRANCH; git pull'
 popd
 

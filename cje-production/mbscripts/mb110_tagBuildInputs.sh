@@ -62,7 +62,7 @@ then
 	git commit -m "Build input for build $BUILD_ID"
 	if [[ $? -eq 0 ]]
 	then
-		git push origin HEAD
+		echo "_git --dry-run origin HEAD"
 	fi
 fi
 
@@ -75,9 +75,9 @@ function toPushRepo() {
 	fi
 }
 export -f toPushRepo
-git submodule foreach 'if grep "^${name}:" ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt > /dev/null; then git tag $BUILD_ID; PUSH_URL="$(toPushRepo $(git config --get remote.origin.url))"; git push --verbose $PUSH_URL $BUILD_ID; else echo Skipping $name; fi || :'
+git submodule foreach 'if grep "^${name}:" ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt > /dev/null; then git tag $BUILD_ID; PUSH_URL="$(toPushRepo $(git config --get remote.origin.url))"; echo "_git push --dry-run --verbose $PUSH_URL $BUILD_ID"; else echo Skipping $name; fi || :'
 git tag $BUILD_ID
-git push --verbose origin $BUILD_ID
+echo "_git push --dry-run --verbose origin $BUILD_ID"
 
 # git logging
 if [[ -n "$lastTag" ]]; then

@@ -13,7 +13,7 @@ def Y_TEST_CONFIGURATIONS = [
   [ os: 'macosx', ws: 'cocoa', arch: 'x86_64' , javaVersion: 21],
 ]
 def BUILD = {
-	def matcher = "$JOB_BASE_NAME" =~ '(?<type>[IY])-build-(?<major>\\d).(?<minor>\\d+)'
+	def matcher = "I-build-4.38" =~ '(?<type>[IY])-build-(?<major>\\d).(?<minor>\\d+)'
 	if (matcher) {
 		def buildConfig = [ type: matcher.group('type'), testPrefix: "ep${matcher.group('major')}${matcher.group('minor')}${matcher.group('type')}-unit"]
 		switch(buildConfig.type) {
@@ -80,6 +80,14 @@ spec:
                         chmod +x mbscripts/*
                         mkdir -p $logDir
                     '''
+				}
+				sshagent(['projects-storage.eclipse.org-bot-ssh']) {
+					sh '''
+						ssh genie.releng@projects-storage.eclipse.org rm -rf /home/data/httpd/download.eclipse.org/eclipse/try-outs
+						ssh genie.releng@projects-storage.eclipse.org mkdir -p /home/data/httpd/download.eclipse.org/eclipse/try-outs/eclipse/updates/4.38-I-builds
+						ssh genie.releng@projects-storage.eclipse.org mkdir -p /home/data/httpd/download.eclipse.org/eclipse/try-outs/eclipse/downloads/drops4
+						ssh genie.releng@projects-storage.eclipse.org mkdir -p /home/data/httpd/download.eclipse.org/eclipse/try-outs/equinox/drops
+					'''
 				}
 			}
 		}
@@ -161,7 +169,7 @@ spec:
 							No changes have been made since the last successful ${BUILD_TYPE}-Build and therefore this scheduled build was skipped:
 							${BUILD_URL}console
 							""".stripIndent(), mimeType: 'text/plain',
-							to: "${BUILD.mailingList}", from: 'genie.releng@eclipse.org'
+							to: 'wellmann.hannes1@gmx.net', from: 'genie.releng@eclipse.org'
                       currentBuild.result = 'ABORTED'
                       error('Abort scheduled build due to no changes')
                     }
@@ -257,7 +265,6 @@ spec:
                         ./mb600_promoteEclipse.sh $CJE_ROOT/buildproperties.shsource
                       '''
                   }
-                build job: 'Releng/updateIndex', wait: false
 				}
 			}
 		}
@@ -285,11 +292,7 @@ spec:
 							echo 'Skip adding unstable build to composite repository.'
 							return
 						}
-						build job: 'Releng/modifyP2CompositeRepository', wait: true, propagate: true, parameters: [
-							string(name: 'repositoryPath', value: "eclipse/updates/${RELEASE_VER}-${BUILD_TYPE}-builds"),
-							string(name: 'add', value: "${BUILD_IID}"),
-							string(name: 'sizeLimit', value: '3')
-						]
+						echo "Add to eclipse/updates/${RELEASE_VER}-${BUILD_TYPE}-builds: ${BUILD_IID}"
 					}
 				}
 			}
@@ -298,12 +301,10 @@ spec:
 			steps {
 				script {
 					for (c in BUILD.testConfigurations) {
-						build job: "${BUILD.testJobFolder}/${BUILD.testPrefix}-${c.os}-${c.arch}-java${c.javaVersion}", wait: false, parameters: [
-							string(name: 'buildId', value: "${BUILD_IID}")
-						]
+						echo "Test ${BUILD.testJobFolder}/${BUILD.testPrefix}-${c.os}-${c.arch}-java${c.javaVersion}: ${BUILD_IID}"
 					}
 				}
-				build job: 'SmokeTests/Start-smoke-tests', wait: false, parameters: [string(name: 'buildId', value: "${BUILD_IID}")]
+				echo "Smoke tests: ${BUILD_IID}"
 			}
 		}
 		stage('Trigger publication to Maven snapshots repo') {
@@ -316,9 +317,7 @@ spec:
 				}
 			}
 			steps {
-				build job: 'Releng/deployToMaven', wait: false, parameters: [
-					string(name: 'sourceRepository', value: "https://download.eclipse.org/eclipse/updates/${RELEASE_VER}-${BUILD_TYPE}-builds/${BUILD_IID}")
-				]
+				echo "Deploy to Maven: https://download.eclipse.org/eclipse/updates/${RELEASE_VER}-${BUILD_TYPE}-builds/${BUILD_IID}"
 			}
 		}
 	}
@@ -329,7 +328,7 @@ spec:
 		failure {
 			emailext subject: "${RELEASE_VER} ${BUILD_TYPE}-Build: ${BUILD_IID} - BUILD FAILED",
 				body: "Please go to ${BUILD_URL}console and check the build failure.", mimeType: 'text/plain',
-				to: "${BUILD.mailingList}", from:'genie.releng@eclipse.org'
+				to: 'wellmann.hannes1@gmx.net', from:'genie.releng@eclipse.org'
 		}
 		success {
 			emailext subject: "${RELEASE_VER} ${BUILD_TYPE}-Build: ${BUILD_IID} ${COMPARATOR_ERRORS_SUBJECT}",
@@ -352,7 +351,7 @@ spec:
 			Equinox downloads:
 			https://download.eclipse.org/equinox/drops/${BUILD_IID}
 			""").stripIndent(), mimeType: 'text/plain',
-			to: "${BUILD.mailingList}", from:'genie.releng@eclipse.org'
+			to: 'wellmann.hannes1@gmx.net', from:'genie.releng@eclipse.org'
 		}
 	}
 }
