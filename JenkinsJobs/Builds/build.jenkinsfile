@@ -45,7 +45,7 @@ pipeline {
 		DROP_DIR = "${CJE_ROOT}/siteDir/eclipse/downloads/drops4"
 		EQUINOX_DROP_DIR = "${CJE_ROOT}/siteDir/equinox/drops"
 		// Download server paths
-		EP_ROOT = '/home/data/httpd/download.eclipse.org'
+		EP_ROOT = '/home/data/httpd/download.eclipse.org/eclipse/try-outs'
 		EP_ECLIPSE_UPDATES = "${EP_ROOT}/eclipse/updates"
 		EP_ECLIPSE_DROPS = "${EP_ROOT}/eclipse/downloads/drops4"
 		EP_EQUINOX_DROPS = "${EP_ROOT}/equinox/drops"
@@ -53,7 +53,17 @@ pipeline {
 	stages {
 		stage('Set up environment') {
 			steps {
+				sshagent(['projects-storage.eclipse.org-bot-ssh']) {
+					sh '''
+						#ssh genie.releng@projects-storage.eclipse.org rm -rf /home/data/httpd/download.eclipse.org/eclipse/try-outs
+						ssh genie.releng@projects-storage.eclipse.org mkdir -p ${EP_ECLIPSE_UPDATES}/4.39-I-builds
+						ssh genie.releng@projects-storage.eclipse.org mkdir -p ${EP_ECLIPSE_UPDATES}/4.39-Y-builds
+						ssh genie.releng@projects-storage.eclipse.org mkdir -p ${EP_ECLIPSE_DROPS}
+						ssh genie.releng@projects-storage.eclipse.org mkdir -p ${EP_EQUINOX_DROPS}
+					'''
+				}
 				script { // Extend build configuration with data from the configuration file
+					def JOB_BASE_NAME = 'I-build-4.39'
 					def matcher = "$JOB_BASE_NAME" =~ '(?<type>[IY])-build-(?<major>\\d).(?<minor>\\d+)'
 					if (!matcher) {
 						error("Unsupported job: $JOB_BASE_NAME")
@@ -156,11 +166,11 @@ pipeline {
 							}
 							export -f remoteURL
 							if [ "${BUILD_TYPE}" == "I" ]; then
-								git push --verbose $(remoteURL) ${AGGREGATOR_LOCAL_BRANCH}
+								git push --dry-run --verbose $(remoteURL) ${AGGREGATOR_LOCAL_BRANCH}
 							fi
 							function tagAndPush {
 								git tag ${BUILD_ID} HEAD
-								git push --verbose $(remoteURL) tag ${BUILD_ID}
+								git push --dry-run --verbose $(remoteURL) tag ${BUILD_ID}
 							}
 							export -f tagAndPush
 							git submodule foreach 'tagAndPush'
@@ -476,7 +486,6 @@ pipeline {
 										scp -r ${dropDir} genie.releng@projects-storage.eclipse.org:${EP_ECLIPSE_DROPS}/.
 									'''
 								}
-								build job: 'Releng/updateIndex', wait: false
 							}
 						}
 					}
@@ -585,11 +594,7 @@ pipeline {
 								echo 'Skip adding unstable build to composite repository.'
 								return
 							}
-							build job: 'Releng/modifyP2CompositeRepository', wait: true, propagate: true, parameters: [
-								string(name: 'repositoryPath', value: "eclipse/updates/${RELEASE_VER}-${BUILD_TYPE}-builds"),
-								string(name: 'add', value: "${BUILD_ID}"),
-								string(name: 'sizeLimit', value: '3')
-							]
+							echo "Add to eclipse/updates/${RELEASE_VER}-${BUILD_TYPE}-builds: ${BUILD_ID}"
 						}
 					}
 				}
@@ -632,15 +637,10 @@ pipeline {
 			steps {
 				script {
 					for (c in BUILD.tests) {
-						build job: "${BUILD.testsFolder}/${TEST_NAME_PREFIX}-${c.os}-${c.arch}-java${c.javaVersion}", wait: false, parameters: [
-							string(name: 'buildId', value: "${BUILD_ID}"),
-							string(name: 'testAgent', value: "${c.agent}"),
-						]
+						echo "Test ${BUILD.testsFolder}/${TEST_NAME_PREFIX}-${c.os}-${c.arch}-java${c.javaVersion}: ${BUILD_ID}"
 					}
 				}
-				build job: 'AutomatedTests/smokeTests', wait: false, parameters: [
-					string(name: 'buildId', value: "${BUILD_ID}")
-				]
+				echo "Smoke tests: ${BUILD_ID}"
 			}
 		}
 		stage('Trigger publication to Maven snapshots repo') {
@@ -653,9 +653,7 @@ pipeline {
 				}
 			}
 			steps {
-				build job: 'Releng/deployToMaven', wait: false, parameters: [
-					string(name: 'sourceRepository', value: "https://download.eclipse.org/eclipse/updates/${RELEASE_VER}-${BUILD_TYPE}-builds/${BUILD_ID}")
-				]
+				echo "Deploy to Maven: https://download.eclipse.org/eclipse/updates/${RELEASE_VER}-${BUILD_TYPE}-builds/${BUILD_ID}"
 			}
 		}
 	}
