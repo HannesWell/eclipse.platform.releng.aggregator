@@ -22,6 +22,9 @@ pipeline {
 			steps {
 				script {
 					echo "DRY_RUN: ${DRY_RUN}"
+					sh 'echo "Hello:${DRY_RUN_PREFIX}-part2${SOME_OTHER_VAR}"'
+					echo "DRY_RUN_PREFIX: ${env.DRY_RUN_PREFIX ?: ''}"
+					error 'STOP Here'
 					env.DROP_ID = readParameter('DROP_ID')
 					if (!"${DROP_ID}") {
 						error("Parameter 'DROP_ID' is not specified")
@@ -319,7 +322,7 @@ pipeline {
 
 def renameBuildDrop(String baseDropPath, String oldDropID, String oldBuildLabel, String newDropID, String newBuildLabel, Closure extraTasks=null) {
 	def sourcePath="${EP_ROOT}/${baseDropPath}/${oldDropID}"
-	def targetPath="${EP_ROOT}/${DRY_RUN_PREFIX}${baseDropPath}/${newDropID}"
+	def targetPath="${EP_ROOT}/${env.DRY_RUN_PREFIX ?: ''}${baseDropPath}/${newDropID}"
 	
 	sh """#!/bin/bash -xe
 		
