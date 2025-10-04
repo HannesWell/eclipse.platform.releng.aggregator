@@ -52,8 +52,6 @@ pipeline {
 						
 						# Fetch previously collected test results and already generated files (that would otherwise be re-generated)
 						rsync -avzh --exclude="*_${triggeringJob}_*" genie.releng@projects-storage.eclipse.org:${EP_ECLIPSE_DROPS}/${buildID}/testresults/xml ${buildDirectory}/testresults
-						scp -r genie.releng@projects-storage.eclipse.org:${EP_ECLIPSE_DROPS}/${buildID}/compilerSummary.html ${buildDirectory}
-						scp -r genie.releng@projects-storage.eclipse.org:${EP_ECLIPSE_DROPS}/${buildID}/testResults.php ${buildDirectory}
 						
 						# ==========================================
 						# Collect results and overview from test-job
@@ -79,9 +77,13 @@ pipeline {
 							"-DtestsConfigExpected=${TEST_CONFIGURATIONS_EXPECTED}" \
 							"-DmanifestFile=${WORKSPACE}/git-repo/eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/testManifest.xml"
 						
-						#TODO: check what really needs to by synced?!
-						#rsync -avzh ${buildDirectory} genie.releng@projects-storage.eclipse.org:${EP_ECLIPSE_DROPS}
+						#TODO: Suppress (re)generation of those files!
+						#TODO: Implement handling in resultGenerator that these files are not regenerated if their path is null or empty
+						#TODO: implement some handling in resultGenerator that the expected test-configs are not regenerated if not set or empty (avoids the need for storing the expected test configs variable).
+						rm ${buildDirectory}/compilerSummary.html
+						rm ${buildDirectory}/testResults.php
 						#TODO: only sync back all new test results and testResults.php and testResultsTables.html
+						#rsync -avzh ${buildDirectory} genie.releng@projects-storage.eclipse.org:${EP_ECLIPSE_DROPS}
 					'''
 				}
 				build job: 'Releng/updateIndex', wait: false
