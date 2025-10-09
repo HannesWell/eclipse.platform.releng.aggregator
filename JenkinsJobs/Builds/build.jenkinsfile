@@ -85,7 +85,7 @@ spec:
 			environment {
 				AGGREGATOR_LOCAL_BRANCH = "${scm.branches[0].name}"
 				AGGREGATOR_REPOSITORY_URL = "${scm.userRemoteConfigs[0].url}" // expected to be an http(s) URL
-				GIT_PUSH = '''git push --dry-run "$(git config remote.origin.url | sed --expression 's,https://github.com/,git@github.com:,')"'''
+				GIT_PUSH = '''pushURL=$(git config remote.origin.url | sed --expression 's,https://github.com/,git@github.com:,') && git push --dry-run ${pushURL}'''
 			}
 			steps {
 				dir("${CJE_ROOT}/${AGG_DIR}") {
