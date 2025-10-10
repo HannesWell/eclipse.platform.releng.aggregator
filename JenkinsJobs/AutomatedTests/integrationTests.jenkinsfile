@@ -1,0 +1,183 @@
+@groovy.transform.Field
+def TEST = null
+
+pipeline {
+	options {
+		timeout(time: 600, unit: 'MINUTES')
+		timestamps()
+		buildDiscarder(logRotator(numToKeepStr:'15', artifactNumToKeepStr:'5'))
+		skipDefaultCheckout()
+	}
+	parameters {
+		string(name: 'buildId', trim: true, description: 'Build Id to test. For example: <code>I20251010-0150</code>')
+		string(name: 'testSuite', defaultValue: 'all', trim: true, description: '''This can be any ant target from
+			https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/blob/master/production/testScripts/configuration/sdk.tests/testScripts/test.xml
+		''')
+	}
+	agent none
+	stages {
+		stage('Fetch test configuration') {
+			agent { // Run on a tiny agent for this small task
+				kubernetes {
+					inheritFrom 'basic'
+					yaml """
+					apiVersion: v1
+					kind: Pod
+					spec:
+					  containers:
+					  - name: "jnlp"
+					    resources:
+					      limits:
+					        memory: "1Gi"
+					        cpu: "500m"
+					      requests:
+					        memory: "1Gi"
+					        cpu: "500m"
+					""".stripIndent()
+				}
+			}
+			steps {
+				checkout scmGit(userRemoteConfigs: [[url: "${scm.userRemoteConfigs[0].url}"]], branches: [[name: "${scm.branches[0].name}"]],
+					extensions: [cloneOption(depth: 1, shallow: true, noTags: true), sparseCheckout([
+					[path: 'JenkinsJobs/buildConfigurations.json'],
+				])])
+				script {
+					def matcher = "$JOB_BASE_NAME" =~ /ep(?<major>\d)(?<minor>\d+)(?<type>[A-Z])-unit-(?<os>\w+)-(?<arch>\w+)-java(?<javaVersion>\d+)/
+					if (!matcher.matches()) {
+						error("Unsupported test job name: $JOB_BASE_NAME" )
+					}
+					//TODO: check what's really used
+					def buildType = matcher.group('type')
+					def os = matcher.group('os')
+					def arch = matcher.group('arch')
+					def javaVersion = matcher.group('javaVersion').toInteger()
+					matcher = null // release matcher as it's not serializable
+					def buildConfigurations = readJSON(file: 'JenkinsJobs/buildConfigurations.json')
+					TEST = buildConfigurations[buildType].tests.find{tc -> tc.os == os && tc.arch == arch && tc.javaVersion == javaVersion }
+					if (!TEST) {
+						error("Test configuration not found. OS: ${os}, ARCH: ${arch}, JAVA_VERSION: ${javaVersion}" )
+					}
+				}
+			}
+		}
+		stage('Run Tests') {
+			agent {
+				label TEST.agentLabel
+			}
+			environment {
+				// Declaring a jdk and ant the usual way in the 'tools' section, because of unknown reasons, breaks the usage of system commands like xvnc, pkill and sh
+				ANT_HOME = tool(type:'ant', name:'apache-ant-latest')
+				ANT_OPTS = "-Djava.io.tmpdir=${pathOf(env.WORKSPACE+'/tmp')}"
+			}
+			steps {
+				// workspace is not always cleaned by default. Clean before custom tools are installed into workspace.
+				cleanWs() 
+				script {
+					env.	JAVA_HOME = getJDKInstallationPath()
+					env.PATH = [pathOf("${JAVA_HOME}/bin"), pathOf("${ANT_HOME}/bin"), env.PATH].join(isUnix() ? ':' : ';')
+					
+					def runTests = """
+						env 1>envVars.txt 2>&1
+						java -XshowSettings -version 1>javaSettings.txt 2>&1
+						
+						curl -o getEBuilder.xml https://download.eclipse.org/eclipse/relengScripts/testScripts/bootstrap/getEBuilder.xml
+						ant -f getEBuilder.xml -DbuildId=${params.buildId} -Dosgi.os=${TEST.os} -Dosgi.ws=${TEST.ws} -Dosgi.arch=${TEST.arch} -DtestSuite=${params.testSuite}
+					""".stripIndent()
+					if (isUnix()) {
+						runTests = '''\
+							#!/bin/bash -x
+							export LANG=en_US.UTF-8
+							echo " whoami: $(whoami)"
+							echo " uname -a: $(uname -a)"
+							
+							# 0002 is often the default for shell users, but it is not when ran from
+							# a cron job, so we set it explicitly, to be sure of value, so releng group has write access to anything
+							# we create on shared area.
+							oldumask=$(umask)
+							umask 0002
+							echo "umask explicitly set to 0002, old value was $oldumask"
+							
+							# we want java.io.tmpdir to be in $WORKSPACE, but must already exist, for Java to use it.
+							mkdir -p tmp
+							
+							echo JAVA_HOME: $JAVA_HOME
+							echo ANT_HOME: $ANT_HOME
+							echo PATH: $PATH
+							
+							ant -diagnostics 1>antDiagnostics.txt 2>&1
+						'''.stripIndent() + runTests
+						if (TEST.os == 'linux') {
+							xvnc(useXauthority: true) {
+								sh(runTests)
+							}
+						} else {
+							sh(runTests)
+						}
+					} else {
+						bat ('''
+							@REM tmp must already exist, for Java to make use of it, in subsequent steps
+							mkdir tmp
+							
+							echo JAVA_HOME: %JAVA_HOME%
+							echo ANT_HOME: %ANT_HOME%
+							echo PATH: %PATH%
+							
+							cmd /c ant -diagnostics 1>antDiagnostics.txt 2>&1
+						''' + runTests)
+					}
+				}
+				archiveArtifacts '**/eclipse-testing/results/**, **/eclipse-testing/directorLogs/**, *.properties, *.txt'
+				junit keepLongStdio: true, testResults: '**/eclipse-testing/results/xml/*.xml'
+				build job: 'Releng/collectTestResults', wait: false, parameters: [
+					string(name: 'triggeringJob', value: "${JOB_BASE_NAME}"),
+					string(name: 'buildURL', value: "${BUILD_URL}"),
+					string(name: 'buildID', value: "${params.buildId}")
+				]
+			}
+			post {
+				always {
+					cleanWs()
+				}
+			}
+			
+		}
+	}
+}
+
+def getJDKInstallationPath() {
+	switch(TEST.jdk.type) {
+		case 'tool': return tool(type:'jdk', name: TEST.jdk.name)
+		case 'local': return TEST.jdk.path
+		case 'install': return install('jdk', TEST.jdk.url)
+		case 'temurin': return installTemurinJDK(TEST.javaVersion, TEST.os, TEST.arch, TEST.jdk.ea ? 'ea' : 'ga')
+	}
+}
+
+def installTemurinJDK(String version, String os, String arch, String releaseType='ga') {
+	// Translate os/arch names that are different in the Adoptium API
+	if (arch == 'x86_64') {
+		arch = 'x64'
+	}
+	if (os == 'macosx') {
+		os = 'mac'
+	} else if (os == 'win32') {
+		os = 'windows'
+	}
+	return install('jdk', "https://api.adoptium.net/v3/binary/latest/${version}/${releaseType}/${os}/${arch}/jdk/hotspot/normal/eclipse") + (os == 'mac' ? '/Contents/Home' : '')
+}
+
+def install(String toolType, String url) {
+	dir("${WORKSPACE}/tools/${toolType}") {
+		def script = "curl -L ${url} | tar -xzf -"
+		if (isUnix()) {
+			sh script
+		} else { // Windows 10 and later has a tar.exe that can handle zip files (even read from std-in)
+			bat script
+		}
+		return "${pwd()}/" + sh(script: 'ls', returnStdout: true).strip()
+	}
+}
+
+def pathOf(String path) {
+	return path.replace('/', isUnix() ? '/' : '\\')
+}

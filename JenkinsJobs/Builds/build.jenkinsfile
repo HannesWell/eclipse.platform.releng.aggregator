@@ -341,7 +341,7 @@ spec:
 			steps {
 				script {
 					for (c in BUILD.tests) {
-						build job: "${BUILD.testJobFolder}/${TEST_NAME_PREFIX}-${c.os}-${c.arch}-java${c.javaVersion}", wait: false, parameters: [
+						build job: "${BUILD.testsFolder}/${TEST_NAME_PREFIX}-${c.os}-${c.arch}-java${c.javaVersion}", wait: false, parameters: [
 							string(name: 'buildId', value: "${BUILD_IID}")
 						]
 					}
