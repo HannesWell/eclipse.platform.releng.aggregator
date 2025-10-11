@@ -42,6 +42,7 @@ pipeline {
 					[path: 'JenkinsJobs/buildConfigurations.json'],
 				])])
 				script {
+					def JOB_BASE_NAME = 'ep438I-unit-win32-x86_64-java21'
 					def matcher = "$JOB_BASE_NAME" =~ /ep(?<major>\d)(?<minor>\d+)(?<type>[A-Z])-unit-(?<os>\w+)-(?<arch>\w+)-java(?<javaVersion>\d+)/
 					if (!matcher.matches()) {
 						error("Unsupported test job name: $JOB_BASE_NAME" )
