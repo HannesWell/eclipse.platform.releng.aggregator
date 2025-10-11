@@ -65,11 +65,16 @@ pipeline {
 							"-DtestsConfigExpected=${TEST_CONFIGURATIONS_EXPECTED}" \
 							"-DmanifestFile=${WORKSPACE}/git-repo/eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/testManifest.xml"
 						
-						rsync -avzh ${buildDirectory} genie.releng@projects-storage.eclipse.org:${EP_ECLIPSE_DROPS}
+						echo __rsync -avzh ${buildDirectory} genie.releng@projects-storage.eclipse.org:${EP_ECLIPSE_DROPS}
 					'''
 				}
 				build job: 'Releng/updateIndex', wait: false
 			}
+		}
+	}
+	post { //TODO: Remove this
+		always {
+			archiveArtifacts '**/*'
 		}
 	}
 }
