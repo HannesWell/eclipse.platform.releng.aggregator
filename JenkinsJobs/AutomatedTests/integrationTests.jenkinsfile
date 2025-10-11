@@ -1,4 +1,3 @@
-@groovy.transform.Field
 def TEST = null
 
 pipeline {
@@ -74,7 +73,7 @@ pipeline {
 				// workspace is not always cleaned by default. Clean before custom tools are installed into workspace.
 				cleanWs() 
 				script {
-					env.	JAVA_HOME = getJDKInstallationPath()
+					env.JAVA_HOME = getJDKInstallationPath(TEST)
 					env.PATH = [pathOf("${JAVA_HOME}/bin"), pathOf("${ANT_HOME}/bin"), env.PATH].join(isUnix() ? ':' : ';')
 					
 					def runTests = """
@@ -145,16 +144,16 @@ pipeline {
 	}
 }
 
-def getJDKInstallationPath() {
-	switch(TEST.jdk.type) {
-		case 'tool': return tool(type:'jdk', name: TEST.jdk.name)
-		case 'local': return TEST.jdk.path
-		case 'install': return install('jdk', TEST.jdk.url)
-		case 'temurin': return installTemurinJDK(TEST.javaVersion, TEST.os, TEST.arch, TEST.jdk.ea ? 'ea' : 'ga')
+def getJDKInstallationPath(Map<String, Object> test) {
+	switch(test.jdk.type) {
+		case 'tool': return tool(type:'jdk', name: test.jdk.name)
+		case 'local': return test.jdk.path
+		case 'install': return install('jdk', test.jdk.url)
+		case 'temurin': return installTemurinJDK(test.javaVersion, test.os, test.arch, test.jdk.ea ? 'ea' : 'ga')
 	}
 }
 
-def installTemurinJDK(String version, String os, String arch, String releaseType='ga') {
+def installTemurinJDK(int version, String os, String arch, String releaseType='ga') {
 	// Translate os/arch names that are different in the Adoptium API
 	if (arch == 'x86_64') {
 		arch = 'x64'
