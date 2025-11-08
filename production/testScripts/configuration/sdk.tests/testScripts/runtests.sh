@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash -x
 
 # This file is used on production machine, running tests on Hudson, Linux
 
