@@ -1,0 +1,22 @@
+<html>
+<head></head>
+<body>
+    <h1>JSON Import Example</h1>
+    <p>Check your console for fetched data.</p>
+	<script>
+	    function fetchJSONData() {
+	        fetch('./compiler-problems2.json')
+	            .then(response => {
+	                if (!response.ok) {
+	                    throw new Error(`HTTP error! Status: ${response.status}`);
+	                }
+	                return response.json();  
+	            })
+	            .then(data => console.log(data))  
+	            .catch(error => console.error('Failed to fetch data:', error)); 
+	    }
+	    fetchJSONData();  
+	</script>
+</body>
+</html>
+
