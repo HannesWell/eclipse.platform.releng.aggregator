@@ -1,0 +1,23 @@
+{
+	"note": "The content of this file will be generated",
+	"compile-problems": {
+		"ant.ui": {
+			"errors": 0,
+			"warnings": 15
+		},
+		"...": {}
+	},
+	"access-problems": {
+		"compare.tests": {
+			"forbidden": 0,
+			"discouraged": 0,
+			"info": 9
+		},
+		"core.tests.runtime": {
+			"forbidden": 0,
+			"discouraged": 0,
+			"info": 36
+		},
+		"...": {}
+	}
+}
