@@ -43,7 +43,6 @@ const projectAside = `
 <a href="https://projects.eclipse.org/projects/eclipse.pde">Plug-in Development Environment</a>
 `;
 
-
 const defaultAside = toElements(`
 ${projectAside}
 `);
@@ -71,6 +70,19 @@ function generate() {
 			const generate = new Function(generator);
 			generate.call(element, element);
 		}
+		
+		tableOfContentsAside = `
+		<div id="toc-container" class="col-md-6">
+			<aside>
+				<ul class="ul-left-nav">
+					<div  class="sideitem">
+						<h2>Table of Contents</h2>
+						<div id="toc-target">
+						</div>
+					</div>
+				</ul>
+			</aside>
+		</div>`;
 
 		const generatedBody = generateBody();
 		document.body.replaceChildren(...generatedBody);
@@ -84,6 +96,8 @@ function generate() {
 				} else {
 					response.text().then(text => {
 						markdownElement.innerHTML = marked.parse(text);
+						//TODO: update the toc here too?!
+						// Decide if there is a TOC at all and if yes, populate it
 					}).catch(error => {
 						markdownElement.innerHTML = (`<span>Failed to parse markdown content: <span><b style="color: FireBrick">${error.message}</b><br/>`)
 					})
@@ -100,6 +114,7 @@ function generate() {
 function generateBody() {
 	const col = document.getElementById('aside') ? 'col-md-18' : ' col-md-24';
 	//TODO: generate the toc content instead of just calling 'generateAside' below
+	// Actually just instead a <div id="toc-target"></div>
 	return toElements(`
 <div>
 	${generateHeader()}
@@ -118,7 +133,7 @@ function generateBody() {
 						</div>
 					</div>
 				</div>
-				${generateAside()}
+				<div id="toc-container"></div>
 				${tableOfContentsAside}
 			</div>
 		</div>
