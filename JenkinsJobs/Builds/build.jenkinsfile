@@ -375,6 +375,8 @@ pipeline {
 	post {
 		always {
 			archiveArtifacts artifacts: 'cje-production/siteDir/**', excludes: 'cje-production/siteDir/eclipse/updates/**'
+			archiveArtifacts artifacts: "cje-production/${AGG_DIR}/products/**"
+			archiveArtifacts artifacts: "cje-production/${AGG_DIR}/sites/**"
 		}
 		failure {
 			emailext subject: "${RELEASE_VER} ${BUILD_TYPE}-Build: ${BUILD_IID} - BUILD FAILED",
