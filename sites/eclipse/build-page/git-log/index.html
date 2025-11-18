@@ -4,30 +4,27 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!--TODO: set proper title and metadata -->
 	<title>Documentation | Eclipse Project</title>
-	<!--TODO: set proper title -->
 	<link rel="preconnect stylesheet" href="../../builds.css" />
 	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 	<script src="../../builds.js"></script>
 	<!-- TODO: can we unify this further without having a (visible) redirect? -->
-	<style>
-		body {
-			max-width: 800px;
-			margin: 0 auto;
-			padding: 20px;
-		}
-	</style>
 </head>
 
 <body>
 	<div data-generate="generateDefaultBreadcrumb(this)">
-		<a href="..">Eclipse</a> <span>Templates</span>
+		<a href="..">Downloads</a> <span>Build I12345678-1234</span>
 	</div>
-	<div id="content"></div>
+	<div data-generate="generateDefaults(this)"></div>
 
+	<main>
+		<div id="content-target"></div>
+	</main>
 	<script>
+		generate();
 		// TODO: Define the path here as argument?
-		loadMarkdown();
+		//loadMarkdown();
 	</script>
 </body>
 
