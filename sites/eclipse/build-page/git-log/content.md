@@ -1,5 +1,9 @@
 Hello World
 
-# Headline
+# Headline 1
 
-Content
+Some text
+
+# Headline 2
+
+More Content

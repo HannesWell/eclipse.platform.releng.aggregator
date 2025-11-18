@@ -2,13 +2,22 @@
 const scriptBase = new URL(".", document.currentScript.src).href
 const markdownBase = `${scriptBase}markdown/?file=`;
 
+function getPageName() {
+	//TODO: maybe find a nicer way? At least resolve camle case?
+	let pathElements = window.location.pathname.split('/')
+	const lastElement = pathElements.at(-1)
+	if (lastElement =='index.html' || lastElement == ''){
+		return pathElements.at(-2)
+	}
+	return lastElement
+}
+
 let meta = toElements(`
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" href="https://eclipseide.org/favicon.ico"/>
 `);
-
 
 let defaultHeader = toElements(`
 	<a href="https://www.eclipse.org/downloads/packages/">Eclipse IDE</a>
@@ -18,34 +27,14 @@ let defaultHeader = toElements(`
 `);
 
 let defaultBreadcrumb = toElements(`
-	<a href="https://eclipseide.org/">Home</a>
-	<a href="https://eclipseide.org/projects/">Projects</a>
+	<a href="https://eclipse.org/">Home</a>
+	<a href="https://www.eclipse.org/projects/">Projects</a>
+	<a href="https://eclipse.dev/eclipse/">Eclipse</a>
 `);
 
-let defaultNav = toElements(`
-<a class="fa-download" href="https://download.eclipse.org/eclipse/downloads/"
-	title="Download: Distribution Sites">
-	Download<p>Distribution Sites</p>
-</a>
-<a class="fa-book" href="https://help.eclipse.org/" title="Documentation: help.eclipse.org">
-	Documentation<p>help.eclipse.org</p>
-</a>
-<a class="fa-users" href="${markdownBase}eclipse-ide/.github/main/CONTRIBUTING.md"
-	title="Contribution: Environment Setup">
-	Contribution<p>Environment Setup</p>
-</a>
-<a class="fa-support" href="https://github.com/eclipse-platform/.github/discussions"
-	title="Support: Discussions">
-	Support<p>Discussions</p>
-</a>
-<a class="fa-newspaper-o" href="${scriptBase}news/"
-	title="News: Noteworthy">
-	News<p>Noteworthy</p>
-</a>
-`);
-
-
-let projectAside = `
+//TODO: specify the TOC as Aside!
+// Make the name of the current page the head-line (like "I12345678-1234" or "Test results")
+const projectAside = `
 <a class="separator" href="https://projects.eclipse.org/projects/eclipse"><i class='fa fa-cube'></i> Eclipse Project</a>
 <a href="https://projects.eclipse.org/projects/eclipse.equinox">Equinox</a>
 <a href="https://projects.eclipse.org/projects/eclipse.platform">Platform</a>
@@ -54,28 +43,14 @@ let projectAside = `
 <a href="https://projects.eclipse.org/projects/eclipse.pde">Plug-in Development Environment</a>
 `;
 
-let githubAside = `
-<span class="separator"><i class='fa fa-github'></i> GitHub</span>
-<a href="https://github.com/eclipse-equinox/">Equinox</a>
-<a href="https://github.com/eclipse-platform/">Platform</a>
-<a href="https://github.com/eclipse-jdt/">Java Development Tools</a>
-<a href="https://github.com/eclipse-pde/">Plug-in Development Environment</a>
-`;
 
-let markdownAside = `
-<span class="separator"><i class='fa fa-edit'></i> Markdown</span>
-<a href="${markdownBase}eclipse-platform/eclipse.platform/master/docs">Platform</a>
-<a href="${markdownBase}eclipse-platform/eclipse.platform.ui/master/docs">Platform UI</a>
-<a href="${markdownBase}eclipse-pde/eclipse.pde/master/docs">PDE</a>
-<a href="${markdownBase}eclipse-equinox/p2/master/docs">Equinox p2</a>
-<a href="${markdownBase}eclipse-ide/.github/main/">Eclipse IDE</a>
-<a href="${markdownBase}eclipse-simrel/.github/main/profile/README.md">Eclipse SimRel</a>
-<a href="${markdownBase}eclipse-tycho/tycho/main/README.md">Eclipse Tycho</a>
-`;
-
-let defaultAside = toElements(`
+const defaultAside = toElements(`
 ${projectAside}
-${githubAside}
+`);
+
+const tocAside = toElements(`
+<a class="separator" href="https://projects.eclipse.org/projects/eclipse"><i class='fa fa-cube'></i>${getPageName()}</a>
+<a href="https://projects.eclipse.org/projects/eclipse.pde">Plug-in Development Environment</a>
 `);
 
 let tableOfContentsAside = '';
@@ -102,7 +77,7 @@ function generate() {
 
 		const markdownElement = document.getElementById('content-target');
 		if (markdownElement) {
-			fetch('content2.md').then(response => {
+			fetch('content.md').then(response => {
 				if (!response.ok) {
 					const statusText = response.statusText
 					markdownElement.innerHTML = `<span><b>Failed to fetch markdown content: </b><span><b style="color: FireBrick">${statusText}</b><br/>`
@@ -115,35 +90,16 @@ function generate() {
 				}
 			})
 		}
+		generateTOC2(markdownElement)
 	} catch (exception) {
 		document.body.prepend(...toElements(`<span>Failed to generate content: <span><b style="color: FireBrick">${exception.message}</b><br/>`));
 		console.log(exception);
 	}
 }
 
-function generateDefaults(element, id) {
-	if (id != null && getQueryParameter(id) != null) {
-		return;
-	}
-
-	const parts = [];
-	if (!hasElement('header')) {
-		parts.push(generateDefaultHeader(document.createElement('div')));
-	}
-	if (!hasElement('breadcrumb')) {
-		parts.push(generateDefaultBreadcrumb(document.createElement('div')));
-	}
-	if (!hasElement('aside')) {
-		parts.push(generateDefaultAside(document.createElement('div')));
-	}
-	if (!hasElement('nav')) {
-		parts.push(generateDefaultNav(document.createElement('div')));
-	}
-	element.prepend(...parts);
-}
-
 function generateBody() {
 	const col = document.getElementById('aside') ? 'col-md-18' : ' col-md-24';
+	//TODO: generate the toc content instead of just calling 'generateAside' below
 	return toElements(`
 <div>
 	${generateHeader()}
@@ -156,7 +112,6 @@ function generateBody() {
 							${generateBreadcrumb()}
 						</div>
 						<div class=" main-col-content">
-							${generateNav()}
 							<div id="midcolumn">
 							${generateMainContent()}
 							</div>
@@ -225,6 +180,8 @@ function generateBody() {
 function generateMainContent() {
 	const main = document.body.querySelector('main')
 	if (main != null) {
+		//TODO: return innerHTML instead?
+		const inner = main.outerHTML
 		return main.outerHTML
 	}
 	return `
@@ -305,11 +262,6 @@ function generateBreadcrumb() {
 	const elements = breadcumbs.children;
 	const items = Array.from(elements).map(link => `<li>${link.outerHTML}</li>`);
 
-	const extraBreachcrumb = generateExtraBreadcrumb();
-	if (extraBreachcrumb != null) {
-		items.push(`<li>${extraBreachcrumb}</li>`);
-	}
-
 	return `
 <section class="default-breadcrumbs hidden-print breadcrumbs-default-margin"
 	id="breadcrumb">
@@ -327,79 +279,38 @@ function generateBreadcrumb() {
 `;
 }
 
-function generateExtraBreadcrumb() {
-	const location = new URL(window.location);
-	const crumb = getQueryParameter('crumb');
-	if (crumb) {
-		return `<span>${crumb}</span>`;
-	} else {
-		const file = getQueryParameter('file');
-		if (file != null) {
-			const match = file.match(/[^\/]+/g);
-			if (match.length == 1) {
-				return `<span>${match[0]}</span>`;
-			} else if (match.length == 2 && match[0] != 'plans') {
-				location.search = `file=${match[0]}`;
-				return `<a href="${location.href}">${match[0]}</a>`;
-			}
-		}
-	}
-}
+function generateTOC(element) {
+	const doc = document
+	const tocElement = doc.getElementById('toc-target')
+	const pageName = getPageName()
 
-function generateDefaultNav(element) {
-	return prependChildren(element, 'nav', ...defaultNav);
-}
-
-function generateNav() {
-	const elements = document.body.querySelectorAll('#nav>a');
-	if (elements.length == 0) {
-		return '';
-	}
-
-	const items = Array.from(elements).map(element => {
-		const href = element.getAttribute('href')
-		const target = element.getAttribute('target') ?? "_self";
-		const title = element.getAttribute('title') ?? '';
-		const className = element.className ?? '';
-		const content = element.innerHTML;
-		return `
-<li class="col-xs-24 col-md-12">
-	<a class="row" href="${href}" title="${title}"
-		target="${target}">
-		<i class="col-xs-3 col-md-6 fa ${className}"></i>
-		<span class="col-xs-21 c col-md-17">${content}
-		</span>
-	</a>
-</li>
-`;
-	});
-
-	return `
-<div class="header_nav">
-	<div class="col-xs-24 col-md-10 vcenter">
-		<a href="${scriptBase}">
-			<img src="${scriptBase}eclipse.svg" alt="The Main Index Page" xwidth="50%" xheight="auto" class="img-responsive header_nav_logo"/>
-		</a>
-	</div><!-- NO SPACES
- --><div class="col-xs-24 col-md-14 vcenter">
-		<ul class="clearfix">
-			${items.join('\n')}
-		</ul>
-	</div>
-</div>
-`;
+	
+	//TODO: callback after page load to populate the TOC?
+	const projectAside = `
+	<a class="separator"><i class='fa fa-cube'></i>${pageName}</a>
+	<a href="https://projects.eclipse.org/projects/eclipse.equinox">Equinox</a>
+	<a href="https://projects.eclipse.org/projects/eclipse.pde">Plug-in Development Environment</a>
+	`;
+	const tocElements = toElements(`
+	${projectAside}
+	`);
+	return prependChildren(element, 'aside', ...tocElements);
 }
 
 function generateDefaultAside(element) {
 	return prependChildren(element, 'aside', ...defaultAside);
 }
 
+function generateTOCAside(element) {
+	return prependChildren(element, 'aside', ...tocAside);
+}
+
+//TODO: generate aside (again?) after the TOC items where collected
 function generateAside() {
 	const elements = document.body.querySelectorAll('aside>*,#aside>*');
 	if (elements.length == 0) {
 		return '';
 	}
-
 	const items = Array.from(elements).map(element => {
 		const main = element.classList.contains('separator')
 		element.classList.add('link-unstyled');
@@ -429,11 +340,6 @@ function generateAside() {
 `;
 }
 
-
-function hasElement(id) {
-	return document.getElementById(id) != null;
-}
-
 function toElements(text) {
 	const wrapper = document.createElement('div');
 	wrapper.innerHTML = text;
@@ -444,10 +350,4 @@ function prependChildren(element, id, ...children) {
 	element.id = id;
 	element.prepend(...children);
 	return element;
-}
-
-function getQueryParameter(id) {
-	const location = new URL(window.location);
-	const search = new URLSearchParams(location.search);
-	return search.get(id);
 }

@@ -2,8 +2,6 @@
 <html>
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<!--TODO: set proper title and metadata -->
 	<title>Documentation | Eclipse Project</title>
 	<link rel="preconnect stylesheet" href="../../builds.css" />
@@ -12,11 +10,14 @@
 	<!-- TODO: can we unify this further without having a (visible) redirect? -->
 </head>
 
+
 <body>
 	<div data-generate="generateDefaultBreadcrumb(this)">
 		<a href="..">Downloads</a> <span>Build I12345678-1234</span>
 	</div>
-	<div data-generate="generateDefaults(this)"></div>
+	<div data-generate="generateDefaultHeader(this)"></div>
+	<!--div data-generate="generateDefaultAside(this)"></div-->
+	<div data-generate="generateTOCAside(this)"></div>
 
 	<main>
 		<div id="content-target"></div>
@@ -24,7 +25,8 @@
 	<script>
 		generate();
 		// TODO: Define the path here as argument?
-		//loadMarkdown();
+		//TODO: Define the resources to load in this file (ideally as async load/promise so that they can be replace in the page when loaded)
+		// Reference the resources through corresponding html elements in the markdown
 	</script>
 </body>
 
