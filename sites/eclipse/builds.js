@@ -52,7 +52,21 @@ const tocAside = toElements(`
 <a href="https://projects.eclipse.org/projects/eclipse.pde">Plug-in Development Environment</a>
 `);
 
-let tableOfContentsAside = '';
+let buildDataPath = null
+let buildDataPromise = null
+
+function buildData() {
+	if (!buildDataPromise && buildDataPath) {
+		buildDataPromise = fetch('build-data.json').then(response => {
+			if (!response.ok){
+				logException(response.statusText, response.statusText)
+				return null //TODO: check if this is gracefully?
+			}
+			response.text().then(txt => JSON.parse(txt))
+		})
+	}
+	return buildDataPromise
+}
 
 function generate() {
 	selfContent = document.documentElement.innerHTML;
@@ -71,23 +85,10 @@ function generate() {
 			generate.call(element, element);
 		}
 		
-		tableOfContentsAside = `
-		<div id="toc-container" class="col-md-6">
-			<aside>
-				<ul class="ul-left-nav">
-					<div  class="sideitem">
-						<h2>Table of Contents</h2>
-						<div id="toc-target">
-						</div>
-					</div>
-				</ul>
-			</aside>
-		</div>`;
-
 		const generatedBody = generateBody();
 		document.body.replaceChildren(...generatedBody);
 
-		const markdownElement = document.getElementById('content-target');
+		const markdownElement = document.getElementById('markdown-target');
 		if (markdownElement) {
 			fetch('content.md').then(response => {
 				if (!response.ok) {
@@ -95,26 +96,56 @@ function generate() {
 					markdownElement.innerHTML = `<span><b>Failed to fetch markdown content: </b><span><b style="color: FireBrick">${statusText}</b><br/>`
 				} else {
 					response.text().then(text => {
+						marked.use(markedGfmHeadingId.gfmHeadingId());
+						marked.use({
+							hooks: {
+								postprocess(html) {
+									return `${html}`;
+								}
+							}
+						});
 						markdownElement.innerHTML = marked.parse(text);
-						//TODO: update the toc here too?!
-						// Decide if there is a TOC at all and if yes, populate it
+						
+						// Populate TOC
+						//TODO: check all other references to 'toc' in markdown/index.html
+						//TODO: Or do it like in generateAside() ?
+						const headings = markedGfmHeadingId.getHeadingList();
+						if (headings) {
+							const headingText = `
+							<ul id="table-of-contents">
+							${headings.map(({id, raw, level}) => `<li class="tl${level}"><a href="#${id}">${raw}</a></li>`).join(' ')}
+							</ul>
+							`;
+							document.getElementById('toc-target').replaceChildren(...toElements(headingText));
+						} else{
+							document.getElementById('toc-container').remove()
+						}
+						// markdownElement.querySelector()
+						// markdownElement.querySelectorAll()
+						// markdownElement.getElementsByTagName()
+						// markdownElement.getElementsByClassName()
+						
 					}).catch(error => {
 						markdownElement.innerHTML = (`<span>Failed to parse markdown content: <span><b style="color: FireBrick">${error.message}</b><br/>`)
 					})
 				}
 			})
 		}
-		generateTOC2(markdownElement)
 	} catch (exception) {
-		document.body.prepend(...toElements(`<span>Failed to generate content: <span><b style="color: FireBrick">${exception.message}</b><br/>`));
-		console.log(exception);
+		logException(exception.message, exception)
 	}
+}
+
+function logException(message, loggedObject) {
+	document.body.prepend(...toElements(`<span>Failed to generate content: <span><b style="color: FireBrick">${message}</b><br/>`));
+	console.log(loggedObject);
 }
 
 function generateBody() {
 	const col = document.getElementById('aside') ? 'col-md-18' : ' col-md-24';
 	//TODO: generate the toc content instead of just calling 'generateAside' below
 	// Actually just instead a <div id="toc-target"></div>
+	//TODO: check if something is constant and can always be inlined
 	return toElements(`
 <div>
 	${generateHeader()}
@@ -133,8 +164,17 @@ function generateBody() {
 						</div>
 					</div>
 				</div>
-				<div id="toc-container"></div>
-				${tableOfContentsAside}
+				<div id="toc-container" class="col-md-6">
+					<aside>
+						<ul class="ul-left-nav">
+							<div class="sideitem">
+								<h2>Table of Contents</h2>
+								<div id="toc-target">
+								</div>
+							</div>
+						</ul>
+					</aside>
+				</div>
 			</div>
 		</div>
 	</main>

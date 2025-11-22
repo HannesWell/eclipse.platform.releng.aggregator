@@ -6,6 +6,8 @@
 	<title>Documentation | Eclipse Project</title>
 	<link rel="preconnect stylesheet" href="../../builds.css" />
 	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+	<!-- TODO: check if this is necessary script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script-->
+	<script src="https://cdn.jsdelivr.net/npm/marked-gfm-heading-id/lib/index.umd.js"></script>
 	<script src="../../builds.js"></script>
 	<!-- TODO: can we unify this further without having a (visible) redirect? -->
 </head>
@@ -20,7 +22,7 @@
 	<div data-generate="generateTOCAside(this)"></div>
 
 	<main>
-		<div id="content-target"></div>
+		<div id="markdown-target"></div>
 	</main>
 	<script>
 		//TODO: set page name here and use it bread-crump and TOC

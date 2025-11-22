@@ -31,6 +31,7 @@ pipeline {
 				}
 			}
 		}
+		//TODO: can this job and all called (ANT) scripts become obsoelte?
 		stage('Update test results'){
 			environment {
 				// Download Server locations (seldomly change)

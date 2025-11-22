@@ -2,8 +2,4 @@ Hello World
 
 # Headline 1
 
-Some text
-
-# Headline 2
-
-More Content
+TODO: provide git log as simple json to simplify the build-pipeline too?
