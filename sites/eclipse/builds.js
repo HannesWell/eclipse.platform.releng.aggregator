@@ -52,8 +52,6 @@ const tocAside = toElements(`
 <a href="https://projects.eclipse.org/projects/eclipse.pde">Plug-in Development Environment</a>
 `);
 
-let tableOfContentsAside = '';
-
 function generate() {
 	selfContent = document.documentElement.innerHTML;
 	try {
@@ -71,23 +69,10 @@ function generate() {
 			generate.call(element, element);
 		}
 		
-		tableOfContentsAside = `
-		<div id="toc-container" class="col-md-6">
-			<aside>
-				<ul class="ul-left-nav">
-					<div  class="sideitem">
-						<h2>Table of Contents</h2>
-						<div id="toc-target">
-						</div>
-					</div>
-				</ul>
-			</aside>
-		</div>`;
-
 		const generatedBody = generateBody();
 		document.body.replaceChildren(...generatedBody);
 
-		const markdownElement = document.getElementById('content-target');
+		const markdownElement = document.getElementById('markdown-target');
 		if (markdownElement) {
 			fetch('content.md').then(response => {
 				if (!response.ok) {
@@ -95,16 +80,38 @@ function generate() {
 					markdownElement.innerHTML = `<span><b>Failed to fetch markdown content: </b><span><b style="color: FireBrick">${statusText}</b><br/>`
 				} else {
 					response.text().then(text => {
+						marked.use(markedGfmHeadingId.gfmHeadingId());
+						marked.use({
+							hooks: {
+								postprocess(html) {
+									return `${html}`;
+								}
+							}
+						});
 						markdownElement.innerHTML = marked.parse(text);
-						//TODO: update the toc here too?!
-						// Decide if there is a TOC at all and if yes, populate it
+						
+						// Populate TOC
+						//TODO: check all other references to 'toc' in markdown/index.html
+						//TODO: Or do it like in generateAside() ?
+						const headings = markedGfmHeadingId.getHeadingList();
+						if(headings) {
+							const headingText = `
+							<ul id="table-of-contents">
+							${headings.map(({id, raw, level}) => `<li class="tl${level}"><a href="#${id}">${raw}</a></li>`).join(' ')}
+							</ul>
+							`;
+							document.getElementById('toc-target').replaceChildren(...toElements(headingText));
+						} else{
+							document.getElementById('toc-container').remove()
+						}
+						
 					}).catch(error => {
 						markdownElement.innerHTML = (`<span>Failed to parse markdown content: <span><b style="color: FireBrick">${error.message}</b><br/>`)
 					})
 				}
 			})
 		}
-		generateTOC2(markdownElement)
+		//generateTOC2(markdownElement)
 	} catch (exception) {
 		document.body.prepend(...toElements(`<span>Failed to generate content: <span><b style="color: FireBrick">${exception.message}</b><br/>`));
 		console.log(exception);
@@ -133,8 +140,17 @@ function generateBody() {
 						</div>
 					</div>
 				</div>
-				<div id="toc-container"></div>
-				${tableOfContentsAside}
+				<div id="toc-container" class="col-md-6">
+					<aside>
+						<ul class="ul-left-nav">
+							<div class="sideitem">
+								<h2>Table of Contents</h2>
+								<div id="toc-target">
+								</div>
+							</div>
+						</ul>
+					</aside>
+				</div>
 			</div>
 		</div>
 	</main>
