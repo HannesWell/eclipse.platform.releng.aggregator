@@ -59,7 +59,8 @@ function buildData() {
 	if (!buildDataPromise && buildDataPath) {
 		buildDataPromise = fetch('build-data.json').then(response => {
 			if (!response.ok){
-				return "Error returned: " + response.statusText
+				logException(response.statusText, response.statusText)
+				return null //TODO: check if this is gracefully?
 			}
 			response.text().then(txt => JSON.parse(txt))
 		})
@@ -119,6 +120,10 @@ function generate() {
 						} else{
 							document.getElementById('toc-container').remove()
 						}
+						// markdownElement.querySelector()
+						// markdownElement.querySelectorAll()
+						// markdownElement.getElementsByTagName()
+						// markdownElement.getElementsByClassName()
 						
 					}).catch(error => {
 						markdownElement.innerHTML = (`<span>Failed to parse markdown content: <span><b style="color: FireBrick">${error.message}</b><br/>`)
@@ -127,9 +132,13 @@ function generate() {
 			})
 		}
 	} catch (exception) {
-		document.body.prepend(...toElements(`<span>Failed to generate content: <span><b style="color: FireBrick">${exception.message}</b><br/>`));
-		console.log(exception);
+		logException(exception.message, exception)
 	}
+}
+
+function logException(message, loggedObject) {
+	document.body.prepend(...toElements(`<span>Failed to generate content: <span><b style="color: FireBrick">${message}</b><br/>`));
+	console.log(loggedObject);
 }
 
 function generateBody() {
