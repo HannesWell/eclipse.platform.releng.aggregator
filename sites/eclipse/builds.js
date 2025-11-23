@@ -52,6 +52,21 @@ const tocAside = toElements(`
 <a href="https://projects.eclipse.org/projects/eclipse.pde">Plug-in Development Environment</a>
 `);
 
+let buildDataPath = null
+let buildDataPromise = null
+
+function buildData() {
+	if (!buildDataPromise && buildDataPath) {
+		buildDataPromise = fetch('build-data.json').then(response => {
+			if (!response.ok){
+				return "Error returned: " + response.statusText
+			}
+			response.text().then(txt => JSON.parse(txt))
+		})
+	}
+	return buildDataPromise
+}
+
 function generate() {
 	selfContent = document.documentElement.innerHTML;
 	try {
@@ -94,7 +109,7 @@ function generate() {
 						//TODO: check all other references to 'toc' in markdown/index.html
 						//TODO: Or do it like in generateAside() ?
 						const headings = markedGfmHeadingId.getHeadingList();
-						if(headings) {
+						if (headings) {
 							const headingText = `
 							<ul id="table-of-contents">
 							${headings.map(({id, raw, level}) => `<li class="tl${level}"><a href="#${id}">${raw}</a></li>`).join(' ')}
@@ -111,7 +126,6 @@ function generate() {
 				}
 			})
 		}
-		//generateTOC2(markdownElement)
 	} catch (exception) {
 		document.body.prepend(...toElements(`<span>Failed to generate content: <span><b style="color: FireBrick">${exception.message}</b><br/>`));
 		console.log(exception);
@@ -122,6 +136,7 @@ function generateBody() {
 	const col = document.getElementById('aside') ? 'col-md-18' : ' col-md-24';
 	//TODO: generate the toc content instead of just calling 'generateAside' below
 	// Actually just instead a <div id="toc-target"></div>
+	//TODO: check if something is constant and can always be inlined
 	return toElements(`
 <div>
 	${generateHeader()}
