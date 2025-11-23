@@ -31,7 +31,12 @@ function listLogs($myDir) {
   echo "<ul>";
   for ($i = 0; $i < $index; $i++) {
     $anEntry = $entries[$i];
-    $line = "<a href=\"$myDir/$anEntry\">$anEntry</a>" . fileSizeForDisplay("$myDir/$anEntry");
+    if (strpos($label, 'stage') !== 0) {
+      continue;
+    }
+    $label = preg_replace('/^s\d+|\.log$/', '', $anEntry);
+    $label = str_replace('_', ' ', $label);
+    $line = "<a href=\"$myDir/$anEntry\">$label</a>" . fileSizeForDisplay("$myDir/$anEntry");
     echo "<li>$line</li>";
   }
   echo "</ul>";
@@ -48,9 +53,9 @@ P {text-indent: 30pt;}
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <meta name="author" content="Eclipse Foundation, Inc." />
 <meta name="keywords" content="eclipse,project,plug-ins,plugins,java,ide,swt,refactoring,free java ide,tools,platform,open source,development environment,development,ide" />
-<link rel="stylesheet" type="text/css" href="../../../eclipse.org-common/stylesheets/visual.css" media="screen" />
-<link rel="stylesheet" type="text/css" href="../../../eclipse.org-common/stylesheets/layout.css" media="screen" />
-<link rel="stylesheet" type="text/css" href="../../../eclipse.org-common/stylesheets/print.css" media="print" />
+<link rel="stylesheet" type="text/css" href="https://download.eclipse.org/eclipse/eclipse.org-common/stylesheets/visual.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="https://download.eclipse.org/eclipse/eclipse.org-common/stylesheets/layout.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="https://download.eclipse.org/eclipse/eclipse.org-common/stylesheets/print.css" media="print" />
 <script>
 
 sfHover = function() {
