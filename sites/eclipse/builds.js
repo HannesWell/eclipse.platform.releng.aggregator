@@ -6,7 +6,7 @@ function getPageName() {
 	//TODO: maybe find a nicer way? At least resolve camle case?
 	let pathElements = window.location.pathname.split('/')
 	const lastElement = pathElements.at(-1)
-	if (lastElement =='index.html' || lastElement == ''){
+	if (lastElement == 'index.html' || lastElement == '') {
 		return pathElements.at(-2)
 	}
 	return lastElement
@@ -57,19 +57,19 @@ let buildDataPromise = null
 
 function buildData() {
 	if (!buildDataPromise && buildDataPath) {
-		buildDataPromise = fetch('build-data.json').then(response => {
-			if (!response.ok){
-				logException(response.statusText, response.statusText)
-				return null //TODO: check if this is gracefully?
+		buildDataPromise = fetch(buildDataPath).then(response => {
+			if (!response.ok) {
+				logException(response.statusText + ': ' + buildDataPath, response.statusText)
+				throw new Exception() //TODO: check this
 			}
-			response.text().then(txt => JSON.parse(txt))
-		})
+			return response.text()
+		}).then(txt => JSON.parse(txt))
 	}
 	return buildDataPromise
 }
 
 function generate() {
-	selfContent = document.documentElement.innerHTML;
+	// selfContent = document.documentElement.innerHTML;	//TODO: remove?
 	try {
 		const head = document.head;
 		var referenceNode = head.querySelector('script');
@@ -84,7 +84,7 @@ function generate() {
 			const generate = new Function(generator);
 			generate.call(element, element);
 		}
-		
+
 		const generatedBody = generateBody();
 		document.body.replaceChildren(...generatedBody);
 
@@ -105,7 +105,7 @@ function generate() {
 							}
 						});
 						markdownElement.innerHTML = marked.parse(text);
-						
+
 						// Populate TOC
 						//TODO: check all other references to 'toc' in markdown/index.html
 						//TODO: Or do it like in generateAside() ?
@@ -113,20 +113,27 @@ function generate() {
 						if (headings) {
 							const headingText = `
 							<ul id="table-of-contents">
-							${headings.map(({id, raw, level}) => `<li class="tl${level}"><a href="#${id}">${raw}</a></li>`).join(' ')}
+							${headings.map(({ id, raw, level }) => `<li class="tl${level}"><a href="#${id}">${raw}</a></li>`).join(' ')}
 							</ul>
 							`;
 							document.getElementById('toc-target').replaceChildren(...toElements(headingText));
-						} else{
+						} else {
 							document.getElementById('toc-container').remove()
 						}
-						// markdownElement.querySelector()
-						// markdownElement.querySelectorAll()
-						// markdownElement.getElementsByTagName()
-						// markdownElement.getElementsByClassName()
-						
+						//TODO: Move to separate method?
+						buildData().then(buildData => {
+							const dataElements = markdownElement.getElementsByClassName("data-ref")
+							for (const textElement of dataElements) {
+								const path = textElement.getAttribute('data-path');
+								let value = buildData
+								for (const key of path.split('.')) {
+									value = value[key]
+								}
+								textElement.textContent = value
+							}
+						})
 					}).catch(error => {
-						markdownElement.innerHTML = (`<span>Failed to parse markdown content: <span><b style="color: FireBrick">${error.message}</b><br/>`)
+						markdownElement.innerHTML = `<span>Failed to parse markdown content: <span><b style="color: FireBrick">${error.message}</b><br/>`
 					})
 				}
 			})
@@ -339,7 +346,6 @@ function generateTOC(element) {
 	const tocElement = doc.getElementById('toc-target')
 	const pageName = getPageName()
 
-	
 	//TODO: callback after page load to populate the TOC?
 	const projectAside = `
 	<a class="separator"><i class='fa fa-cube'></i>${pageName}</a>
