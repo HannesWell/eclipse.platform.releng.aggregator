@@ -52,20 +52,20 @@ const tocAside = toElements(`
 <a href="https://projects.eclipse.org/projects/eclipse.pde">Plug-in Development Environment</a>
 `);
 
-let buildDataPath = null
-let buildDataPromise = null
+// start resource fetch early TODO: Check if this works as desired
+const markdownContentFetched = fetch('content.md')
 
-function buildData() {
-	if (!buildDataPromise && buildDataPath) {
-		buildDataPromise = fetch(buildDataPath).then(response => {
-			if (!response.ok) {
-				logException(response.statusText + ': ' + buildDataPath, response.statusText)
-				throw new Exception() //TODO: check this
-			}
-			return response.text()
-		}).then(txt => JSON.parse(txt))
-	}
-	return buildDataPromise
+let contentDataFetched = null
+
+function loadContentData(buildDataPath) {
+	contentDataFetched = fetch(buildDataPath).then(response => {
+		if (!response.ok) {
+			//TODO: might this be called too early?
+			logException(response.statusText + ': ' + buildDataPath, response.statusText)
+			throw new Exception() //TODO: check this
+		}
+		return response.text()
+	}).then(txt => JSON.parse(txt))
 }
 
 function generate() {
@@ -90,7 +90,7 @@ function generate() {
 
 		const markdownElement = document.getElementById('markdown-target');
 		if (markdownElement) {
-			fetch('content.md').then(response => {
+			markdownContentFetched.then(response => {
 				if (!response.ok) {
 					const statusText = response.statusText
 					markdownElement.innerHTML = `<span><b>Failed to fetch markdown content: </b><span><b style="color: FireBrick">${statusText}</b><br/>`
@@ -121,17 +121,40 @@ function generate() {
 							document.getElementById('toc-container').remove()
 						}
 						//TODO: Move to separate method?
-						buildData().then(buildData => {
-							const dataElements = markdownElement.getElementsByClassName("data-ref")
-							for (const textElement of dataElements) {
-								const path = textElement.getAttribute('data-path');
-								let value = buildData
-								for (const key of path.split('.')) {
-									value = value[key]
+						if (contentDataFetched) {
+							contentDataFetched.then(buildData => {
+								const dataTables = markdownElement.getElementsByClassName("data-table")
+								for (const table of dataTables) {
+									if (table.tBodies.length != 1) {
+										throw new Exception("Data table with more than one body")
+									}
+									let tbody = table.tBodies[0]
+									if (table.rows.length != 1) {
+										throw new Exception("Data table with more than one row")
+									}
+									const rowTemplate = table.rows[0].cloneNode(0)
+									table.deleteRow(0) // Remove the template row
+									
+									const dataPath = table.getAttribute('data-path');
+									const tableData = getValue(dataPath, buildData)
+									for (const data of tableData) {
+										//TODO: or insert after first row and delete the first line at the end?
+									}
+									
+									let value = buildData
+									for (const key of path.split('.')) {
+										value = value[key]
+									}
+									textElement.textContent = value
 								}
-								textElement.textContent = value
-							}
-						})
+								//TODO: consider entire document, includead bread-crumb etc
+								const dataElements = markdownElement.getElementsByClassName("data-ref")
+								for (const textElement of dataElements) {
+									const path = textElement.getAttribute('data-path');
+									textElement.textContent = getValue(path, buildData)
+								}
+							})
+						}
 					}).catch(error => {
 						markdownElement.innerHTML = `<span>Failed to parse markdown content: <span><b style="color: FireBrick">${error.message}</b><br/>`
 					})
@@ -141,6 +164,14 @@ function generate() {
 	} catch (exception) {
 		logException(exception.message, exception)
 	}
+}
+
+function getValue(data, path) {
+	let value = data
+	for (const key of path.split('.')) {
+		value = value[key]
+	}
+	return value;
 }
 
 function logException(message, loggedObject) {
@@ -246,9 +277,7 @@ function generateMainContent() {
 		const inner = main.outerHTML
 		return main.outerHTML
 	}
-	return `
-<main>The body specifies no content.</main>
-`;
+	return "<main>The body specifies no content.</main>";
 }
 
 function generateDefaultHeader(element) {
