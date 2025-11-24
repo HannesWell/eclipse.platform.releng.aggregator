@@ -52,20 +52,20 @@ const tocAside = toElements(`
 <a href="https://projects.eclipse.org/projects/eclipse.pde">Plug-in Development Environment</a>
 `);
 
-let buildDataPath = null
-let buildDataPromise = null
+// start resource fetch early TODO: Check if this works as desired
+const markdownContentFetched = fetch('content.md')
 
-function buildData() {
-	if (!buildDataPromise && buildDataPath) {
-		buildDataPromise = fetch(buildDataPath).then(response => {
-			if (!response.ok) {
-				logException(response.statusText + ': ' + buildDataPath, response.statusText)
-				throw new Exception() //TODO: check this
-			}
-			return response.text()
-		}).then(txt => JSON.parse(txt))
-	}
-	return buildDataPromise
+let contentDataFetched = null
+
+function loadContentData(buildDataPath) {
+	contentDataFetched = fetch(buildDataPath).then(response => {
+		if (!response.ok) {
+			//TODO: might this be called too early?
+			logException(response.statusText + ': ' + buildDataPath, response.statusText)
+			throw new Error() //TODO: check this
+		}
+		return response.text()
+	}).then(txt => JSON.parse(txt))
 }
 
 function generate() {
@@ -90,7 +90,7 @@ function generate() {
 
 		const markdownElement = document.getElementById('markdown-target');
 		if (markdownElement) {
-			fetch('content.md').then(response => {
+			markdownContentFetched.then(response => {
 				if (!response.ok) {
 					const statusText = response.statusText
 					markdownElement.innerHTML = `<span><b>Failed to fetch markdown content: </b><span><b style="color: FireBrick">${statusText}</b><br/>`
@@ -105,7 +105,6 @@ function generate() {
 							}
 						});
 						markdownElement.innerHTML = marked.parse(text);
-
 						// Populate TOC
 						//TODO: check all other references to 'toc' in markdown/index.html
 						//TODO: Or do it like in generateAside() ?
@@ -121,17 +120,13 @@ function generate() {
 							document.getElementById('toc-container').remove()
 						}
 						//TODO: Move to separate method?
-						buildData().then(buildData => {
-							const dataElements = markdownElement.getElementsByClassName("data-ref")
-							for (const textElement of dataElements) {
-								const path = textElement.getAttribute('data-path');
-								let value = buildData
-								for (const key of path.split('.')) {
-									value = value[key]
-								}
-								textElement.textContent = value
-							}
-						})
+						if (contentDataFetched) {
+							contentDataFetched.then(contentData => {
+								resolveDataTables(markdownElement, contentData)
+								//TODO: consider entire document, includead bread-crumb etc
+								resolveDataReferences(markdownElement, contentData)
+							})
+						}
 					}).catch(error => {
 						markdownElement.innerHTML = `<span>Failed to parse markdown content: <span><b style="color: FireBrick">${error.message}</b><br/>`
 					})
@@ -141,6 +136,49 @@ function generate() {
 	} catch (exception) {
 		logException(exception.message, exception)
 	}
+}
+
+function resolveDataTables(rootElement, data) {
+	const dataTables = rootElement.getElementsByClassName("data-table")
+	for (const table of dataTables) {
+		if (table.tBodies.length != 1) {
+			throw new Error("Data table with more than one body")
+		}
+		let tbody = table.tBodies[0]
+		if (tbody.rows.length != 1) {
+			throw new Error("Data table with more than one row")
+		}
+		const templateRow = tbody.rows[0]
+		const dataPath = table.getAttribute('data-path');
+		const tableData = getValue(data, dataPath)
+		for (const dataRow of tableData) {
+			const row = templateRow.cloneNode(true)
+			resolveDataReferences(row, dataRow)
+			tbody.appendChild(row)
+		}
+		tbody.deleteRow(0) // Remove the template row
+	}
+}
+
+function resolveDataReferences(contextElement, contextData) {
+	const dataElements = Array.from(contextElement.getElementsByClassName("data-ref"))
+	for (const textElement of dataElements) {
+		textElement.classList.remove("data-ref") // Prevent multiple processing in subsequent passes with different context
+		//TODO: assert that it's a span element or handle different types too?
+		const dataPath = textElement.getAttribute('data-path');
+		textElement.textContent = getValue(contextData, dataPath)
+	}
+}
+
+function getValue(data, path) {
+	let value = data
+	for (const key of path.split('.')) {
+		if(!value.hasOwnProperty(key)) {
+			throw new Error(`Key '${key}' not found in ${JSON.stringify(value)}`)
+		}
+		value = value[key]
+	}
+	return value;
 }
 
 function logException(message, loggedObject) {
@@ -246,9 +284,7 @@ function generateMainContent() {
 		const inner = main.outerHTML
 		return main.outerHTML
 	}
-	return `
-<main>The body specifies no content.</main>
-`;
+	return "<main>The body specifies no content.</main>";
 }
 
 function generateDefaultHeader(element) {
