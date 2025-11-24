@@ -290,6 +290,7 @@ pipeline {
 								dir("${CJE_ROOT}/mbscripts") {
 									sh '''#!/bin/bash -xe
 										source $CJE_ROOT/buildproperties.shsource
+										mkdir -p $CJE_ROOT/$DROP_DIR/$BUILD_ID
 										cp $CJE_ROOT/buildproperties.* $CJE_ROOT/$DROP_DIR/$BUILD_ID
 										./mb300_gatherEclipseParts.sh $CJE_ROOT/buildproperties.shsource 2>&1
 									'''
@@ -341,6 +342,7 @@ pipeline {
 								dir("${CJE_ROOT}/mbscripts") {
 									sh '''#!/bin/bash -xe
 										source $CJE_ROOT/buildproperties.shsource
+										mkdir -p $CJE_ROOT/$EQUINOX_DROP_DIR/$BUILD_ID
 										cp $CJE_ROOT/buildproperties.* $CJE_ROOT/$EQUINOX_DROP_DIR/$BUILD_ID
 										./mb310_gatherEquinoxParts.sh $CJE_ROOT/buildproperties.shsource 2>&1
 									'''
