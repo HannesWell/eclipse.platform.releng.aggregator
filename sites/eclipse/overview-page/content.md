@@ -11,7 +11,9 @@ For reference, see also the [p2 repositories provided](https://wiki.eclipse.org/
 
 ### Latest Downloads
 
-<table class="data-table" data-path="latest" style="width: 100%;border-collapse: separate;border-spacing: 1px;">
+<!-- TODO: introduce markdown post-processor that allows avoid repetition of the table definition and just use a div with different data? -->
+
+<table class="data-table builds-table" data-path="latest" >
 	<thead>
 		<tr>
 			<th>Build Name</th>
@@ -19,13 +21,15 @@ For reference, see also the [p2 repositories provided](https://wiki.eclipse.org/
 			<th>Build Date</th>
 		</tr>
 	</thead>
-	<tr>
-		<td class="data-ref"><a href="${path}" title="Latest Release">${label}</a></td>
-		<td class="data-ref">
-			<a href="${path}">
+	<tr> <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
+		<td>
+			<a class="data-ref" href="${path}" title="Latest Release">${label}</a>
+		</td>
+		<td>
+			<a class="data-ref" href="${path}">
 				<img src="${statusIcon}" title="Build is available" alt="Build is available">
 			</a>
-			<a href="${testsPath}" title="${testsCompletion} test platforms finished." style="text-decoration: none">
+			<a class="data-ref" href="${testsPath}" title="${testsCompletion} test platforms finished." style="text-decoration: none">
 				<img src="${testsIcon}"/>
 				(${testsCompletion} platforms)
 			</a>

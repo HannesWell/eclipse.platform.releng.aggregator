@@ -11,11 +11,22 @@ pipeline {
 	agent {
 		label 'basic'
 	}
+	environment {
+		// Download server paths
+		EP_ROOT = '/home/data/httpd/download.eclipse.org/eclipse/try-outs'
+		EP_ECLIPSE_DROPS = "${EP_ROOT}/eclipse/downloads/drops4"
+		EP_EQUINOX_DROPS = "${EP_ROOT}/equinox/drops"
+		EP_ECLIPSE_UPDATES = "${EP_ROOT}/eclipse/updates"
+	}
 	stages {
 		stage('Update index'){
 			steps {
 				sshagent(['projects-storage.eclipse.org-bot-ssh']) {
+					def buildDrops = sh(returnStdout: true, script: "ssh genie.releng@projects-storage.eclipse.org ls ${EP_ECLIPSE_DROPS}").trim().split("\\s")
+					
 					sh '''#!/bin/bash -xe
+						ssh genie.releng@projects-storage.eclipse.org
+						ls
 						PHP_PAGE="createIndex4x.php"
 						HTML_PAGE="index.html"
 						TEMP_INDEX="tempIndex.html"
