@@ -28,7 +28,7 @@
 			"testsPath": "drops4/I20251124-1800/testResults.php"
 		}
 	],
-	"latestRelease": [
+	"releases": [
 		{
 			"label": "4.37",
 			"path": "drops4/R-4.37-202509050730/",

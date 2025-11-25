@@ -13,30 +13,74 @@ pipeline {
 	}
 	environment {
 		// Download server paths
-		EP_ROOT = '/home/data/httpd/download.eclipse.org/eclipse/try-outs'
+		EP_ROOT = '/home/data/httpd/download.eclipse.org'
 		EP_ECLIPSE_DROPS = "${EP_ROOT}/eclipse/downloads/drops4"
 		EP_EQUINOX_DROPS = "${EP_ROOT}/equinox/drops"
 		EP_ECLIPSE_UPDATES = "${EP_ROOT}/eclipse/updates"
 	}
 	stages {
-		stage('Update index'){
+		stage('Update index') {
 			steps {
-				sshagent(['projects-storage.eclipse.org-bot-ssh']) {
-					def buildDrops = sh(returnStdout: true, script: "ssh genie.releng@projects-storage.eclipse.org ls ${EP_ECLIPSE_DROPS}").trim().split("\\s")
-					
-					sh '''#!/bin/bash -xe
-						ssh genie.releng@projects-storage.eclipse.org
-						ls
-						PHP_PAGE="createIndex4x.php"
-						HTML_PAGE="index.html"
-						TEMP_INDEX="tempIndex.html"
-						
-						wget --no-verbose -O ${TEMP_INDEX} https://download.eclipse.org/eclipse/downloads/${PHP_PAGE} 2>&1
-						
-						scp ${TEMP_INDEX} genie.releng@projects-storage.eclipse.org:/home/data/httpd/download.eclipse.org/eclipse/downloads/${HTML_PAGE}
-					'''
+				script {
+					//TODO: change this to one call to SSH which iterates over the directories in bash and outputs the relevant data
+					// Then parse the result in a noncps method to speed it up
+					sshagent(['projects-storage.eclipse.org-bot-ssh']) {
+						def buildDrops = sh(script: "ssh genie.releng@projects-storage.eclipse.org ls ${EP_ECLIPSE_DROPS}", returnStdout: true).trim().split("\\s")
+						def releases = []
+						def stableBuilds = []
+						def iBuilds = []
+						def yBuilds = []
+						for (dropName in buildDrops) {
+							if (dropName == 'index.html') {
+								continue; //TODO: check if the current path is a dir (with a specific file)
+							}
+							echo "Collect data of ${dropName}"
+							def boolean isOldStyleDrop = true
+							def int expectedTestsCount = -1
+							def int finishedTestsCount = -1
+							if (isOldStyleDrop) {
+								def expectedTests = sh(script: "ssh genie.releng@projects-storage.eclipse.org cat ${EP_ECLIPSE_DROPS}/${dropName}/testConfigs.php", returnStdout: true).trim()
+								expectedTestsCount = expectedTests.count('$expectedTestConfigs[]=')
+								def finishedTests = sh(script: "ssh genie.releng@projects-storage.eclipse.org cat ${EP_ECLIPSE_DROPS}/${dropName}/testConfigsFound.php || echo 'Tests not yet finished'", returnStdout: true).trim()
+								finishedTestsCount = finishedTests.count('$foundTestConfigs[]=')
+							} else {
+								//TODO: implement this
+								error 'New style projects not yet implemented'
+							}
+							def dropData = [ path: "drops4/${dropName}".toString(), statusIcon: 'images/build_done.gif' ]
+							if (dropName.startsWith('R-')) {
+								dropData.label = dropName.substring(2, dropName.lastIndexOf('-'))
+								releases += dropData
+							} else if (dropName.startsWith('S-')) {
+								dropData.label = dropName.substring(2, dropName.lastIndexOf('-'))
+								stableBuilds += dropData
+							} else if (dropName.startsWith('I20')) {
+								dropData.label = dropName
+								iBuilds += dropData
+							} else if (dropName.startsWith('Y20')) {
+								dropData.label = dropName
+								yBuilds += dropData
+							}
+							dropData.date = ''
+							dropData.testsCompletion = "${finishedTestsCount} of ${expectedTestsCount}".toString()
+							dropData.testsIcon = finishedTestsCount == expectedTestsCount ? 'images/junit.gif' : 'images/runtests.gif'
+							dropData.testsPath = "drops4/${dropName}/${isOldStyleDrop ? 'testResults.php' : 'testresults'}".toString()
+						}
+						def overviewData = [releases: releases, stableBuilds: stableBuilds, iBuilds: iBuilds, yBuilds: yBuilds]
+						overviewData.values().each{ list -> list.sort({d1, d2 -> -d1.label.compareTo(d2.label)})}
+						// Select latest element among all releases, stable builds respectivly I-builds
+						def latest = [overviewData.releases[0], overviewData.stableBuilds[0], overviewData.iBuilds[0] ] 
+						writeJSON('data.json', overviewData)
+					}
 				}
+				archiveArtifacts artifacts: '**/*'
 			}
 		}
 	}
+}
+
+//TODO: instead checkout this repo and use def utilities = load "JenkinsJobs/shared/utilities.groovy" ?!
+def writeJSON(String jsonFilePath, def json) {
+	// This leads to prettier results than using the writeJSON() step, even with the pretty parameter set.
+	writeFile(file: jsonFilePath, text: groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(json)).replace('    ','\t'), encoding :'UTF-8')
 }

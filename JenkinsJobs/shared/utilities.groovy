@@ -24,6 +24,10 @@ def replaceAllInFile(String filePath, Map<String,String> replacements) {
 def modifyJSON(String jsonFilePath, Closure transformation) {
 	def json = readJSON(file: jsonFilePath)
 	transformation.call(json)
+	writeJSON(jsonFilePath, json)
+}
+
+def writeJSON(String jsonFilePath, def json) {
 	// This leads to prettier results than using the writeJSON() step, even with the pretty parameter set.
 	writeFile(file: jsonFilePath, text: JsonOutput.prettyPrint(JsonOutput.toJson(json)).replace('    ','\t'), encoding :'UTF-8')
 }
