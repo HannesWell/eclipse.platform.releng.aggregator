@@ -1,44 +1,147 @@
 {
 	"latest": [
 		{
-			"name": "4.37",
+			"label": "4.37",
+			"path": "drops4/R-4.37-202509050730/",
+			"statusIcon": "images/build_done.gif",
 			"date": "Fri, 5 Sep 2025 -- 07:30 (+0000)",
-			"status": "ok",
-			"testStatus": "6 of 6"
+			"testsCompletion": "6 of 6",
+			"testsIcon": "images/junit.gif",
+			"testsPath": "drops4/R-4.37-202509050730/testResults.php"
 		},
 		{
-			"name": "4.38RC1",
+			"label": "4.38RC1",
+			"path": "drops4/S-4.38RC1-202511201800/",
+			"statusIcon": "images/build_done.gif",
 			"date": "Thu, 20 Nov 2025 -- 18:00 (+0000)",
-			"status": "ok",
-			"testStatus": "6 of 6"
+			"testsCompletion": "6 of 6",
+			"testsIcon": "images/junit.gif",
+			"testsPath": "drops4/S-4.38RC1-202511201800/testResults.php"
 		},
 		{
-			"name": "I20251123-1800 ",
-			"date": "Sun, 23 Nov 2025 -- 18:00 (+0000)",
-			"status": "caution",
-			"testStatus": "5 of 6"
+			"label": "I20251124-1800",
+			"path": "drops4/I20251124-1800/",
+			"statusIcon": "images/caution.gif",
+			"date": "Mon, 24 Nov 2025 -- 18:00 (+0000)",
+			"testsCompletion": "5 of 6",
+			"testsIcon": "images/runtests.gif",
+			"testsPath": "drops4/I20251124-1800/testResults.php"
 		}
 	],
-	"latest-release": [
-		"4.37",
-		"4.36",
-		"4.35"
+	"latestRelease": [
+		{
+			"label": "4.37",
+			"path": "drops4/R-4.37-202509050730/",
+			"statusIcon": "images/build_done.gif",
+			"date": "Fri, 5 Sep 2025 -- 07:30 (+0000)",
+			"testsCompletion": "6 of 6",
+			"testsIcon": "images/junit.gif",
+			"testsPath": "drops4/R-4.37-202509050730/testResults.php"
+		},
+		{
+			"label": "4.38RC1",
+			"path": "drops4/S-4.38RC1-202511201800/",
+			"statusIcon": "images/build_done.gif",
+			"date": "Thu, 20 Nov 2025 -- 18:00 (+0000)",
+			"testsCompletion": "6 of 6",
+			"testsIcon": "images/junit.gif",
+			"testsPath": "drops4/S-4.38RC1-202511201800/testResults.php"
+		},
+		{
+			"label": "I20251124-1800",
+			"path": "drops4/I20251124-1800/",
+			"statusIcon": "images/caution.gif",
+			"date": "Mon, 24 Nov 2025 -- 18:00 (+0000)",
+			"testsCompletion": "5 of 6",
+			"testsIcon": "images/runtests.gif",
+			"testsPath": "drops4/I20251124-1800/testResults.php"
+		}
 	],
-	"stable-builds": [
-		"4.38M3",
-		"4.38M2",
-		"4.38M1"
+	"stableBuilds": [
+		{
+			"label": "4.37",
+			"path": "drops4/R-4.37-202509050730/",
+			"statusIcon": "images/build_done.gif",
+			"date": "Fri, 5 Sep 2025 -- 07:30 (+0000)",
+			"testsCompletion": "6 of 6",
+			"testsIcon": "images/junit.gif",
+			"testsPath": "drops4/R-4.37-202509050730/testResults.php"
+		},
+		{
+			"label": "4.38RC1",
+			"path": "drops4/S-4.38RC1-202511201800/",
+			"statusIcon": "images/build_done.gif",
+			"date": "Thu, 20 Nov 2025 -- 18:00 (+0000)",
+			"testsCompletion": "6 of 6",
+			"testsIcon": "images/junit.gif",
+			"testsPath": "drops4/S-4.38RC1-202511201800/testResults.php"
+		},
+		{
+			"label": "I20251124-1800",
+			"path": "drops4/I20251124-1800/",
+			"statusIcon": "images/caution.gif",
+			"date": "Mon, 24 Nov 2025 -- 18:00 (+0000)",
+			"testsCompletion": "5 of 6",
+			"testsIcon": "images/runtests.gif",
+			"testsPath": "drops4/I20251124-1800/testResults.php"
+		}
 	],
-	"i-builds": [
-		"I20251114-0540",
-		"I20251113-1020",
-		"I20251113-0510",
-		"..."
+	"iBuilds": [
+		{
+			"label": "4.37",
+			"path": "drops4/R-4.37-202509050730/",
+			"statusIcon": "images/build_done.gif",
+			"date": "Fri, 5 Sep 2025 -- 07:30 (+0000)",
+			"testsCompletion": "6 of 6",
+			"testsIcon": "images/junit.gif",
+			"testsPath": "drops4/R-4.37-202509050730/testResults.php"
+		},
+		{
+			"label": "4.38RC1",
+			"path": "drops4/S-4.38RC1-202511201800/",
+			"statusIcon": "images/build_done.gif",
+			"date": "Thu, 20 Nov 2025 -- 18:00 (+0000)",
+			"testsCompletion": "6 of 6",
+			"testsIcon": "images/junit.gif",
+			"testsPath": "drops4/S-4.38RC1-202511201800/testResults.php"
+		},
+		{
+			"label": "I20251124-1800",
+			"path": "drops4/I20251124-1800/",
+			"statusIcon": "images/caution.gif",
+			"date": "Mon, 24 Nov 2025 -- 18:00 (+0000)",
+			"testsCompletion": "5 of 6",
+			"testsIcon": "images/runtests.gif",
+			"testsPath": "drops4/I20251124-1800/testResults.php"
+		}
 	],
-	"y-builds": [
-		"Y1234567-0000",
-		"Y1234567-0000",
-		"Y1234567-0000",
-		"..."
+	"yBuilds": [
+		{
+			"label": "4.37",
+			"path": "drops4/R-4.37-202509050730/",
+			"statusIcon": "images/build_done.gif",
+			"date": "Fri, 5 Sep 2025 -- 07:30 (+0000)",
+			"testsCompletion": "6 of 6",
+			"testsIcon": "images/junit.gif",
+			"testsPath": "drops4/R-4.37-202509050730/testResults.php"
+		},
+		{
+			"label": "4.38RC1",
+			"path": "drops4/S-4.38RC1-202511201800/",
+			"statusIcon": "images/build_done.gif",
+			"date": "Thu, 20 Nov 2025 -- 18:00 (+0000)",
+			"testsCompletion": "6 of 6",
+			"testsIcon": "images/junit.gif",
+			"testsPath": "drops4/S-4.38RC1-202511201800/testResults.php"
+		},
+		{
+			"label": "I20251124-1800",
+			"path": "drops4/I20251124-1800/",
+			"statusIcon": "images/caution.gif",
+			"date": "Mon, 24 Nov 2025 -- 18:00 (+0000)",
+			"testsCompletion": "5 of 6",
+			"testsIcon": "images/runtests.gif",
+			"testsPath": "drops4/I20251124-1800/testResults.php"
+		}
 	]
 }

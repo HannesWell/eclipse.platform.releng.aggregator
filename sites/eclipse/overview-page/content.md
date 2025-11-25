@@ -11,13 +11,7 @@ For reference, see also the [p2 repositories provided](https://wiki.eclipse.org/
 
 ### Latest Downloads
 
-| Build Name    | Build Status  | Build Date   |
-| ------------- | :------------- |------------- |
-| 4.37          | Cell 2, Row 1 | Col 3        |
-| 4.37          | Cell 2, Row 1 | Col 3        |
-
-
-<table class="data-table" data-path="latest">
+<table class="data-table" data-path="latest" style="width: 100%;border-collapse: separate;border-spacing: 1px;">
 	<thead>
 		<tr>
 			<th>Build Name</th>
@@ -26,19 +20,33 @@ For reference, see also the [p2 repositories provided](https://wiki.eclipse.org/
 		</tr>
 	</thead>
 	<tr>
-		<td><span class="data-ref" data-path="name"></span></td>
-		<td>(<span class="data-ref" data-path="testStatus"></span> platforms)</td>
-		<td><span class="data-ref" data-path="date"></span></td>
+		<td class="data-ref"><a href="${path}" title="Latest Release">${label}</a></td>
+		<td class="data-ref">
+			<a href="${path}">
+				<img src="${statusIcon}" title="Build is available" alt="Build is available">
+			</a>
+			<a href="${testsPath}" title="${testsCompletion} test platforms finished." style="text-decoration: none">
+				<img src="${testsIcon}"/>
+				(${testsCompletion} platforms)
+			</a>
+		</td>
+		<td class="data-ref">${date}</td>
 	</tr>
-</table> 
+</table>
+
+### Latest Release
 
 
-asda
-sda
-sd
-asd
+### Stable Builds
 
-#############################################################################
+
+### Integration Builds
+
+
+### Beta Java Builds
+
+
+# Plan for this page
 TODO: remove the following
 The overview page listing all available build
 

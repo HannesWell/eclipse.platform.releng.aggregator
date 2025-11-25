@@ -160,20 +160,23 @@ function resolveDataTables(rootElement, data) {
 	}
 }
 
+const dataReferencePattern = /\${(?<path>[\w-]+)}/g
+
 function resolveDataReferences(contextElement, contextData) {
 	const dataElements = Array.from(contextElement.getElementsByClassName("data-ref"))
-	for (const textElement of dataElements) {
-		textElement.classList.remove("data-ref") // Prevent multiple processing in subsequent passes with different context
-		//TODO: assert that it's a span element or handle different types too?
-		const dataPath = textElement.getAttribute('data-path');
-		textElement.textContent = getValue(contextData, dataPath)
+	for (const element of dataElements) {
+		element.classList.remove("data-ref") // Prevent multiple processing in subsequent passes with different context (therefore a copy is created from the list)
+		//TODO: or outer html to also handle attributes?
+		element.innerHTML = element.innerHTML.replaceAll(dataReferencePattern, (_match, pathGroup, _offset, _string) => {
+			return getValue(contextData, pathGroup)
+		})
 	}
 }
 
 function getValue(data, path) {
 	let value = data
 	for (const key of path.split('.')) {
-		if(!value.hasOwnProperty(key)) {
+		if (!value.hasOwnProperty(key)) {
 			throw new Error(`Key '${key}' not found in ${JSON.stringify(value)}`)
 		}
 		value = value[key]
