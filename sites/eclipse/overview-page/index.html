@@ -12,20 +12,27 @@
 	<!-- TODO: can we unify this further without having a (visible) redirect? -->
 	<style>
 		table.builds-table {
-			width: 150%;
-			border-spacing: 20px;
+			width: 100%;
+			table-layout: fixed;
 		}
 
 		tr {
 			border-top: 1px solid gainsboro;
 			border-bottom: 1px solid gainsboro;
 		}
+
 		thead {
-			background-color: darkgray;
+			background-color: cornflowerblue;
 		}
 
 		tr:nth-child(even) {
 			background-color: gainsboro;
+		}
+
+		th,
+		td {
+			padding-left: 5px;
+			text-align: start;
 		}
 	</style>
 </head>
