@@ -1,0 +1,7 @@
+{
+	"_class": "hudson.tasks.junit.TestResult",
+	"duration": 6343.636,
+	"failCount": 0,
+	"passCount": 158375,
+	"skipCount": 307
+}

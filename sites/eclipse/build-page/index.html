@@ -4,21 +4,22 @@
 <head>
 	<!--TODO: set proper title and metadata -->
 	<title>Documentation | Eclipse Project</title>
-	<link rel="preconnect stylesheet" href="../builds.css" />
+	<link rel="preconnect stylesheet" href="../page.css" />
 	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 	<!-- TODO: check if this is necessary script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script-->
 	<script src="https://cdn.jsdelivr.net/npm/marked-gfm-heading-id/lib/index.umd.js"></script>
-	<script src="../builds.js"></script>
+	<script src="../page.js"></script>
 	<!-- TODO: can we unify this further without having a (visible) redirect? -->
 </head>
 
-
 <body>
 	<div data-generate="generateDefaultBreadcrumb(this)">
-		<a href="..">Downloads</a> <span>Build I12345678-1234</span>
+		<a href="..">Downloads</a> <span class="data-ref">${label}</span>
 	</div>
+	<!-- TODO: Always generate the default headers? -->
 	<div data-generate="generateDefaultHeader(this)"></div>
 	<!--div data-generate="generateDefaultAside(this)"></div-->
+	<!-- TODO: Make the TOC configurable, e.g. considered heading levels. E.g. here we don't want the very first head-line but the different build kind headlines? -->
 	<div data-generate="generateTOCAside(this)"></div>
 
 	<main>
@@ -26,6 +27,48 @@
 	</main>
 	<script>
 		loadContentData('data.json')
+
+		markdownPostProcessor = (markdownElement, contentData) => {
+			const testConfigs = contentData.expectedTests
+			const reultsSummaryURLs = testConfigs.map(c => `testresults/ep437I-unit-${c}.json`)
+			const testResultsSummary = fetchAllJSON(reultsSummaryURLs)
+			const testResultsTable = markdownElement.getElementById("test-results-summary-table")
+			//  <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
+			const tbody = testResultsTable.tBodies[0]
+			const templateRow = toElement(`
+				<tr>
+					<td class="data-ref">\${name}</td>
+					<td class="data-ref">\${failCount}</td>
+					<td class="data-ref">\${passCount}</td>
+					<td class="data-ref">\${totalCount}</td>
+					<td class="data-ref">\${duration}</td>
+				</tr>`)
+			//TODO: create template row separatly to avoid the need to remove it?
+			testResultsSummary.then(testResults => {
+				for (let r = 0; r < testResults.length; r++) {
+					const result = testResults[r]
+					const row = tbody.insertRow()
+					result['name'] = testConfigs[r]
+					if (result) { // Test configuration completed
+						result['totalCount'] = result.passCount + result.failCount
+					} else {
+						//TODO: if we add the row a separate element we could have a completly other row that e.g. links the job (or at least it's definition')
+						// Then we can have just one element spanning the entire row linking to Jenkins
+						// It shouldn't be linked permanently as the link is dead after the release.
+						// call element methods table.createRow() and set it's inner html and resolve it..
+						result['duration'] = ''
+						result['passCount'] = ''
+						result['failCount'] = ''
+						result['totalCount'] = ''
+					}
+					const row = templateRow.cloneNode(true)
+					resolveDataReferences(row, result)
+					tbody.appendChild(row)
+				}
+				tbody.deleteRow(0) // Remove the template row
+			})
+		}
+
 		//TODO: set page name here and use it bread-crump and TOC
 		generate();
 		// TODO: Define the path here as argument?

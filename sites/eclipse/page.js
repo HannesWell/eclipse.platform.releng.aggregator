@@ -53,6 +53,8 @@ const tocAside = toElements(`
 `);
 
 // start resource fetch early TODO: Check if this works as desired
+// TODO: try to make the md file name modifyable (and nullable). But this would make it hard to fetch early.
+// Or the early fetch would have to be started in the generate method
 const markdownContentFetched = fetch('content.md')
 
 let contentDataFetched = null
@@ -67,6 +69,13 @@ function loadContentData(buildDataPath) {
 		return response.text()
 	}).then(txt => JSON.parse(txt))
 }
+
+function fetchAllJSON(urls) {
+	const promises = urls.map(url => fetch(url).then(res => res.text()).then(txt => JSON.parse(txt)))
+	return Promise.all(promises)
+}
+
+let markdownPostProcessor = (_markdownElement, _contentData) => { }
 
 function generate() {
 	// selfContent = document.documentElement.innerHTML;	//TODO: remove?
@@ -96,12 +105,11 @@ function generate() {
 					markdownElement.innerHTML = `<span><b>Failed to fetch markdown content: </b><span><b style="color: FireBrick">${statusText}</b><br/>`
 				} else {
 					response.text().then(text => {
+						//TODO: Move some parts to separate method?
 						marked.use(markedGfmHeadingId.gfmHeadingId());
 						marked.use({
 							hooks: {
-								postprocess(html) {
-									return `${html}`;
-								}
+								postprocess(html) { return `${html}`; }
 							}
 						});
 						markdownElement.innerHTML = marked.parse(text);
@@ -119,12 +127,11 @@ function generate() {
 						} else {
 							document.getElementById('toc-container').remove()
 						}
-						//TODO: Move to separate method?
 						if (contentDataFetched) {
 							contentDataFetched.then(contentData => {
-								resolveDataTables(markdownElement, contentData)
-								//TODO: consider entire document, includead bread-crumb etc
-								resolveDataReferences(markdownElement, contentData)
+								//TODO: handle TOC elements! Respectivly exclude the page overview or handle it separatly
+								resolveDataReferences(document, contentData)
+								markdownPostProcessor(markdownElement, contentData)
 							})
 						}
 					}).catch(error => {
@@ -138,6 +145,7 @@ function generate() {
 	}
 }
 
+//TODO: remove this?
 function resolveDataTables(rootElement, data) {
 	const dataTables = rootElement.getElementsByClassName("data-table")
 	for (const table of dataTables) {
@@ -160,14 +168,15 @@ function resolveDataTables(rootElement, data) {
 	}
 }
 
-const dataReferencePattern = /\${(?<path>[\w-]+)}/g
+//TODO: use other symbol to not conflict with js variable interpolation. E.g. §{} or $()
+const dataReferencePattern = /\${(?<path>[\w-\.]+)}/g
 
 function resolveDataReferences(contextElement, contextData) {
 	const dataElements = Array.from(contextElement.getElementsByClassName("data-ref"))
 	for (const element of dataElements) {
 		element.classList.remove("data-ref") // Prevent multiple processing in subsequent passes with different context (therefore a copy is created from the list)
 		//TODO: or outer html to also handle attributes?
-		element.innerHTML = element.innerHTML.replaceAll(dataReferencePattern, (_match, pathGroup, _offset, _string) => {
+		element.outerHTML = element.outerHTML.replaceAll(dataReferencePattern, (_match, pathGroup, _offset, _string) => {
 			return getValue(contextData, pathGroup)
 		})
 	}
@@ -444,6 +453,14 @@ function toElements(text) {
 	const wrapper = document.createElement('div');
 	wrapper.innerHTML = text;
 	return wrapper.children
+}
+
+function toElement(text) {
+	const elements = toElements(text)
+	if (elements.length != 1) {
+		throw new Error("Not exactly one element: " + elements.length)
+	}
+	return elements[0]
 }
 
 function prependChildren(element, id, ...children) {

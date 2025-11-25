@@ -14,3 +14,34 @@
 #copyright {
 	padding-left: 0;
 }
+
+table {
+	table-layout: fixed;
+	width: 100%;
+	border-collapse: collapse;
+}
+
+
+thead:hover,
+thead {
+	background-color: lightsteelblue;
+}
+
+tr {
+	border-top: 1px solid lightgray;
+	border-bottom: 1px solid lightgray;
+}
+
+tr:nth-child(even) {
+	background-color: whitesmoke;
+}
+
+tr:hover {
+	background-color: gainsboro;
+}
+
+th,
+td {
+	text-align: start;
+	padding: 5px;
+}

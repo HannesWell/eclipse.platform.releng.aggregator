@@ -4,18 +4,18 @@
 <head>
 	<!--TODO: set proper title and metadata -->
 	<title>Documentation | Eclipse Project</title>
-	<link rel="preconnect stylesheet" href="../builds.css" />
+	<link rel="preconnect stylesheet" href="../page.css" />
 	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 	<!-- TODO: check if this is necessary script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script-->
 	<script src="https://cdn.jsdelivr.net/npm/marked-gfm-heading-id/lib/index.umd.js"></script>
-	<script src="../builds.js"></script>
+	<script src="../page.js"></script>
 	<!-- TODO: can we unify this further without having a (visible) redirect? -->
 </head>
 
 <body>
 	<div data-generate="generateDefaultBreadcrumb(this)">
 		<!-- TODO: Add just the downloads element here -->
-		<a href="..">Downloads</a> <span>Build I12345678-1234</span>
+		<span>Downloads</span>
 	</div>
 	<!-- TODO: Always generate the default headers? -->
 	<div data-generate="generateDefaultHeader(this)"></div>
@@ -28,6 +28,50 @@
 	</main>
 	<script>
 		loadContentData('data.json')
+
+		markdownPostProcessor = (markdownElement, contentData) => {
+			const dataTables = Array.from(markdownElement.getElementsByClassName("builds-table"))
+			for (const tablePlaceholder of dataTables) {
+				const dataPath = tablePlaceholder.getAttribute('data-path');
+				const tableData = getValue(contentData, dataPath)
+				const table = toElement(`
+				<table class="builds-table" data-path="${dataPath}" >
+					<thead>
+						<tr>
+							<th>Build Name</th>
+							<th>Build Status</th>
+							<th>Build Date</th>
+						</tr>
+					</thead>
+					<tr> <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
+						<td>
+							<a class="data-ref" href="\${path}" title="Latest Release">\${label}</a>
+						</td>
+						<td>
+							<a class="data-ref" href="\${path}">
+								<img src="\${statusIcon}" title="Build is available" alt="Build is available">
+							</a>
+							<a class="data-ref" href="\${testsPath}" title="\${testsCompletion} test platforms finished." style="text-decoration: none">
+								<img src="\${testsIcon}"/>
+								(\${testsCompletion} tests completed)
+							</a>
+						</td>
+						<td class="data-ref">\${date}</td>
+					</tr>
+				</table>	`)
+				//TODO: create template row separatly to avoid the need to remove it?
+				tablePlaceholder.replaceWith(table)
+				const tbody = table.tBodies[0]
+				const templateRow = tbody.rows[0]
+				for (const dataRow of tableData) {
+					const row = templateRow.cloneNode(true)
+					resolveDataReferences(row, dataRow)
+					tbody.appendChild(row)
+				}
+				tbody.deleteRow(0) // Remove the template row
+			}
+		}
+
 		//TODO: set page name here and use it bread-crump and TOC
 		generate();
 		// TODO: Define the path here as argument?
