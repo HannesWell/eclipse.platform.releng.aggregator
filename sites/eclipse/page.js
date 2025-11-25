@@ -167,7 +167,7 @@ function resolveDataReferences(contextElement, contextData) {
 	for (const element of dataElements) {
 		element.classList.remove("data-ref") // Prevent multiple processing in subsequent passes with different context (therefore a copy is created from the list)
 		//TODO: or outer html to also handle attributes?
-		element.innerHTML = element.innerHTML.replaceAll(dataReferencePattern, (_match, pathGroup, _offset, _string) => {
+		element.outerHTML = element.outerHTML.replaceAll(dataReferencePattern, (_match, pathGroup, _offset, _string) => {
 			return getValue(contextData, pathGroup)
 		})
 	}

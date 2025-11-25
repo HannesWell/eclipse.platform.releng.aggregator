@@ -39,10 +39,14 @@ pipeline {
 							def int expectedTestsCount = -1
 							def int finishedTestsCount = -1
 							if (isOldStyleDrop) {
-								def expectedTests = sh(script: "ssh genie.releng@projects-storage.eclipse.org cat ${EP_ECLIPSE_DROPS}/${dropName}/testConfigs.php", returnStdout: true).trim()
-								expectedTestsCount = expectedTests.count('$expectedTestConfigs[]=')
-								def finishedTests = sh(script: "ssh genie.releng@projects-storage.eclipse.org cat ${EP_ECLIPSE_DROPS}/${dropName}/testConfigsFound.php || echo 'Tests not yet finished'", returnStdout: true).trim()
-								finishedTestsCount = finishedTests.count('$foundTestConfigs[]=')
+								def tests = sh(script: """
+									ssh genie.releng@projects-storage.eclipse.org "
+										cat ${EP_ECLIPSE_DROPS}/${dropName}/testConfigs.php
+										cat ${EP_ECLIPSE_DROPS}/${dropName}/testConfigsFound.php || echo 'Tests not yet finished'
+									"
+								""", returnStdout: true).trim()
+								expectedTestsCount = tests.count('$expectedTestConfigs[]=')
+								finishedTestsCount = tests.count('$foundTestConfigs[]=')
 							} else {
 								//TODO: implement this
 								error 'New style projects not yet implemented'
@@ -67,9 +71,11 @@ pipeline {
 							dropData.testsPath = "drops4/${dropName}/${isOldStyleDrop ? 'testResults.php' : 'testresults'}".toString()
 						}
 						def overviewData = [releases: releases, stableBuilds: stableBuilds, iBuilds: iBuilds, yBuilds: yBuilds]
-						overviewData.values().each{ list -> list.sort({d1, d2 -> -d1.label.compareTo(d2.label)})}
+						sort(overviewData)
+						//overviewData.values().each{ list -> list.sort({d1, d2 -> d1.label.compareTo(d2.label)})}
 						// Select latest element among all releases, stable builds respectivly I-builds
-						def latest = [overviewData.releases[0], overviewData.stableBuilds[0], overviewData.iBuilds[0] ] 
+						def latest = [overviewData.releases[0], overviewData.stableBuilds[0], overviewData.iBuilds[0] ]
+						overviewData.latest = latest
 						writeJSON('data.json', overviewData)
 					}
 				}
@@ -77,6 +83,11 @@ pipeline {
 			}
 		}
 	}
+}
+
+@NonCPS
+def sort(def overviewData) {
+	overviewData.values().each{ list -> list.sort({d1, d2 -> -d1.label.compareTo(d2.label)})}
 }
 
 //TODO: instead checkout this repo and use def utilities = load "JenkinsJobs/shared/utilities.groovy" ?!

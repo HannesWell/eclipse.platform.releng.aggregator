@@ -12,9 +12,20 @@
 	<!-- TODO: can we unify this further without having a (visible) redirect? -->
 	<style>
 		table.builds-table {
-			width: 100%;
-			border-collapse: separate;
-			border-spacing: 1px;
+			width: 150%;
+			border-spacing: 20px;
+		}
+
+		tr {
+			border-top: 1px solid gainsboro;
+			border-bottom: 1px solid gainsboro;
+		}
+		thead {
+			background-color: darkgray;
+		}
+
+		tr:nth-child(even) {
+			background-color: gainsboro;
 		}
 	</style>
 </head>
@@ -22,7 +33,7 @@
 <body>
 	<div data-generate="generateDefaultBreadcrumb(this)">
 		<!-- TODO: Add just the downloads element here -->
-		<a href="..">Downloads</a> <span>Build I12345678-1234</span>
+		<span>Downloads</span>
 	</div>
 	<!-- TODO: Always generate the default headers? -->
 	<div data-generate="generateDefaultHeader(this)"></div>
