@@ -29,6 +29,7 @@ For reference, see also the [p2 repositories provided](https://wiki.eclipse.org/
 	</thead>
 	<tr>
 		<td><span class="data-ref" data-path="name"></span></td>
+		<!-- TODO: just reference the corresponding image URL in json? Or allow passing a callback to the generate function that allows further sub-sequent customization in the individual pages -->
 		<td>(<span class="data-ref" data-path="testStatus"></span> platforms)</td>
 		<td><span class="data-ref" data-path="name"></span></td>
 	</tr>

@@ -105,7 +105,6 @@ function generate() {
 							}
 						});
 						markdownElement.innerHTML = marked.parse(text);
-
 						// Populate TOC
 						//TODO: check all other references to 'toc' in markdown/index.html
 						//TODO: Or do it like in generateAside() ?
@@ -122,7 +121,8 @@ function generate() {
 						}
 						//TODO: Move to separate method?
 						if (contentDataFetched) {
-							contentDataFetched.then(buildData => {
+							contentDataFetched.then(contentData => {
+
 								const dataTables = markdownElement.getElementsByClassName("data-table")
 								for (const table of dataTables) {
 									if (table.tBodies.length != 1) {
@@ -132,26 +132,22 @@ function generate() {
 									if (table.rows.length != 1) {
 										throw new Exception("Data table with more than one row")
 									}
-									const rowTemplate = table.rows[0].cloneNode(0)
-									table.deleteRow(0) // Remove the template row
-									
+									const templateRow = table.rows[0]
 									const dataPath = table.getAttribute('data-path');
-									const tableData = getValue(dataPath, buildData)
-									for (const data of tableData) {
-										//TODO: or insert after first row and delete the first line at the end?
+									const tableData = getValue(dataPath, contentData)
+									for (const dataRow of tableData) {
+										const row = templateRow.cloneNode(0)
+										table.appendChild(row)
 									}
-									
-									let value = buildData
-									for (const key of path.split('.')) {
-										value = value[key]
-									}
-									textElement.textContent = value
+									table.deleteRow(0) // Remove the template row
 								}
 								//TODO: consider entire document, includead bread-crumb etc
-								const dataElements = markdownElement.getElementsByClassName("data-ref")
+								const refElem = markdownElement
+								const dataElements = refElem.getElementsByClassName("data-ref")
 								for (const textElement of dataElements) {
+									//TODO: assert that it's a span element or handle different types too?
 									const path = textElement.getAttribute('data-path');
-									textElement.textContent = getValue(path, buildData)
+									textElement.textContent = getValue(path, contentData)
 								}
 							})
 						}
@@ -164,6 +160,10 @@ function generate() {
 	} catch (exception) {
 		logException(exception.message, exception)
 	}
+}
+
+function resolveDataTables() {
+
 }
 
 function getValue(data, path) {
@@ -430,7 +430,7 @@ function generateAside() {
 `;
 }
 
-function toElements(text) {
+export function toElements(text) {
 	const wrapper = document.createElement('div');
 	wrapper.innerHTML = text;
 	return wrapper.children
