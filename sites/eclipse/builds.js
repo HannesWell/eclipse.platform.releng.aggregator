@@ -62,7 +62,7 @@ function loadContentData(buildDataPath) {
 		if (!response.ok) {
 			//TODO: might this be called too early?
 			logException(response.statusText + ': ' + buildDataPath, response.statusText)
-			throw new Exception() //TODO: check this
+			throw new Error() //TODO: check this
 		}
 		return response.text()
 	}).then(txt => JSON.parse(txt))
@@ -122,33 +122,9 @@ function generate() {
 						//TODO: Move to separate method?
 						if (contentDataFetched) {
 							contentDataFetched.then(contentData => {
-
-								const dataTables = markdownElement.getElementsByClassName("data-table")
-								for (const table of dataTables) {
-									if (table.tBodies.length != 1) {
-										throw new Exception("Data table with more than one body")
-									}
-									let tbody = table.tBodies[0]
-									if (table.rows.length != 1) {
-										throw new Exception("Data table with more than one row")
-									}
-									const templateRow = table.rows[0]
-									const dataPath = table.getAttribute('data-path');
-									const tableData = getValue(dataPath, contentData)
-									for (const dataRow of tableData) {
-										const row = templateRow.cloneNode(0)
-										table.appendChild(row)
-									}
-									table.deleteRow(0) // Remove the template row
-								}
+								resolveDataTables(markdownElement, contentData)
 								//TODO: consider entire document, includead bread-crumb etc
-								const refElem = markdownElement
-								const dataElements = refElem.getElementsByClassName("data-ref")
-								for (const textElement of dataElements) {
-									//TODO: assert that it's a span element or handle different types too?
-									const path = textElement.getAttribute('data-path');
-									textElement.textContent = getValue(path, contentData)
-								}
+								resolveDataReferences(markdownElement, contentData)
 							})
 						}
 					}).catch(error => {
@@ -162,13 +138,44 @@ function generate() {
 	}
 }
 
-function resolveDataTables() {
+function resolveDataTables(rootElement, data) {
+	const dataTables = rootElement.getElementsByClassName("data-table")
+	for (const table of dataTables) {
+		if (table.tBodies.length != 1) {
+			throw new Error("Data table with more than one body")
+		}
+		let tbody = table.tBodies[0]
+		if (tbody.rows.length != 1) {
+			throw new Error("Data table with more than one row")
+		}
+		const templateRow = tbody.rows[0]
+		const dataPath = table.getAttribute('data-path');
+		const tableData = getValue(data, dataPath)
+		for (const dataRow of tableData) {
+			const row = templateRow.cloneNode(true)
+			resolveDataReferences(row, dataRow)
+			tbody.appendChild(row)
+		}
+		tbody.deleteRow(0) // Remove the template row
+	}
+}
 
+function resolveDataReferences(contextElement, contextData) {
+	const dataElements = Array.from(contextElement.getElementsByClassName("data-ref"))
+	for (const textElement of dataElements) {
+		textElement.classList.remove("data-ref") // Prevent multiple processing in subsequent passes with different context
+		//TODO: assert that it's a span element or handle different types too?
+		const dataPath = textElement.getAttribute('data-path');
+		textElement.textContent = getValue(contextData, dataPath)
+	}
 }
 
 function getValue(data, path) {
 	let value = data
 	for (const key of path.split('.')) {
+		if(!value.hasOwnProperty(key)) {
+			throw new Error(`Key '${key}' not found in ${JSON.stringify(value)}`)
+		}
 		value = value[key]
 	}
 	return value;
@@ -430,7 +437,7 @@ function generateAside() {
 `;
 }
 
-export function toElements(text) {
+function toElements(text) {
 	const wrapper = document.createElement('div');
 	wrapper.innerHTML = text;
 	return wrapper.children

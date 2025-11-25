@@ -17,8 +17,6 @@ For reference, see also the [p2 repositories provided](https://wiki.eclipse.org/
 | 4.37          | Cell 2, Row 1 | Col 3        |
 
 
-<span class="data-ref" data-path="name"></span>
-
 <table class="data-table" data-path="latest">
 	<thead>
 		<tr>
@@ -29,11 +27,16 @@ For reference, see also the [p2 repositories provided](https://wiki.eclipse.org/
 	</thead>
 	<tr>
 		<td><span class="data-ref" data-path="name"></span></td>
-		<!-- TODO: just reference the corresponding image URL in json? Or allow passing a callback to the generate function that allows further sub-sequent customization in the individual pages -->
 		<td>(<span class="data-ref" data-path="testStatus"></span> platforms)</td>
-		<td><span class="data-ref" data-path="name"></span></td>
+		<td><span class="data-ref" data-path="date"></span></td>
 	</tr>
 </table> 
+
+
+asda
+sda
+sd
+asd
 
 #############################################################################
 TODO: remove the following
