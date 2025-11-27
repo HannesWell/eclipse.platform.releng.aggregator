@@ -1,25 +1,44 @@
-Hello World
+## Eclipse <span class="data-ref">${release}</span> <span class="data-ref">${kind}</span> Build: <span class="data-ref">${label}</span>
 
-# Headline 1
-
-Hello <span class="data-ref">${name}</span> World adasdas.
-
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+This page provides access to the various deliverables of Eclipse Platform build along with its logs and tests.
 
 
-# Headline 2
+<!-- TODO: Check what's always shown and what only for release/RC builds! -->
+<a class="data-ref" href="https://eclipse.dev/eclipse/news/${releaseShort}">New and Noteworthy</a><br>
+<a class="data-ref" href="https://eclipse.dev/eclipse/markdown/?f=news/${releaseShort}/acknowledgements.md">Acknowledgments</a><br>
+<a class="data-ref" href="https://eclipse.dev/eclipse/development/readme.html?file=readme_eclipse_${releaseShort}.html">Eclipse Project ${releaseShort} Readme</a><br>
+<a class="data-ref" href="https://eclipse.dev/eclipse/development/plans.html?file=plans/eclipse_project_plan_${releaseShort}.xml">Eclipse Project Plan</a><br>
 
-Hello <span class="data-ref">${name}</span> World asasdad.
+#### Logs and Test Links
 
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+- View the [logs for the current build](testresults).
+- View the [integration and unit test results for the current build.](testresults).
 
-# Another topic
+#### Summary of Unit Tests Results
 
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+6 of 6 integration and unit test configurations are complete.
 
+<table class="test-results-summary-table" data-path="${dataPath}" >
+	<thead>
+		<tr>
+			<th>Tested Platform</th>
+			<th>Failed</th>
+			<th>Passed</th>
+			<th>Total</th>
+			<th>Test Time (s)</th><!-- TODO: change this to minutes or just show the time at the values -->
+		</tr>
+	</thead>
+	<tr> <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
+		<td class="data-ref">${name}</td>
+		<td class="data-ref">${failCount}</td>
+		<td class="data-ref">${passCount}</td>
+		<td class="data-ref">${totalCount}</td>
+		<td class="data-ref">${duration}</td>
+	</tr>
+</table>
 
-# A third paragraph
+#### Related Links
 
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-
-More Content
+- <a class="data-ref" href="https://eclipse.dev/eclipse/development/plans/eclipse_project_plan_${releaseShort}.xml#target_environments">Target Platforms and Environments.</a>
+- [Git log](gitLog.php)
+- [How to verify a download.](https://wiki.eclipse.org/Platform-releng/How_to_check_integrity_of_downloads)

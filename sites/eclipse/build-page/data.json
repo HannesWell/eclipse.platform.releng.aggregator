@@ -1,6 +1,18 @@
 {
-	"name": "Build 235",
 	"note": "The content of this file will be generated",
+	"identifier": "R-4.37-202509050730",
+	"label": "4.37",
+	"kind": "Release",
+	"releaseShort": "4.37",
+	"release": "4.37.0",
+	"expectedTests": [
+		"linux-x86_64-java21",
+		"linux-x86_64-java24",
+		"linux-x86_64-java25",
+		"macosx-aarch64-java21",
+		"macosx-x86_64-java21",
+		"win32-x86_64-java21"
+	],
 	"latest": [
 		"4.37",
 		"4.38M3",

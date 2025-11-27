@@ -124,8 +124,8 @@ function generate() {
 						}
 						if (contentDataFetched) {
 							contentDataFetched.then(contentData => {
-								//TODO: consider entire document, includead bread-crumb etc
-								resolveDataReferences(markdownElement, contentData)
+								//TODO: handle TOC elements! Respectivly exclude the page overview or handle it separatly
+								resolveDataReferences(document, contentData)
 								markdownPostProcessor(markdownElement, contentData)
 							})
 						}
@@ -163,6 +163,7 @@ function resolveDataTables(rootElement, data) {
 	}
 }
 
+//TODO: use other symbol to not conflict with js variable interpolation. E.g. §{} or $()
 const dataReferencePattern = /\${(?<path>[\w-]+)}/g
 
 function resolveDataReferences(contextElement, contextData) {
