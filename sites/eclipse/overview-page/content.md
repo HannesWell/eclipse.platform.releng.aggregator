@@ -11,142 +11,20 @@ For reference, see also the [p2 repositories provided](https://wiki.eclipse.org/
 
 ### Latest Downloads
 
-<!-- 
-	TODO: introduce markdown post-processor that allows avoid repetition of the table definition and just use a div with different data?
-	This would also avoid the problem that the not yet resolved image path is attempted to be resolved.
-	Therefore the injection should happen after the data is loaded.
-	Maybe it's a good idea to do this after the general variable resolution happened? Then we can avoid marking elements as resolved?
--->
-
-<table class="data-table builds-table" data-path="latest" >
-	<thead>
-		<tr>
-			<th>Build Name</th>
-			<th>Build Status</th>
-			<th>Build Date</th>
-		</tr>
-	</thead>
-	<tr> <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
-		<td>
-			<a class="data-ref" href="${path}" title="Latest Release">${label}</a>
-		</td>
-		<td>
-			<a class="data-ref" href="${path}">
-				<img src="${statusIcon}" title="Build is available" alt="Build is available">
-			</a>
-			<a class="data-ref" href="${testsPath}" title="${testsCompletion} test platforms finished." style="text-decoration: none">
-				<img src="${testsIcon}"/>
-				(${testsCompletion} tests completed)
-			</a>
-		</td>
-		<td class="data-ref">${date}</td>
-	</tr>
-</table>
+<div class="builds-table" data-path="latest"></div>
 
 ### Latest Release
 
-<table class="data-table builds-table" data-path="releases" >
-	<thead>
-		<tr>
-			<th>Build Name</th>
-			<th>Build Status</th>
-			<th>Build Date</th>
-		</tr>
-	</thead>
-	<tr> <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
-		<td>
-			<a class="data-ref" href="${path}" title="Latest Release">${label}</a>
-		</td>
-		<td>
-			<a class="data-ref" href="${path}">
-				<img src="${statusIcon}" title="Build is available" alt="Build is available">
-			</a>
-			<a class="data-ref" href="${testsPath}" title="${testsCompletion} test platforms finished." style="text-decoration: none">
-				<img src="${testsIcon}"/>
-				(${testsCompletion} tests completed)
-			</a>
-		</td>
-		<td class="data-ref">${date}</td>
-	</tr>
-</table>
+<div class="builds-table" data-path="releases"></div>
 
 ### Stable Builds
 
-<table class="data-table builds-table" data-path="stableBuilds" >
-	<thead>
-		<tr>
-			<th>Build Name</th>
-			<th>Build Status</th>
-			<th>Build Date</th>
-		</tr>
-	</thead>
-	<tr> <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
-		<td>
-			<a class="data-ref" href="${path}" title="Latest Release">${label}</a>
-		</td>
-		<td>
-			<a class="data-ref" href="${path}">
-				<img src="${statusIcon}" title="Build is available" alt="Build is available">
-			</a>
-			<a class="data-ref" href="${testsPath}" title="${testsCompletion} test platforms finished." style="text-decoration: none">
-				<img src="${testsIcon}"/>
-				(${testsCompletion} tests completed)
-			</a>
-		</td>
-		<td class="data-ref">${date}</td>
-	</tr>
-</table>
+<div class="builds-table" data-path="stableBuilds"></div>
 
 ### Integration Builds
 
-<table class="data-table builds-table" data-path="iBuilds" >
-	<thead>
-		<tr>
-			<th>Build Name</th>
-			<th>Build Status</th>
-			<th>Build Date</th>
-		</tr>
-	</thead>
-	<tr> <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
-		<td>
-			<a class="data-ref" href="${path}" title="Latest Release">${label}</a>
-		</td>
-		<td>
-			<a class="data-ref" href="${path}">
-				<img src="${statusIcon}" title="Build is available" alt="Build is available">
-			</a>
-			<a class="data-ref" href="${testsPath}" title="${testsCompletion} test platforms finished." style="text-decoration: none">
-				<img src="${testsIcon}"/>
-				(${testsCompletion} tests completed)
-			</a>
-		</td>
-		<td class="data-ref">${date}</td>
-	</tr>
-</table>
+<div class="builds-table" data-path="iBuilds"></div>
 
 ### Beta Java Builds
 
-<table class="data-table builds-table" data-path="yBuilds" >
-	<thead>
-		<tr>
-			<th>Build Name</th>
-			<th>Build Status</th>
-			<th>Build Date</th>
-		</tr>
-	</thead>
-	<tr> <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
-		<td>
-			<a class="data-ref" href="${path}" title="Latest Release">${label}</a>
-		</td>
-		<td>
-			<a class="data-ref" href="${path}">
-				<img src="${statusIcon}" title="Build is available" alt="Build is available">
-			</a>
-			<a class="data-ref" href="${testsPath}" title="${testsCompletion} test platforms finished." style="text-decoration: none">
-				<img src="${testsIcon}"/>
-				(${testsCompletion} tests completed)
-			</a>
-		</td>
-		<td class="data-ref">${date}</td>
-	</tr>
-</table>
+<div class="builds-table" data-path="yBuilds"></div>

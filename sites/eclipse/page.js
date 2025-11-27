@@ -124,7 +124,6 @@ function generate() {
 						}
 						if (contentDataFetched) {
 							contentDataFetched.then(contentData => {
-								//resolveDataTables(markdownElement, contentData)
 								//TODO: consider entire document, includead bread-crumb etc
 								resolveDataReferences(markdownElement, contentData)
 								markdownPostProcessor(markdownElement, contentData)
