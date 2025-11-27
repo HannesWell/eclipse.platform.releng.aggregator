@@ -53,6 +53,8 @@ const tocAside = toElements(`
 `);
 
 // start resource fetch early TODO: Check if this works as desired
+// TODO: try to make the md file name modifyable (and nullable). But this would make it hard to fetch early.
+// Or the early fetch would have to be started in the generate method
 const markdownContentFetched = fetch('content.md')
 
 let contentDataFetched = null
@@ -67,6 +69,8 @@ function loadContentData(buildDataPath) {
 		return response.text()
 	}).then(txt => JSON.parse(txt))
 }
+
+let markdownPostProcessor = (_markdownElement, _contentData) => { }
 
 function generate() {
 	// selfContent = document.documentElement.innerHTML;	//TODO: remove?
@@ -96,12 +100,11 @@ function generate() {
 					markdownElement.innerHTML = `<span><b>Failed to fetch markdown content: </b><span><b style="color: FireBrick">${statusText}</b><br/>`
 				} else {
 					response.text().then(text => {
+						//TODO: Move some parts to separate method?
 						marked.use(markedGfmHeadingId.gfmHeadingId());
 						marked.use({
 							hooks: {
-								postprocess(html) {
-									return `${html}`;
-								}
+								postprocess(html) { return `${html}`; }
 							}
 						});
 						markdownElement.innerHTML = marked.parse(text);
@@ -119,12 +122,12 @@ function generate() {
 						} else {
 							document.getElementById('toc-container').remove()
 						}
-						//TODO: Move to separate method?
 						if (contentDataFetched) {
 							contentDataFetched.then(contentData => {
-								resolveDataTables(markdownElement, contentData)
+								//resolveDataTables(markdownElement, contentData)
 								//TODO: consider entire document, includead bread-crumb etc
 								resolveDataReferences(markdownElement, contentData)
+								markdownPostProcessor(markdownElement, contentData)
 							})
 						}
 					}).catch(error => {
@@ -138,6 +141,7 @@ function generate() {
 	}
 }
 
+//TODO: remove this?
 function resolveDataTables(rootElement, data) {
 	const dataTables = rootElement.getElementsByClassName("data-table")
 	for (const table of dataTables) {

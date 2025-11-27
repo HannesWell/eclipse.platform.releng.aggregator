@@ -28,6 +28,11 @@
 	</main>
 	<script>
 		loadContentData('data.json')
+		
+		markdownPostProcessor = (markdownElement, contentData) => { 
+			markdownElement.getElementsByClassName("data-table")
+		}
+		
 		//TODO: set page name here and use it bread-crump and TOC
 		generate();
 		// TODO: Define the path here as argument?
