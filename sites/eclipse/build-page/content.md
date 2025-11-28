@@ -19,7 +19,17 @@ This page provides access to the various deliverables of Eclipse Platform build 
 <!-- TODO: inject this value! -->
 6 of 6 integration and unit test configurations are complete.
 
-<div class="test-results-summary-table"></div>
+<table id="test-results-summary-table">
+	<thead>
+		<tr>
+			<th>Tested Platform</th>
+			<th>Failed</th>
+			<th>Passed</th>
+			<th>Total</th>
+			<th>Test Time (s)</th><!-- TODO: change this to minutes or just show the time at the values -->
+		</tr>
+	</thead>
+</table>
 
 ### Related Links
 
