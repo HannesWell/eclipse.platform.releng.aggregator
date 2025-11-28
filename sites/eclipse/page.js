@@ -70,6 +70,11 @@ function loadContentData(buildDataPath) {
 	}).then(txt => JSON.parse(txt))
 }
 
+function fetchAllJSON(urls) {
+	const promises = urls.map(url => fetch(url).then(res => res.text()).then(txt => JSON.parse(txt)))
+	return Promise.all(promises)
+}
+
 let markdownPostProcessor = (_markdownElement, _contentData) => { }
 
 function generate() {
@@ -164,7 +169,7 @@ function resolveDataTables(rootElement, data) {
 }
 
 //TODO: use other symbol to not conflict with js variable interpolation. E.g. §{} or $()
-const dataReferencePattern = /\${(?<path>[\w-]+)}/g
+const dataReferencePattern = /\${(?<path>[\w-\.]+)}/g
 
 function resolveDataReferences(contextElement, contextData) {
 	const dataElements = Array.from(contextElement.getElementsByClassName("data-ref"))
@@ -448,6 +453,14 @@ function toElements(text) {
 	const wrapper = document.createElement('div');
 	wrapper.innerHTML = text;
 	return wrapper.children
+}
+
+function toElement(text) {
+	const elements = toElements(text)
+	if (elements.length != 1) {
+		throw new Error("Not exactly one element: " + elements.length)
+	}
+	return elements[0]
 }
 
 function prependChildren(element, id, ...children) {

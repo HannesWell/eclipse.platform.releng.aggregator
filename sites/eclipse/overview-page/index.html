@@ -34,7 +34,7 @@
 			for (const tablePlaceholder of dataTables) {
 				const dataPath = tablePlaceholder.getAttribute('data-path');
 				const tableData = getValue(contentData, dataPath)
-				const table = toElements(`
+				const table = toElement(`
 				<table class="builds-table" data-path="${dataPath}" >
 					<thead>
 						<tr>
@@ -58,7 +58,8 @@
 						</td>
 						<td class="data-ref">\${date}</td>
 					</tr>
-				</table>	`)[0]
+				</table>	`)
+				//TODO: create template row separatly to avoid the need to remove it?
 				tablePlaceholder.replaceWith(table)
 				const tbody = table.tBodies[0]
 				const templateRow = tbody.rows[0]

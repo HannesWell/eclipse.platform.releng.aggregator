@@ -13,6 +13,10 @@
 		"macosx-x86_64-java21",
 		"win32-x86_64-java21"
 	],
+	"p2Repository": {
+		"filename": "repository-4.37.zip",
+		"fileSize": "526 MB"
+	},
 	"latest": [
 		"4.37",
 		"4.38M3",

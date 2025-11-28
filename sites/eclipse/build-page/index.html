@@ -29,45 +29,57 @@
 		loadContentData('data.json')
 
 		markdownPostProcessor = (markdownElement, contentData) => {
-			const dataTables = Array.from(markdownElement.getElementsByClassName("builds-table"))
-			for (const tablePlaceholder of dataTables) {
-				const dataPath = tablePlaceholder.getAttribute('data-path');
-				const tableData = getValue(contentData, dataPath)
-				const table = toElements(`
-				<table class="resource-table" data-path="${dataPath}" >
+			const testConfigs = contentData.expectedTests
+			const reultsSummaryURLs = testConfigs.map(c => `testresults/ep437I-unit-${c}.json`)
+			const testResultsSummary = fetchAllJSON(reultsSummaryURLs)
+			const testResultsTablePlaceholders = (markdownElement.getElementsByClassName("test-results-summary-table"))
+			if (testResultsTablePlaceholders.length != 1) {
+				throw new Error("Not exactly one test-results-summary-table found: " + testResultsTablePlaceholders.length)
+			}
+			const table = toElement(`
+				<table class="test-results-summary-table">
 					<thead>
 						<tr>
-							<th>Build Name</th>
-							<th>Build Status</th>
-							<th>Build Date</th>
+							<th>Tested Platform</th>
+							<th>Failed</th>
+							<th>Passed</th>
+							<th>Total</th>
+							<th>Test Time (s)</th><!-- TODO: change this to minutes or just show the time at the values -->
 						</tr>
 					</thead>
 					<tr> <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
-						<td>
-							<a class="data-ref" href="\${path}" title="Latest Release">\${label}</a>
-						</td>
-						<td>
-							<a class="data-ref" href="\${path}">
-								<img src="\${statusIcon}" title="Build is available" alt="Build is available">
-							</a>
-							<a class="data-ref" href="\${testsPath}" title="\${testsCompletion} test platforms finished." style="text-decoration: none">
-								<img src="\${testsIcon}"/>
-								(\${testsCompletion} tests completed)
-							</a>
-						</td>
-						<td class="data-ref">\${date}</td>
+						<td class="data-ref">\${name}</td>
+						<td class="data-ref">\${failCount}</td>
+						<td class="data-ref">\${passCount}</td>
+						<td class="data-ref">\${totalCount}</td>
+						<td class="data-ref">\${duration}</td>
 					</tr>
-				</table>	`)[0]
-				tablePlaceholder.replaceWith(table)
-				const tbody = table.tBodies[0]
-				const templateRow = tbody.rows[0]
-				for (const dataRow of tableData) {
+				</table>`)
+			testResultsTablePlaceholders[0].replaceWith(table)
+			const tbody = table.tBodies[0]
+			const templateRow = tbody.rows[0]
+			//TODO: create template row separatly to avoid the need to remove it?
+			testResultsSummary.then(testResults => {
+				for (let r = 0; r < testResults.length; r++) {
+					const result = testResults[r]
+					result['name'] = testConfigs[r]
+					if (!result.duration) { // Test configuration not yet completed
+						//TODO: if we add the row a separate element we could have a completly other row that e.g. links the job (or at least it's definition')
+						// Then we can have just one element spanning the entire row linking to Jenkins
+						// It shouldn't be linked permanently as the link is dead after the release.
+						result['duration'] = ''
+						result['passCount'] = ''
+						result['failCount'] = ''
+						result['totalCount'] = ''
+					} else {
+						result['totalCount'] = result.passCount + result.failCount
+					}
 					const row = templateRow.cloneNode(true)
-					resolveDataReferences(row, dataRow)
+					resolveDataReferences(row, result)
 					tbody.appendChild(row)
 				}
 				tbody.deleteRow(0) // Remove the template row
-			}
+			})
 		}
 
 		//TODO: set page name here and use it bread-crump and TOC
