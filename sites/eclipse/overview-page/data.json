@@ -4,7 +4,7 @@
 			"path": "drops4/R-4.37-202509050730",
 			"statusIcon": "images/build_done.gif",
 			"label": "4.37",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "6 of 6",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/R-4.37-202509050730/testResults.php"
@@ -13,7 +13,7 @@
 			"path": "drops4/R-4.36-202505281830",
 			"statusIcon": "images/build_done.gif",
 			"label": "4.36",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/R-4.36-202505281830/testResults.php"
@@ -22,7 +22,7 @@
 			"path": "drops4/R-4.35-202502280140",
 			"statusIcon": "images/build_done.gif",
 			"label": "4.35",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/R-4.35-202502280140/testResults.php"
@@ -33,7 +33,7 @@
 			"path": "drops4/S-4.38RC1-202511201800",
 			"statusIcon": "images/build_done.gif",
 			"label": "4.38RC1",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/S-4.38RC1-202511201800/testResults.php"
@@ -42,7 +42,7 @@
 			"path": "drops4/S-4.38M3-202511140540",
 			"statusIcon": "images/build_done.gif",
 			"label": "4.38M3",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/S-4.38M3-202511140540/testResults.php"
@@ -51,7 +51,7 @@
 			"path": "drops4/S-4.38M2-202510240020",
 			"statusIcon": "images/build_done.gif",
 			"label": "4.38M2",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "4 of 5",
 			"testsIcon": "images/runtests.gif",
 			"testsPath": "drops4/S-4.38M2-202510240020/testResults.php"
@@ -60,7 +60,7 @@
 			"path": "drops4/S-4.38M1-202510031800",
 			"statusIcon": "images/build_done.gif",
 			"label": "4.38M1",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/S-4.38M1-202510031800/testResults.php"
@@ -71,7 +71,7 @@
 			"path": "drops4/I20251124-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251124-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251124-1800/testResults.php"
@@ -80,7 +80,7 @@
 			"path": "drops4/I20251123-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251123-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251123-1800/testResults.php"
@@ -89,7 +89,7 @@
 			"path": "drops4/I20251122-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251122-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251122-1800/testResults.php"
@@ -98,7 +98,7 @@
 			"path": "drops4/I20251121-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251121-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251121-1800/testResults.php"
@@ -107,7 +107,7 @@
 			"path": "drops4/I20251120-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251120-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251120-1800/testResults.php"
@@ -116,7 +116,7 @@
 			"path": "drops4/I20251120-0400",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251120-0400",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251120-0400/testResults.php"
@@ -125,7 +125,7 @@
 			"path": "drops4/I20251117-0620",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251117-0620",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "2 of 5",
 			"testsIcon": "images/runtests.gif",
 			"testsPath": "drops4/I20251117-0620/testResults.php"
@@ -134,7 +134,7 @@
 			"path": "drops4/I20251110-0010",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251110-0010",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251110-0010/testResults.php"
@@ -143,7 +143,7 @@
 			"path": "drops4/I20251103-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251103-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251103-1800/testResults.php"
@@ -152,7 +152,7 @@
 			"path": "drops4/I20251027-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251027-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251027-1800/testResults.php"
@@ -161,7 +161,7 @@
 			"path": "drops4/I20251020-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251020-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251020-1800/testResults.php"
@@ -170,7 +170,7 @@
 			"path": "drops4/I20251013-0020",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251013-0020",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251013-0020/testResults.php"
@@ -179,7 +179,7 @@
 			"path": "drops4/I20251006-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251006-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251006-1800/testResults.php"
@@ -188,7 +188,7 @@
 			"path": "drops4/I20250929-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20250929-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20250929-1800/testResults.php"
@@ -197,7 +197,7 @@
 			"path": "drops4/I20250922-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20250922-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20250922-1800/testResults.php"
@@ -206,7 +206,7 @@
 			"path": "drops4/I20250920-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20250920-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20250920-1800/testResults.php"
@@ -215,7 +215,7 @@
 			"path": "drops4/I20250908-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20250908-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "6 of 6",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20250908-1800/testResults.php"
@@ -226,7 +226,7 @@
 			"path": "drops4/Y20251125-1000",
 			"statusIcon": "images/build_done.gif",
 			"label": "Y20251125-1000",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "0 of 4",
 			"testsIcon": "images/runtests.gif",
 			"testsPath": "drops4/Y20251125-1000/testResults.php"
@@ -235,7 +235,7 @@
 			"path": "drops4/Y20251122-1000",
 			"statusIcon": "images/build_done.gif",
 			"label": "Y20251122-1000",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "1 of 4",
 			"testsIcon": "images/runtests.gif",
 			"testsPath": "drops4/Y20251122-1000/testResults.php"
@@ -244,7 +244,7 @@
 			"path": "drops4/Y20251120-1000",
 			"statusIcon": "images/build_done.gif",
 			"label": "Y20251120-1000",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "1 of 4",
 			"testsIcon": "images/runtests.gif",
 			"testsPath": "drops4/Y20251120-1000/testResults.php"
@@ -253,7 +253,7 @@
 			"path": "drops4/Y20251118-1000",
 			"statusIcon": "images/build_done.gif",
 			"label": "Y20251118-1000",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "1 of 4",
 			"testsIcon": "images/runtests.gif",
 			"testsPath": "drops4/Y20251118-1000/testResults.php"
@@ -262,7 +262,7 @@
 			"path": "drops4/Y20251115-1000",
 			"statusIcon": "images/build_done.gif",
 			"label": "Y20251115-1000",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "0 of 4",
 			"testsIcon": "images/runtests.gif",
 			"testsPath": "drops4/Y20251115-1000/testResults.php"
@@ -271,7 +271,7 @@
 			"path": "drops4/Y20251113-1000",
 			"statusIcon": "images/build_done.gif",
 			"label": "Y20251113-1000",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "1 of 4",
 			"testsIcon": "images/runtests.gif",
 			"testsPath": "drops4/Y20251113-1000/testResults.php"
@@ -280,7 +280,7 @@
 			"path": "drops4/Y20251113-0240",
 			"statusIcon": "images/build_done.gif",
 			"label": "Y20251113-0240",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "1 of 4",
 			"testsIcon": "images/runtests.gif",
 			"testsPath": "drops4/Y20251113-0240/testResults.php"
@@ -289,7 +289,7 @@
 			"path": "drops4/Y20251112-0800",
 			"statusIcon": "images/build_done.gif",
 			"label": "Y20251112-0800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "2 of 4",
 			"testsIcon": "images/runtests.gif",
 			"testsPath": "drops4/Y20251112-0800/testResults.php"
@@ -298,7 +298,7 @@
 			"path": "drops4/Y20250916-1440",
 			"statusIcon": "images/build_done.gif",
 			"label": "Y20250916-1440",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "4 of 4",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/Y20250916-1440/testResults.php"
@@ -307,7 +307,7 @@
 			"path": "drops4/Y20250912-1000",
 			"statusIcon": "images/build_done.gif",
 			"label": "Y20250912-1000",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "4 of 4",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/Y20250912-1000/testResults.php"
@@ -318,7 +318,7 @@
 			"path": "drops4/R-4.37-202509050730",
 			"statusIcon": "images/build_done.gif",
 			"label": "4.37",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "6 of 6",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/R-4.37-202509050730/testResults.php"
@@ -327,7 +327,7 @@
 			"path": "drops4/S-4.38RC1-202511201800",
 			"statusIcon": "images/build_done.gif",
 			"label": "4.38RC1",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/S-4.38RC1-202511201800/testResults.php"
@@ -336,7 +336,7 @@
 			"path": "drops4/I20251124-1800",
 			"statusIcon": "images/build_done.gif",
 			"label": "I20251124-1800",
-			"date": "",
+			"date": "to be read",
 			"testsCompletion": "5 of 5",
 			"testsIcon": "images/junit.gif",
 			"testsPath": "drops4/I20251124-1800/testResults.php"

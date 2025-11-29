@@ -32,40 +32,32 @@
 			const testConfigs = contentData.expectedTests
 			const reultsSummaryURLs = testConfigs.map(c => `testresults/ep437I-unit-${c}.json`)
 			const testResultsSummary = fetchAllJSON(reultsSummaryURLs)
-			const testResultsTable = markdownElement.getElementById("test-results-summary-table")
-			//  <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
-			const tbody = testResultsTable.tBodies[0]
-			const templateRow = toElement(`
-				<tr>
-					<td class="data-ref">\${name}</td>
-					<td class="data-ref">\${failCount}</td>
-					<td class="data-ref">\${passCount}</td>
-					<td class="data-ref">\${totalCount}</td>
-					<td class="data-ref">\${duration}</td>
-				</tr>`)
-			//TODO: create template row separatly to avoid the need to remove it?
+			const testResultsTable = document.getElementById("test-results-summary-table")
+			const tBody = testResultsTable.createTBody()
 			testResultsSummary.then(testResults => {
 				for (let r = 0; r < testResults.length; r++) {
+					const row = tBody.insertRow()
 					const result = testResults[r]
-					const row = tbody.insertRow()
-					result['name'] = testConfigs[r]
-					if (result) { // Test configuration completed
+					const testName = testConfigs[r] 
+					result['name'] = testName
+					if (result.duration) { // Test configuration completed
 						result['totalCount'] = result.passCount + result.failCount
+						row.innerHTML = `
+							<td>${testName}</td>
+							<td>${result.failCount}</td>
+							<td>${result.passCount}</td>
+							<td>${result.passCount + result.failCount}</td>
+							<td>${result.duration}</td>
+						`
 					} else {
-						//TODO: if we add the row a separate element we could have a completly other row that e.g. links the job (or at least it's definition')
-						// Then we can have just one element spanning the entire row linking to Jenkins
-						// It shouldn't be linked permanently as the link is dead after the release.
-						// call element methods table.createRow() and set it's inner html and resolve it..
-						result['duration'] = ''
-						result['passCount'] = ''
-						result['failCount'] = ''
-						result['totalCount'] = ''
+						const jobName = `ep${contentData.releaseShort.replace('.','')}I-unit-${testConfigs[r]}`
+						row.innerHTML = `
+							<td>${testName}</td>
+							<td colspan="4"> Test job is running at <a href="https://ci.eclipse.org/releng/job/AutomatedTests/job/${jobName}/">${jobName}</a></td>
+						`
 					}
-					const row = templateRow.cloneNode(true)
 					resolveDataReferences(row, result)
-					tbody.appendChild(row)
 				}
-				tbody.deleteRow(0) // Remove the template row
 			})
 		}
 
