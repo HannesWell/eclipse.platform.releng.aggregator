@@ -14,8 +14,8 @@
 		"win32-x86_64-java21"
 	],
 	"p2Repository": {
-		"filename": "repository-4.37.zip",
-		"fileSize": "526 MB"
+		"name": "repository-4.37.zip",
+		"size": "526 MB"
 	},
 	"eclipse-sdk-products": [
 		{

@@ -298,8 +298,13 @@ pipeline {
 								}
 							}
 							script {
+								def buildProperties = readBuildProperties("${CJE_ROOT}/buildproperties.properties")
 								def utilities = load "JenkinsJobs/shared/utilities.groovy"
-								utilities.writeJSON("$CJE_ROOT/$DROP_DIR/$BUILD_ID/buildproperties.json", buildProperties)
+								dir("$CJE_ROOT/$DROP_DIR/$BUILD_IID") {
+									def fileList = sh(script: 'stat --format "%n %s" *', returnStdout: true)
+									def buildSiteProperties = generateSiteData(buildProperties, fileList)
+									utilities.writeJSON("buildproperties.json", buildSiteProperties)
+								}
 							}
 						}
 						stage('Generate Repo reports') {
@@ -497,4 +502,19 @@ def readBuildProperties(String buildPropertiesFile) {
 			v = v.trim();
 			return [n, (v.startsWith('"') && v.endsWith('"') ? v.substring(1, v.length() - 1) : v)]
 		}
+}
+
+@NonCPS
+def generateSiteData(Map<String, String> buildProperties, String fileList) {
+	return [ identifier: buildProperties.BUILD_ID, label: buildProperties.BUILD_ID,
+			kind: buildProperties.BUILD_TYPE_NAME,
+			release: buildProperties.STREAM, releaseShort: buildProperties.RELEASE_VER,
+			expectedTests: '',
+			p2Repository: [ name: '', size: '' ],
+			'eclipse-sdk-products': [ name: '', size: '' ],
+			'eclipse-platform-products': [ name: '', size: '' ],
+			'eclipse-tests': [ name: '', size: '' ],
+			'jdt-compiler': [ name: '', size: '' ],
+			'swt-binaries': [ name: '', size: '' ],
+			]
 }
