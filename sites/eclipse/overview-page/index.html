@@ -35,41 +35,58 @@
 				const dataPath = tablePlaceholder.getAttribute('data-path');
 				const tableData = getValue(contentData, dataPath)
 				const table = toElement(`
-				<table class="builds-table" data-path="${dataPath}" >
+				<table class="builds-table">
 					<thead>
 						<tr>
 							<th>Build Name</th>
 							<th>Build Status</th>
-							<th>Build Date</th>
+							<th>Build Date (UTC)</th>
 						</tr>
 					</thead>
-					<tr> <!-- The template row, which is replicated for each data-set and has its referenced with that data-set's values -->
-						<td>
-							<a class="data-ref" href="\${path}" title="Latest Release">\${label}</a>
-						</td>
-						<td>
-							<a class="data-ref" href="\${path}">
-								<img src="\${statusIcon}" title="Build is available" alt="Build is available">
-							</a>
-							<a class="data-ref" href="\${testsPath}" title="\${testsCompletion} test platforms finished." style="text-decoration: none">
-								<img src="\${testsIcon}"/>
-								(\${testsCompletion} tests completed)
-							</a>
-						</td>
-						<td class="data-ref">\${date}</td>
-					</tr>
-				</table>	`)
-				//TODO: create template row separatly to avoid the need to remove it?
+				</table>`)
 				tablePlaceholder.replaceWith(table)
-				const tbody = table.tBodies[0]
-				const templateRow = tbody.rows[0]
+				const tBody = table.createTBody()
 				for (const dataRow of tableData) {
-					const row = templateRow.cloneNode(true)
-					resolveDataReferences(row, dataRow)
-					tbody.appendChild(row)
+					const row = tBody.insertRow()
+
+					const date = getBuildDate(dataRow)
+					row.innerHTML = `
+					<td>
+						<a href="${dataRow.path}">${dataRow.label}</a>
+					</td>
+					<td>
+						<a href="${dataRow.path}">
+							<img src="${dataRow.statusIcon}" title="Build is available" alt="Build is available">
+						</a>
+						<a href="${dataRow.testsPath}" title="${dataRow.testsCompletion} test platforms finished." style="text-decoration: none">
+							<img src="${dataRow.testsIcon}"/>
+							(${dataRow.testsCompletion} tests completed)
+						</a>
+					</td>
+					<td>${date}</td>
+					`
 				}
-				tbody.deleteRow(0) // Remove the template row
 			}
+		}
+
+		function getBuildDate(buildData) {
+			let date = buildData.date;
+			const year = parseInt(date.substring(0, 4))
+			const month = parseInt(date.substring(5, 7)) - 1
+			const day = parseInt(date.substring(8, 10))
+			const hour = parseInt(date.substring(11, 13))
+			const minute = parseInt(date.substring(14, 16))
+			const dateUTC = new Date(Date.UTC(year, month, day, hour, minute));
+			return new Intl.DateTimeFormat("en-GB", {
+				timeZone: "UTC",
+				year: "numeric",
+				month: "short",
+				day: "2-digit",
+				weekday: "short",
+				hour12: false,
+				hour: "2-digit",
+				minute: "2-digit",
+			}).format(dateUTC)
 		}
 
 		//TODO: set page name here and use it bread-crump and TOC
