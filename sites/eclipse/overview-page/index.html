@@ -47,10 +47,7 @@
 				tablePlaceholder.replaceWith(table)
 				const tBody = table.createTBody()
 				for (const dataRow of tableData) {
-					const row = tBody.insertRow()
-
-					const date = getBuildDate(dataRow)
-					row.innerHTML = `
+					tBody.insertRow().innerHTML = `
 					<td>
 						<a href="${dataRow.path}">${dataRow.label}</a>
 					</td>
@@ -63,7 +60,7 @@
 							(${dataRow.testsCompletion} tests completed)
 						</a>
 					</td>
-					<td>${date}</td>
+					<td>${getBuildDate(dataRow)}</td>
 					`
 				}
 			}

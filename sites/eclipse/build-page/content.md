@@ -52,10 +52,20 @@ To update your build to use this specific build, you can use the software reposi
 
 ### Eclipse SDK
 
+<div class="files-table" data-path="eclipse-sdk-products"></div>
+
 ### Tests and Testing Framework
+
+<div class="files-table" data-path="eclipse-tests"></div>
 
 ### Platform Runtime Binary
 
+<div class="files-table" data-path="eclipse-platform-products"></div>
+
 ### JDT Core Batch Compiler
 
+<div class="files-table" data-path="jdt-compiler"></div>
+
 ### SWT Binary and Source
+
+<div class="files-table" data-path="swt-binaries"></div>

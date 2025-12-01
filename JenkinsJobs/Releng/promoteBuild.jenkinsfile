@@ -377,6 +377,7 @@ EOF
 	]
 	def buildPropertiesPHP = sh(returnStdout: true, script: "ssh genie.releng@projects-storage.eclipse.org cat ${sourcePath}/buildproperties.php")
 	for (entry in newProperties) {
+		//TODO: update this to modify the buildproperties.json with the new names/labels and updated filenames/size(?)
 		buildPropertiesPHP = buildPropertiesPHP.replaceFirst('\\$' + entry.key + ' = "[^"]+"', '\\$' + entry.key + ' = "' + entry.value + '"')
 	}
 	writeFile(file: 'buildproperties.php', text: buildPropertiesPHP)

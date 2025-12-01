@@ -17,31 +17,42 @@
 		"filename": "repository-4.37.zip",
 		"fileSize": "526 MB"
 	},
-	"latest": [
-		"4.37",
-		"4.38M3",
-		"I20251114-0540"
+	"eclipse-sdk-products": [
+		{
+			"name": "eclipse-SDK-I20251130-1800-win32-x86_64.zip",
+			"size": "291 MB"
+		},
+		{
+			"name": "eclipse-SDK-I20251130-1800-win32-aarch64.zip",
+			"size": "291 MB"
+		},
+		{
+			"name": "eclipse-SDK-I20251130-1800-linux-gtk-x86_64.tar.gz",
+			"size": "289 MB"
+		},
+		{
+			"name": "eclipse-SDK-I20251130-1800-linux-gtk-aarch64.tar.gz",
+			"size": "289 MB"
+		},
+		{
+			"name": "eclipse-SDK-I20251130-1800-linux-gtk-ppc64le.tar.gz",
+			"size": "289 MB"
+		},
+		{
+			"name": "eclipse-SDK-I20251130-1800-linux-gtk-riscv64.tar.gz",
+			"size": "289 MB"
+		},
+		{
+			"name": "eclipse-SDK-I20251130-1800-macosx-cocoa-x86_64.dmg",
+			"size": "291 MB"
+		},
+		{
+			"name": "eclipse-SDK-I20251130-1800-macosx-cocoa-aarch64.dmg",
+			"size": "291 MB"
+		}
 	],
-	"latest-release": [
-		"4.37",
-		"4.36",
-		"4.35"
-	],
-	"stable-builds": [
-		"4.38M3",
-		"4.38M2",
-		"4.38M1"
-	],
-	"i-builds": [
-		"I20251114-0540",
-		"I20251113-1020",
-		"I20251113-0510",
-		"..."
-	],
-	"y-builds": [
-		"Y1234567-0000",
-		"Y1234567-0000",
-		"Y1234567-0000",
-		"..."
-	]
+	"eclipse-tests": [],
+	"eclipse-platform-products": [],
+	"jdt-compiler": [],
+	"swt-binaries": []
 }

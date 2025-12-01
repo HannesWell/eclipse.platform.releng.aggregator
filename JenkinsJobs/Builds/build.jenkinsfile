@@ -297,6 +297,10 @@ pipeline {
 									'''
 								}
 							}
+							script {
+								def utilities = load "JenkinsJobs/shared/utilities.groovy"
+								utilities.writeJSON("$CJE_ROOT/$DROP_DIR/$BUILD_ID/buildproperties.json", buildProperties)
+							}
 						}
 						stage('Generate Repo reports') {
 							steps {

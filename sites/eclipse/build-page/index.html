@@ -28,20 +28,25 @@
 	<script>
 		loadContentData('buildproperties.json')
 
-		markdownPostProcessor = (markdownElement, contentData) => {
-			const testConfigs = contentData.expectedTests
-			const reultsSummaryURLs = testConfigs.map(c => `testresults/ep437I-unit-${c}.json`)
-			const testResultsSummary = fetchAllJSON(reultsSummaryURLs)
+		markdownPostProcessor = (markdownElement, buildProperties) => {
+
+			// Inject test results
+			const testConfigs = buildProperties.expectedTests
+			const buildType = buildProperties.identifier.startsWith('Y') ? 'Y' : 'I'
+			const jobNamePrefix = `ep${buildProperties.releaseShort.replace('.', '')}${buildType}-unit`
+			const testJobFolderName = buildType == 'I' ? 'AutomatedTests' : 'YBuilds'
+
+			const testResultsSummary = fetchAllJSON(testConfigs.map(c => `testresults/${jobNamePrefix}-${c}.json`))
 			const testResultsTable = document.getElementById("test-results-summary-table")
 			const tBody = testResultsTable.createTBody()
 			testResultsSummary.then(testResults => {
 				for (let r = 0; r < testResults.length; r++) {
 					const row = tBody.insertRow()
 					const result = testResults[r]
-					const testName = testConfigs[r] 
+					const testName = testConfigs[r]
 					result['name'] = testName
 					if (result.duration) { // Test configuration completed
-						result['totalCount'] = result.passCount + result.failCount
+						//TODO: compute nicer label
 						row.innerHTML = `
 							<td>${testName}</td>
 							<td>${result.failCount}</td>
@@ -50,15 +55,69 @@
 							<td>${result.duration}</td>
 						`
 					} else {
-						const jobName = `ep${contentData.releaseShort.replace('.','')}I-unit-${testConfigs[r]}`
+						const jobName = `${jobNamePrefix}-${testConfigs[r]}`
 						row.innerHTML = `
 							<td>${testName}</td>
-							<td colspan="4"> Test job is running at <a href="https://ci.eclipse.org/releng/job/AutomatedTests/job/${jobName}/">${jobName}</a></td>
+							<td colspan="4"> Test job is running at <a href="https://ci.eclipse.org/releng/job/${testJobFolderName}/job/${jobName}/">${jobName}</a></td>
 						`
 					}
 					resolveDataReferences(row, result)
 				}
 			})
+
+			// Inject resource files
+			const dataTables = Array.from(markdownElement.getElementsByClassName("files-table"))
+			for (const tablePlaceholder of dataTables) {
+				const dataPath = tablePlaceholder.getAttribute('data-path');
+				const filesData = getValue(buildProperties, dataPath)
+				const table = toElement(`
+				<table class="files-table">
+					<thead>
+						<tr>
+							<th>Platform</th>
+							<th style="width:50%">Download</th>
+							<th>Size</th>
+						</tr>
+					</thead>
+				</table>`)
+				tablePlaceholder.replaceWith(table)
+				const tBody = table.createTBody()
+				for (const file of filesData) {
+					tBody.insertRow().innerHTML = `
+					<td>	${file.label ? file.label : getPlatformLabel(file.name)}</td>
+					<td>
+						<a href="https://www.eclipse.org/downloads/download.php?file=eclipse/downloads/drops4/${buildProperties.identifier}/${file.name}">${file.name}</a>
+					</td>
+					<td>${file.size}</td>
+					`
+				}
+			}
+		}
+
+		function getPlatformLabel(fileName) {
+			let os;
+			if (fileName.indexOf('-win32-') !== -1) {
+				os = 'Windows'
+			} else if (fileName.indexOf('-linux-') !== -1) {
+				os = 'Linux'
+			} else if (fileName.indexOf('-macosx-') !== -1) {
+				os = 'Mac OSX'
+			} else {
+				throw new Error('Cannot determine OS from filename: ' + fileName)
+			}
+			let arch;
+			if (fileName.indexOf('-x86_64-')) {
+				arch = 'x86 64-bit'
+			} else if (fileName.indexOf('-aarch64-') !== -1) {
+				arch = 'ARM 64-bit'
+			} else if (fileName.indexOf('-ppc64le-') !== -1) {
+				arch = 'PowerPC 64-bit'
+			} else if (fileName.indexOf('-riscv64-') !== -1) {
+				arch = 'RISC-V 64-bit'
+			} else {
+				throw new Error('Cannot determine OS from filename: ' + fileName)
+			}
+			return `${os} (${arch})`
 		}
 
 		//TODO: set page name here and use it bread-crump and TOC

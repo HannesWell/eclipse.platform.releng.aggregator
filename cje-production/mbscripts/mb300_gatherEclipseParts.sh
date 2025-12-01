@@ -181,26 +181,3 @@ if [ -d $NOTARIZE_LOG_DIR ]; then
     cat $i
   done
 fi
-
-# publish Eclipse
-pushd $CJE_ROOT
-ANT_SCRIPT=$ECLIPSE_BUILDER_DIR/eclipse/helper.xml
-$JavaCMD -jar $LAUNCHER_JAR \
-  -application org.eclipse.ant.core.antRunner \
-  -buildfile $ANT_SCRIPT \
-  -data $CJE_ROOT/$TMP_DIR/workspace-publish \
-  -DAGGR_DIR=$CJE_ROOT/$AGG_DIR \
-  -DcjeDir=$CJE_ROOT \
-  -DEBuilderDir=$ECLIPSE_BUILDER_DIR \
-  -DbuildDirectory=$CJE_ROOT/$DROP_DIR/$BUILD_ID \
-  -DbuildLabel=$BUILD_ID \
-  -DbuildDir=$BUILD_ID \
-  -DbuildRepo=$PLATFORM_REPO_DIR \
-  -DbuildType=$BUILD_TYPE \
-  -DpublishingContent=$ECLIPSE_BUILDER_DIR/eclipse/publishingFiles \
-  -DindexFileName=index.php \
-  -Dbase.builder=$CJE_ROOT/$BASEBUILDER_DIR \
-  -Djava.io.tmpdir=$CJE_ROOT/$TMP_DIR \
-  -v \
-  publish
-popd
