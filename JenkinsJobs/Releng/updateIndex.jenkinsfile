@@ -25,6 +25,17 @@ pipeline {
 					//TODO: change this to one call to SSH which iterates over the directories in bash and outputs the relevant data
 					// Then parse the result in a noncps method to speed it up
 					sshagent(['projects-storage.eclipse.org-bot-ssh']) {
+						def buildDropsData = sh(script: """
+							ssh genie.releng@projects-storage.eclipse.org '
+								drops=\$(ls ${EP_ECLIPSE_DROPS})
+								for drop in \${drops}; do
+									echo \${drop}
+									cat ${EP_ECLIPSE_DROPS}/\${drop}/testConfigs.php
+									cat ${EP_ECLIPSE_DROPS}/\${drop}/testConfigsFound.php || echo 'Tests not yet finished'
+								done
+							'
+							""".stripIndent(), returnStdout: true)
+						echo buildDropsData
 						def buildDrops = sh(script: "ssh genie.releng@projects-storage.eclipse.org ls ${EP_ECLIPSE_DROPS}", returnStdout: true).trim().split("\\s")
 						def releases = []
 						def stableBuilds = []
