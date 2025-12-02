@@ -52,27 +52,31 @@ pipeline {
 								error 'New style projects not yet implemented'
 							}
 							def dropData = [ path: "drops4/${dropName}".toString(), statusIcon: 'images/build_done.gif' ]
+							def dateTime = null;
 							if (dropName.startsWith('R-')) {
 								dropData.label = dropName.substring(2, dropName.lastIndexOf('-'))
+								dropData.date = toUTCdateTime(dropName.substring(dropName.lastIndexOf('-') + 1))
 								releases += dropData
 							} else if (dropName.startsWith('S-')) {
 								dropData.label = dropName.substring(2, dropName.lastIndexOf('-'))
+								dropData.date = toUTCdateTime(dropName.substring(dropName.lastIndexOf('-') + 1))
 								stableBuilds += dropData
 							} else if (dropName.startsWith('I20')) {
 								dropData.label = dropName
+								dropData.date = toUTCdateTime(dropName.substring(1).replace('-', ''))
 								iBuilds += dropData
 							} else if (dropName.startsWith('Y20')) {
 								dropData.label = dropName
+								dropData.date = toUTCdateTime(dropName.substring(1).replace('-', ''))
 								yBuilds += dropData
 							}
-							dropData.date = ''
+							dropData.date = toUTCdateTime(dateTime)
 							dropData.testsCompletion = "${finishedTestsCount} of ${expectedTestsCount}".toString()
 							dropData.testsIcon = finishedTestsCount == expectedTestsCount ? 'images/junit.gif' : 'images/runtests.gif'
 							dropData.testsPath = "drops4/${dropName}/${isOldStyleDrop ? 'testResults.php' : 'testresults'}".toString()
 						}
 						def overviewData = [releases: releases, stableBuilds: stableBuilds, iBuilds: iBuilds, yBuilds: yBuilds]
 						sort(overviewData)
-						//overviewData.values().each{ list -> list.sort({d1, d2 -> d1.label.compareTo(d2.label)})}
 						// Select latest element among all releases, stable builds respectivly I-builds
 						def latest = [overviewData.releases[0], overviewData.stableBuilds[0], overviewData.iBuilds[0] ]
 						overviewData.latest = latest
@@ -89,6 +93,20 @@ pipeline {
 @NonCPS
 def sort(def overviewData) {
 	overviewData.values().each{ list -> list.sort({d1, d2 -> -d1.label.compareTo(d2.label)})}
+}
+
+@NonCPS
+def toUTCdateTime(String dateTime) {
+	if (dateTime.length() != 12) {
+		throw new IllegalArgumentException('Not an expected date-time string: ' + dateTime)
+	}
+	def int year = Integer.parseInt(dateTime.substring(0, 4))
+	def int month = Integer.parseInt(dateTime.substring(4, 6))
+	def int day = Integer.parseInt(dateTime.substring(6, 8))
+	def int hour = Integer.parseInt(dateTime.substring(8, 10))
+	def int minute = Integer.parseInt(dateTime.substring(10, 12))
+	def dateTime = java.time.LocalDateTime.of(year, month, day, hour, minute).atZone(java.time.ZoneId.of("America/New_York"));
+	return dateTime.withZoneSameInstant(java.time.ZoneOffset.UTC).toLocalDateTime();
 }
 
 //TODO: instead checkout this repo and use def utilities = load "JenkinsJobs/shared/utilities.groovy" ?!
