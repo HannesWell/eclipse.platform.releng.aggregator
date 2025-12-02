@@ -301,6 +301,8 @@ pipeline {
 								def buildProperties = readBuildProperties("${CJE_ROOT}/buildproperties.properties")
 								def utilities = load "JenkinsJobs/shared/utilities.groovy"
 								dir("$CJE_ROOT/$DROP_DIR/$BUILD_IID") {
+									//TODO: Remove this
+									// def fileList = sh(script: "ssh genie.releng@projects-storage.eclipse.org 'cd ${EP_ECLIPSE_DROPS}/I20251202-0300 && stat --format \"%n %s\" *'", returnStdout: true)
 									def fileList = sh(script: 'stat --format "%n %s" *', returnStdout: true)
 									def buildSiteProperties = generateSiteData(buildProperties, fileList)
 									utilities.writeJSON("buildproperties.json", buildSiteProperties)
@@ -506,10 +508,14 @@ def readBuildProperties(String buildPropertiesFile) {
 
 @NonCPS
 def generateSiteData(Map<String, String> buildProperties, String fileList) {
+	def testPrefix = "ep${buildProperties.RELEASE_VER.replace('.', '')}I-unit-"
 	return [ identifier: buildProperties.BUILD_ID, label: buildProperties.BUILD_ID,
 			kind: buildProperties.BUILD_TYPE_NAME,
 			release: buildProperties.STREAM, releaseShort: buildProperties.RELEASE_VER,
-			expectedTests: '',
+			expectedTests: buildProperties.TEST_CONFIGURATIONS_EXPECTED.split(',').collect{ c ->
+				def config = c.split('-')
+				return "${config[2]}-${config[3]}-${config[4].substring(0, config[4].indexOf('_'))}"
+			},
 			p2Repository: [ name: '', size: '' ],
 			'eclipse-sdk-products': [ name: '', size: '' ],
 			'eclipse-platform-products': [ name: '', size: '' ],

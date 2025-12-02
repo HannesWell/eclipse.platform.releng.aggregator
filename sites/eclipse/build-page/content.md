@@ -16,7 +16,7 @@ This page provides access to the various deliverables of Eclipse Platform build 
 
 ### Summary of Unit Tests Results
 
-<!-- TODO: inject this value! -->
+<!-- TODO: inject this value too! -->
 6 of 6 integration and unit test configurations are complete.
 
 <table id="test-results-summary-table">
@@ -47,7 +47,7 @@ To update your build to use this specific build, you can use the software reposi
 
 | Platform | Download | Size |
 | -------- | -------- | ---- |
-| All | <a class="data-ref" href="https://www.eclipse.org/downloads/download.php?file=/eclipse/downloads/drops4/${identifier}/${p2Repository.filename}">${p2Repository.filename}</a><br> | <span class="data-ref">${p2Repository.fileSize}</span> |
+| All | <a class="data-ref" href="https://www.eclipse.org/downloads/download.php?file=/eclipse/downloads/drops4/${identifier}/${p2Repository.name}">${p2Repository.name}</a><br> | <span class="data-ref">${p2Repository.size}</span> |
 <!-- TODO: add Add repo icon-->
 
 ### Eclipse SDK
