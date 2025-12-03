@@ -261,6 +261,7 @@ pipeline {
 					
 					# Gather maven properties
 					cp ${AGG_DIR}/eclipse-platform-parent/target/mavenproperties.properties ${DROP_DIR}/$BUILD_ID/mavenproperties.properties
+					comparatorRepo=$(grep '^comparator.repo=' ${DROP_DIR}/${BUILD_ID}/mavenproperties.properties | cut -d'=' -f2-)
 					
 					# Gather artifactcomparisons
 					pushd ${AGG_DIR}
@@ -270,22 +271,15 @@ pipeline {
 					popd
 					
 					# Verify comparatorlogs
-					#
-					# Note: copy mb220_buildSdkPatch.sh.log as mb060_run-maven-build_output.txt for now to avoid changing eclipse_compare.xml
-					# ToDo: Modify org.eclipse.releng.build.tools.comparator.Extractor to be configurable:
-					# https://github.com/eclipse-platform/eclipse.platform.releng.buildtools/blob/c5f7ecf1951d44311e24ce7bd6b505189aabb4da/bundles/org.eclipse.releng.build.tools.comparator/src/org/eclipse/releng/build/tools/comparator/Extractor.java#L27
 					#TODO: Generally try to avoid the need to capture the build log in a file/for teeing
-					cp ${logDir}/mb220_buildSdkPatch.sh.log ${DROP_DIR}/$BUILD_ID/buildlogs/mb060_run-maven-build_output.txt
+					cp ${logDir}/mb220_buildSdkPatch.sh.log ${DROP_DIR}/$BUILD_ID/buildlogs/
 					
 					pushd ${DROP_DIR}/$BUILD_ID
-					$BASE_BUILDER_ECLIPSE_EXE \
-						-application org.eclipse.ant.core.antRunner \
-						-buildfile $ECLIPSE_BUILDER_DIR/eclipse/buildScripts/eclipse_compare.xml \
-						-data $CJE_ROOT/$TMP_DIR/workspace-comparatorLogs \
+					java \
 						-DbuildDirectory=${DROP_DIR}/$BUILD_ID \
+						-DcomparatorRepo=${comparatorRepo} \
 						-Djava.io.tmpdir=$CJE_ROOT/$TMP_DIR \
-						-v \
-						compare
+						${WORKSPACE}/scripts/releng/ComparatorSummaryExtractor.java
 					popd
 					
 					comparatorLogMinimumSize=350
@@ -307,6 +301,9 @@ pipeline {
 				stage('Eclipse') {
 					stages {
 						stage('Gather Eclipse parts') {
+							tools {
+								jdk 'temurin-jdk25-latest'
+							}						
 							environment {
 								KEYRING = credentials('secret-subkeys-releng.asc')
 								KEYRING_PASSPHRASE = credentials('secret-subkeys-releng.asc-passphrase')
@@ -461,25 +458,26 @@ pipeline {
 									done
 									
 									# Publish Eclipse
-									pushd $CJE_ROOT
-									$BASE_BUILDER_ECLIPSE_EXE \
-										-application org.eclipse.ant.core.antRunner \
-										-buildfile $ECLIPSE_BUILDER_DIR/eclipse/helper.xml \
-										-data $CJE_ROOT/$TMP_DIR/workspace-publish \
-										-DAGGR_DIR=${AGG_DIR} \
-										-DcjeDir=$CJE_ROOT \
-										-DEBuilderDir=$ECLIPSE_BUILDER_DIR \
-										-DbuildDirectory=${DROP_DIR}/${BUILD_ID} \
-										-DbuildLabel=$BUILD_ID \
-										-DbuildDir=$BUILD_ID \
-										-DbuildRepo=$PLATFORM_REPO_DIR \
-										-DbuildType=$BUILD_TYPE \
-										-DpublishingContent=$ECLIPSE_BUILDER_DIR/eclipse/publishingFiles \
-										-DindexFileName=index.php \
-										-Djava.io.tmpdir=$CJE_ROOT/$TMP_DIR \
-										-v \
-										publish
+									
+									pushd ${DROP_DIR}/${BUILD_ID}
+										bash ${CJE_ROOT}/scripts/produceChecksum.sh eclipse
 									popd
+									
+									cp -r ${ECLIPSE_BUILDER_DIR}/eclipse/publishingFiles/staticDropFiles/. ${DROP_DIR}/${BUILD_ID}
+									
+									java \
+										-DisBuildTested=true \
+										-DbuildType=${BUILD_TYPE} \
+										-DdropTokenList='%repository%,%sdk%,%tests%,%runtime%,%jdtc%,%swt%' \
+										-DdropHtmlFileName=index.php \
+										-DxmlDirectoryName=${DROP_DIR}/${BUILD_ID}/testresults/xml \
+										-DdropDirectoryName=${DROP_DIR}/${BUILD_ID} \
+										-DdropTemplateFileName=${ECLIPSE_BUILDER_DIR}/eclipse/publishingFiles/templateFiles/index.template.php \
+										-DcompileLogsDirectoryName=${DROP_DIR}/${BUILD_ID}/compilelogs/plugins \
+										-DtestManifestFileName=${ECLIPSE_BUILDER_DIR}/eclipse/publishingFiles/testManifest.xml \
+										-DtestsConfigExpected=${TEST_CONFIGURATIONS_EXPECTED} \
+										-DdoMissingList=true \
+										${WORKSPACE}/scripts/releng/TestResultsGenerator.java
 								'''
 							}
 						}
@@ -501,6 +499,9 @@ pipeline {
 				stage('Equinox') {
 					stages {
 						stage('Gather Equinox parts') {
+							tools {
+								jdk 'temurin-jdk25-latest'
+							}						
 							environment {
 								KEYRING = credentials('secret-subkeys-releng.asc')
 								KEYRING_PASSPHRASE = credentials('secret-subkeys-releng.asc-passphrase')
@@ -542,25 +543,43 @@ pipeline {
 									# Publish Equinox
 									pushd $CJE_ROOT
 									mkdir -p $ECLIPSE_BUILDER_DIR/equinox/$TMP_DIR
+									mkdir -p $CJE_ROOT/$TMP_DIR
 									$BASE_BUILDER_ECLIPSE_EXE \
 										-application org.eclipse.ant.core.antRunner \
 										-buildfile $ECLIPSE_BUILDER_DIR/equinox/helper.xml \
 										-data $CJE_ROOT/$TMP_DIR/workspace-publishEquinox \
 										-DEBuilderDir=$ECLIPSE_BUILDER_DIR \
 										-DbuildDir=$BUILD_ID \
-										-DbuildDirectory=${EQUINOX_DROP_DIR} \
 										-DbuildId=$BUILD_ID \
 										-DbuildRepo=$PLATFORM_REPO_DIR \
-										-DbuildType=$BUILD_TYPE \
-										-DpostingDirectory=${DROP_DIR}/$BUILD_ID \
 										-DequinoxPostingDirectory=${EQUINOX_DROP_DIR} \
 										-DeqpublishingContent=$ECLIPSE_BUILDER_DIR/equinox/publishingFiles \
-										-DindexFileName=index.php \
 										-Dequinox.build.configs=$ECLIPSE_BUILDER_DIR/equinox/buildConfigs \
 										-Djava.io.tmpdir=$CJE_ROOT/$TMP_DIR \
 										-v \
 										publish
 									popd
+									
+									pushd ${EQUINOX_DROP_DIR}/${BUILD_ID}
+										bash ${CJE_ROOT}/scripts/produceChecksum.sh equinox
+									popd
+									
+									# Copy compile logs to this posting directory. Not sure needed. Is this where API reports come from? TODO: check this or just drop it?
+									cp -r ${DROP_DIR}/$BUILD_ID/compilelogs/**/plugins/org.eclipse.osgi*/** ${DROP_DIR}/$BUILD_ID/compilelogs/**/plugins/org.eclipse.equinox*/** ${EQUINOX_DROP_DIR}/${BUILD_ID}
+									
+									cp -r ${ECLIPSE_BUILDER_DIR}/equinox/publishingFiles/staticDropFiles/. ${EQUINOX_DROP_DIR}/${BUILD_ID}
+									
+									java \
+										-DisBuildTested=false \
+										-DbuildType=${BUILD_TYPE} \
+										-DdropTokenList='%equinox%,%framework%,%extrabundles%,%other%,%launchers%,%osgistarterkits%' \
+										-DdropHtmlFileName=index.php \
+										-DxmlDirectoryName=${DROP_DIR}/$BUILD_ID/testresults/xml \
+										-DdropDirectoryName=${EQUINOX_DROP_DIR}/${BUILD_ID} \
+										-DdropTemplateFileName=${ECLIPSE_BUILDER_DIR}/equinox/publishingFiles/templateFiles/index.template.php \
+										-DcompileLogsDirectoryName=${EQUINOX_DROP_DIR}/${BUILD_ID}/compilelogs/plugins \
+										-DtestManifestFileName=${ECLIPSE_BUILDER_DIR}/equinox/publishingFiles/testManifest.xml \
+										${WORKSPACE}/scripts/releng/TestResultsGenerator.java
 								'''
 							}
 						}

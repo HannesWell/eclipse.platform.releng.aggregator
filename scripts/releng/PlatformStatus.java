@@ -11,6 +11,7 @@
  *
  *  Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Hannes Wellmann - Convert to plain Java scripts
  *******************************************************************************/
 
 import java.util.List;
