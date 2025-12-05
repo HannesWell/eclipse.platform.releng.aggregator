@@ -274,13 +274,11 @@ pipeline {
 					#TODO: Generally try to avoid the need to capture the build log in a file/for teeing
 					cp ${logDir}/mb220_buildSdkPatch.sh.log ${DROP_DIR}/$BUILD_ID/buildlogs/
 					
-					pushd ${DROP_DIR}/$BUILD_ID
 					java \
 						-DbuildDirectory=${DROP_DIR}/$BUILD_ID \
 						-DcomparatorRepo=${comparatorRepo} \
 						-Djava.io.tmpdir=$CJE_ROOT/$TMP_DIR \
 						${WORKSPACE}/scripts/releng/ComparatorSummaryExtractor.java
-					popd
 					
 					comparatorLogMinimumSize=350
 					comparatorLog=${comparatorlogsDir}/buildtimeComparatorUnanticipated.log.txt
@@ -409,19 +407,10 @@ pipeline {
 									popd
 									
 									# Verify compilelog
-									pushd ${DROP_DIR}/${BUILD_ID}
-									$BASE_BUILDER_ECLIPSE_EXE \
-										-application org.eclipse.ant.core.antRunner \
-										-buildfile $ECLIPSE_BUILDER_DIR/eclipse/helper.xml \
-										-data $CJE_ROOT/$TMP_DIR/workspace-verifyCompile \
-										-DcjeDir=$CJE_ROOT \
-										-DEBuilderDir=$ECLIPSE_BUILDER_DIR \
-										-DbuildDirectory=${DROP_DIR}/${BUILD_ID} \
-										-DbuildLabel=$BUILD_ID \
-										-Djava.io.tmpdir=$CJE_ROOT/$TMP_DIR \
-										-v \
-										verifyCompile
-									popd
+									#TODO: adapt this to final names
+									java \
+										-Dinput=${DROP_DIR}/${BUILD_ID}/compilelogs/plugins \
+										${WORKSPACE}/scripts/releng/CompileLogConverter.java
 									
 									# Generate repository reports
 									$BASE_BUILDER_ECLIPSE_EXE \
@@ -564,8 +553,8 @@ pipeline {
 										bash ${CJE_ROOT}/scripts/produceChecksum.sh equinox
 									popd
 									
-									# Copy compile logs to this posting directory. Not sure needed. Is this where API reports come from? TODO: check this or just drop it?
-									cp -r ${DROP_DIR}/$BUILD_ID/compilelogs/**/plugins/org.eclipse.osgi*/** ${DROP_DIR}/$BUILD_ID/compilelogs/**/plugins/org.eclipse.equinox*/** ${EQUINOX_DROP_DIR}/${BUILD_ID}
+									# Copy compile logs to this posting directory. Not sure needed. Is this where API reports come from? TODO: check this or just remove it? It's probably not of interest anyways.
+									#cp -r ${DROP_DIR}/$BUILD_ID/compilelogs/**/plugins/org.eclipse.osgi*/** ${DROP_DIR}/$BUILD_ID/compilelogs/**/plugins/org.eclipse.equinox*/** ${EQUINOX_DROP_DIR}/${BUILD_ID}
 									
 									cp -r ${ECLIPSE_BUILDER_DIR}/equinox/publishingFiles/staticDropFiles/. ${EQUINOX_DROP_DIR}/${BUILD_ID}
 									
