@@ -28,10 +28,10 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import log.converter.DOMHtmlConverter;
 import log.converter.LogDocumentNode;
+import log.converter.LogDocumentNode.ProblemSummaryNode;
 import log.converter.ProblemNode;
-import log.converter.ProblemSummaryNode;
+import log.converter.ProblemNode.SeverityType;
 import log.converter.ProblemsNode;
-import log.converter.SeverityType;
 
 public class CompileLogConverter {
 

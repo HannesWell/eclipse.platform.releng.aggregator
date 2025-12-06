@@ -11,7 +11,9 @@ package log.converter;
 
 public class ProblemNode {
 
-	protected static final String EMPTY = ""; //$NON-NLS-1$
+	public enum SeverityType {
+		ERROR, WARNING, INFO;
+	}
 
 	public SeverityType severityType;
 	public int charStart;
@@ -32,9 +34,9 @@ public class ProblemNode {
 
 	public void setSources() {
 		if ((sourceStart == -1) || (sourceEnd == -1)) {
-			sourceCodeBefore = EMPTY;
+			sourceCodeBefore = "";
 			sourceCode = contextValue;
-			sourceCodeAfter = EMPTY;
+			sourceCodeAfter = "";
 		} else {
 			final int length = contextValue.length();
 			if (sourceStart < length) {
@@ -45,12 +47,12 @@ public class ProblemNode {
 					sourceCodeAfter = contextValue.substring(end, length);
 				} else {
 					sourceCode = contextValue.substring(sourceStart, length);
-					sourceCodeAfter = EMPTY;
+					sourceCodeAfter = "";
 				}
 			} else {
-				sourceCodeBefore = EMPTY;
-				sourceCode = EMPTY;
-				sourceCodeAfter = EMPTY;
+				sourceCodeBefore = "";
+				sourceCode = "";
+				sourceCodeAfter = "";
 			}
 		}
 	}

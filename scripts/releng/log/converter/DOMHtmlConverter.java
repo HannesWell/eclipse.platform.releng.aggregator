@@ -17,7 +17,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ChoiceFormat;
 import java.text.MessageFormat;
+import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Set;
+
+import log.converter.LogDocumentNode.ProblemSummaryNode;
 
 public class DOMHtmlConverter {
 
@@ -25,7 +29,7 @@ public class DOMHtmlConverter {
 	public static final String DISCOURAGED_REFERENCE = "DiscouragedReference"; //$NON-NLS-1$
 	public static final Set<String> FILTERED_WARNINGS_IDS = Set.of(FORBIDDEN_REFERENCE, DISCOURAGED_REFERENCE);
 
-	private final Messages messages = new Messages("log.converter.html_messages"); //$NON-NLS-1$
+	private final ResourceBundle messages = ResourceBundle.getBundle("log.converter.html_messages"); //$NON-NLS-1$
 
 	private void writeAnchorsReferences(final Writer writer) throws IOException {
 		writer.write(messages.getString("anchors.references.no_top"));//$NON-NLS-1$
@@ -113,16 +117,15 @@ public class DOMHtmlConverter {
 					Integer.toString(problemSummaryNode.numberOfInfos())));
 
 			writeAnchorsReferences(writer);
-			final ProblemsNode[] problemsNodes = documentNode.getProblems();
+			List<ProblemsNode> problemsNodes = documentNode.getProblems();
 			int globalErrorNumber = 1;
 
 			writeErrorAnchor(writer);
 			writeAnchorsReferencesErrors(writer);
 			// dump errors
 			for (final ProblemsNode problemsNode : problemsNodes) {
-				final ProblemNode[] problemNodes = problemsNode.getErrors();
-				final int length = problemNodes.length;
-				if (length == 0) {
+				List<ProblemNode> problemNodes = problemsNode.getErrors();
+				if (problemNodes.isEmpty()) {
 					continue;
 				}
 				pattern = messages.getString("errors.header"); //$NON-NLS-1$
@@ -137,8 +140,8 @@ public class DOMHtmlConverter {
 				form.setFormatByArgumentIndex(1, warningForm);
 				final Object[] arguments = new Object[] { sourceFileName, problemsNode.numberOfErrors };
 				writer.write(form.format(arguments));
-				for (int j = 0; j < length; j++) {
-					final ProblemNode problemNode = problemNodes[j];
+				for (int j = 0; j < problemNodes.size(); j++) {
+					final ProblemNode problemNode = problemNodes.get(j);
 					if ((j & 1) != 0) {
 						pattern = messages.getString("errors.entry.odd"); //$NON-NLS-1$
 					} else {
@@ -159,9 +162,8 @@ public class DOMHtmlConverter {
 			writeAnchorsReferencesOtherWarnings(writer);
 			// dump other warnings
 			for (final ProblemsNode problemsNode : problemsNodes) {
-				final ProblemNode[] problemNodes = problemsNode.getOtherWarnings();
-				final int length = problemNodes.length;
-				if (length == 0) {
+				List<ProblemNode> problemNodes = problemsNode.getOtherWarnings();
+				if (problemNodes.isEmpty()) {
 					continue;
 				}
 
@@ -176,8 +178,8 @@ public class DOMHtmlConverter {
 				form.setFormatByArgumentIndex(1, warningForm);
 				final Object[] arguments = new Object[] { sourceFileName, problemsNode.numberOfWarnings };
 				writer.write(form.format(arguments));
-				for (int j = 0; j < length; j++) {
-					final ProblemNode problemNode = problemNodes[j];
+				for (int j = 0; j < problemNodes.size(); j++) {
+					final ProblemNode problemNode = problemNodes.get(j);
 					if ((j & 1) != 0) {
 						pattern = messages.getString("warnings.entry.odd"); //$NON-NLS-1$
 					} else {
@@ -198,9 +200,8 @@ public class DOMHtmlConverter {
 			writeInfosAnchor(writer);
 			writeAnchorsReferencesInfos(writer);
 			for (final ProblemsNode problemsNode : problemsNodes) {
-				final ProblemNode[] problemNodes = problemsNode.getInfos();
-				final int length = problemNodes.length;
-				if (length == 0) {
+				List<ProblemNode> problemNodes = problemsNode.getInfos();
+				if (problemNodes.isEmpty()) {
 					continue;
 				}
 
@@ -215,8 +216,8 @@ public class DOMHtmlConverter {
 				form.setFormatByArgumentIndex(1, warningForm);
 				final Object[] arguments = new Object[] { sourceFileName, problemsNode.numberOfInfos };
 				writer.write(form.format(arguments));
-				for (int j = 0; j < length; j++) {
-					final ProblemNode problemNode = problemNodes[j];
+				for (int j = 0; j < problemNodes.size(); j++) {
+					final ProblemNode problemNode = problemNodes.get(j);
 					if ((j & 1) != 0) {
 						pattern = messages.getString("infos.entry.odd"); //$NON-NLS-1$
 					} else {
@@ -237,9 +238,8 @@ public class DOMHtmlConverter {
 			writeForbiddenRulesWarningsAnchor(writer);
 			writeAnchorsReferencesForbiddenRulesWarnings(writer);
 			for (final ProblemsNode problemsNode : problemsNodes) {
-				final ProblemNode[] problemNodes = problemsNode.getForbiddenWarnings();
-				final int length = problemNodes.length;
-				if (length == 0) {
+				List<ProblemNode> problemNodes = problemsNode.getForbiddenWarnings();
+				if (problemNodes.isEmpty()) {
 					continue;
 				}
 
@@ -254,8 +254,8 @@ public class DOMHtmlConverter {
 				form.setFormatByArgumentIndex(1, warningForm);
 				final Object[] arguments = new Object[] { sourceFileName, problemsNode.numberOfWarnings };
 				writer.write(form.format(arguments));
-				for (int j = 0; j < length; j++) {
-					final ProblemNode problemNode = problemNodes[j];
+				for (int j = 0; j < problemNodes.size(); j++) {
+					final ProblemNode problemNode = problemNodes.get(j);
 					if ((j & 1) != 0) {
 						pattern = messages.getString("warnings.entry.odd"); //$NON-NLS-1$
 					} else {
@@ -276,9 +276,8 @@ public class DOMHtmlConverter {
 			writeDiscouragedRulesWarningsAnchor(writer);
 			writeAnchorsReferencesDiscouragedRulesWarnings(writer);
 			for (final ProblemsNode problemsNode : problemsNodes) {
-				final ProblemNode[] problemNodes = problemsNode.getDiscouragedWarnings();
-				final int length = problemNodes.length;
-				if (length == 0) {
+				List<ProblemNode> problemNodes = problemsNode.getDiscouragedWarnings();
+				if (problemNodes.isEmpty()) {
 					continue;
 				}
 
@@ -293,8 +292,8 @@ public class DOMHtmlConverter {
 				form.setFormatByArgumentIndex(1, warningForm);
 				final Object[] arguments = new Object[] { sourceFileName, problemsNode.numberOfWarnings };
 				writer.write(form.format(arguments));
-				for (int j = 0; j < length; j++) {
-					final ProblemNode problemNode = problemNodes[j];
+				for (int j = 0; j < problemNodes.size(); j++) {
+					final ProblemNode problemNode = problemNodes.get(j);
 					if ((j & 1) != 0) {
 						pattern = messages.getString("warnings.entry.odd"); //$NON-NLS-1$
 					} else {

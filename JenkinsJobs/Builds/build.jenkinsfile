@@ -221,8 +221,8 @@ pipeline {
 						$BASE_BUILDER_ECLIPSE_EXE \
 							-debug -consolelog -data $CJE_ROOT/$TMP_DIR/workspace-toolsinstall \
 							-application org.eclipse.equinox.p2.director \
-							-repository ${ECLIPSE_RUN_REPO},${BUILDTOOLS_REPO},https://download.eclipse.org/cbi/updates/p2-analyzers/products/nightly/latest \
-							-installIU org.eclipse.pde.api.tools,org.eclipse.releng.build.tools.feature.feature.group,org.eclipse.cbi.p2repo.analyzers \
+							-repository ${ECLIPSE_RUN_REPO},https://download.eclipse.org/cbi/updates/p2-analyzers/products/nightly/latest \
+							-installIU org.eclipse.pde.api.tools,org.eclipse.cbi.p2repo.analyzers \
 							-profile SDKProfile
 					'''
 				}
