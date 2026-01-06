@@ -39,7 +39,7 @@
 
 	<script>
 		loadPageData('../buildproperties.json')
-		const logFiles = fetch('logFiles.json').then(r => r.json())
+		const logFiles = fetch('logs.json').then(r => r.json())
 
 		contentPostProcessor = (mainElement, build) => {
 			document.title += ` for ${build.label}`

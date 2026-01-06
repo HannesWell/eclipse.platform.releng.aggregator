@@ -49,19 +49,13 @@
 					table.remove()
 					continue
 				}
-				table.createTHead().innerHTML = `
-					<tr>
-						<th>Build Name</th>
-						<th>Build Date (UTC)</th>
-					</tr>
-				`
 				const tBody = table.createTBody()
 				for (const build of tableData) {
 					tBody.insertRow().innerHTML = `
 					<td>
 						<a href="${build.path}">${build.label}</a>
 					</td>
-					<td>${formatBuildDate(build.date)}</td>
+					<td>${formatBuildDate(build.date)} (UTC)</td>
 					`
 				}
 			}
