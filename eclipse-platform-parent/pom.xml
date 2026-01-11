@@ -877,6 +877,9 @@
                   <goal>p2-metadata</goal>
                 </goals>
                 <phase>verify</phase>
+                <configuration>
+                  <writeComparatorDelta>true</writeComparatorDelta>
+                </configuration>
               </execution>
             </executions>
           </plugin>
