@@ -18,27 +18,70 @@
 		<!--TODO: check all the links and migrate them if necessary-->
 		<p>
 			On this page you can find the latest builds produced by the <a href="https://www.eclipse.org/eclipse/">Eclipse Project</a>.
-			To get started, run the program and go through the user and developer documentation provided in the help system or see the <a href="http://help.eclipse.org/">web-based help system</a>.
+			To get started, run the program and go through the user and developer documentation provided in the help system or see the <a href="https://help.eclipse.org/">web-based help system</a>.
 			If you have problems installing or getting the workbench to run, <a href="https://wiki.eclipse.org/The_Official_Eclipse_FAQs">check out the Eclipse Project FAQ</a>, or try posting a question to the <a href="https://www.eclipse.org/forums/">forum</a>.
 		</p>
 		<p>
 			See the <a href="https://www.eclipse.org/downloads/">main Eclipse Foundation download site</a> for convenient all-in-one packages.
-			The <a href="http://archive.eclipse.org/eclipse/downloads/">archive site</a> contains older releases (including the last 3.x version, <a href="http://archive.eclipse.org/eclipse/downloads/drops/R-3.8.2-201301310800/">3.8.2</a>).
-			For reference, see also the <a href="https://wiki.eclipse.org/Eclipse_Project_Update_Sites">p2 repositories provided</a>, meaning of <a href="https://download.eclipse.org/eclipse/downloads/build_types.html">kinds of builds (P,M,I,S, and R)</a>, and the <a href="https://www.eclipse.org/eclipse/platform-releng/buildSchedule.html">build schedule</a>.
+			The <a href="https://archive.eclipse.org/eclipse/downloads/">archive site</a> contains older releases (including the last 3.x version, <a href="https://archive.eclipse.org/eclipse/downloads/drops/R-3.8.2-201301310800/">3.8.2</a>).
+			For reference, see also the <a href="https://wiki.eclipse.org/Eclipse_Project_Update_Sites">p2 repositories provided</a>, and the <a href="https://www.eclipse.org/eclipse/platform-releng/buildSchedule.html">build schedule</a>.
 		</p>
 		<h3 id="latest-downloads">Latest Downloads</h3>
 		<table class="builds-table" data-path="latest"></table>
 
-		<h3 id="latest-release">Latest Release</h3>
+		<h3 id="latest-release">Latest Releases</h3>
+		<!-- TODO: explain the retention policy from https://wiki.eclipse.org/Eclipse_Project_Update_Sites and mention that older releases are continued in the archives. -->
+		<dialog class="details-popup">
+			<h4>Latest Releases</h4>
+			Releases are builds that have been declared major releases by the development team - for example <code>R4.39</code>.
+			Releases are the right builds for people who want to be on a stable, tested release, and don't need the latest greatest features and improvements.
+			Release builds always have an "R" at the beginning of the name i.e. <code>R4.0</code>, <code>R4.1</code> etc.
+			Non-release builds are named according to the date of the build - for example 20011027 is the build from Oct 27, 2001.
+			<h4>Retention policy</h4>
+			Releases are retained indefinitivly.
+			However, only the build websites of the last three releases are provided at this main download area.
+			Older releases are provided from the <a href="https://archive.eclipse.org/eclipse/downloads/">Eclipse Archive</a>.
+			Existing links to artifacts, that were moved to the archive, are transparently redirected and continue to work.
+			Similarly only the P2-repositories of the last ten releases are provided at this download area and older repositories are located in the archive.
+			Again, links pointing to P2-repositories at this download area continue to work, even after a repository was moved to the archive.
+		</dialog>
 		<table class="builds-table" data-path="releases"></table>
 
 		<h3 id="stable-builds">Stable Builds</h3>
+		<dialog class="details-popup">
+			<h3>Stable Builds</h3>
+			Stable builds are integration builds that have been found to be stable enough for most people to use.
+			They are promoted from integration build to stable build after they have been used for a few days and deemed reasonably stable.
+			The latest stable build is the right build for people who want to stay up to date with what is going on in the latest development stream, and don't mind putting up with a few problems n in order to get the latest greatest features and bug fixes.
+			The latest stable build is the one the development team likes people to be using, because of the valuable and timely feedback.
+			<h4>Retention policy</h4>
+			Stable builds and their P2-repositories are retained until the targeted release is published.
+		</dialog>
 		<table class="builds-table" data-path="stableBuilds"></table>
 
 		<h3 id="integration-builds">Integration Builds</h3>
+		<dialog class="details-popup">
+			<h3>Integration Builds</h3>
+			An Integration build (short <em>I-build</em>) is usually produced once a day and reflects the latest development state from the main branches of all contributing Git repositories.
+			Altough it is tried keep the code in good share, it can happen that bugs occure and functionality is degraded.
+			I-Builds with severe problems are marked as unstable.
+			Using I-Builds is recommended for developers of Eclipse itself and for those interested in testing the latest features and state.
+			<h4>Retention policy</h4>
+			The build website of an integration build (short <em>I-build</em>) is retained for at least five days.
+			From older I-builds only the first (not unstable) build of a week is retained until the targeted release is published.
+			The p2-repository of each I-build is retained until the targeted release is published.
+		</dialog>
 		<table class="builds-table" data-path="iBuilds"></table>
 
 		<h3 id="beta-java-builds">Beta Java Builds</h3>
+		<dialog class="details-popup">
+			<h3>Beta Java Builds</h3>
+			The Beta Java Builds provide the latest development state of JDT's support for the upcomming, not yet released <em>Java</em> version,
+			including JDT's Java Compiler ECJ as well as UI and debug support.
+			These builds are produced from dedicated beta branches in the JDT Git repositories.
+			<h4>Retention policy</h4>
+			For <em>Beta Java Builds</em> the last nine builds websites are retained and the corresponding P2-repositories are retained until the next development cycle respectivly until the targeted java version is released.
+		</dialog>
 		<table class="builds-table" data-path="yBuilds"></table>
 
 	</main>
