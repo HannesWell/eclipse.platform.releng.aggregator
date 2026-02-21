@@ -95,7 +95,7 @@
 		function getStatusIcon(buildData) {
 			switch (buildData.status) {
 				case 'success':
-					return 'images/build_done.gif'
+					return 'images/build_done.svg'
 				case 'unstable':
 					return 'images/caution.gif'
 				default:
@@ -111,14 +111,14 @@
 			const expected = parseInt(matches.groups.expected)
 			const completed = parseInt(matches.groups.completed)
 			if (expected == completed) {
-				return 'images/junit.gif'
+				return 'images/junit.svg'
 			} else {
 				if (completed == 0 && buildDate < TWELVE_HOURS_AGO) {
 					return 'images/caution.gif'
 				} else if (buildDate < TWENTYFOUR_HOURS_AGO) {
-					return 'images/junit.gif' // Assume tests are not running anymore
+					return 'images/junit.svg' // Assume tests are not running anymore
 				}
-				return 'images/runtests.gif'
+				return 'images/runtests.svg'
 			}
 		}
 
