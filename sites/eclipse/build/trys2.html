@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Native Dialog Demo</title>
+	<style>
+		body {
+			font-family: sans-serif;
+			padding: 2rem;
+		}
+
+		/* Info icon style */
+		.info-btn {
+			cursor: pointer;
+			background: #007bff;
+			color: white;
+			border: none;
+			border-radius: 50%;
+			width: 20px;
+			height: 20px;
+			font-size: 14px;
+			margin-left: 8px;
+			vertical-align: middle;
+		}
+
+		/* Dialog backdrop style */
+		dialog::backdrop {
+			background: rgba(0, 0, 0, 0.5);
+			backdrop-filter: blur(4px);
+		}
+
+		/* Dialog box style */
+		dialog {
+			border: none;
+			border-radius: 2px;
+			padding: 1.5rem;
+			position: relative;
+			/* Needed for absolute positioning of close btn */
+			min-width: 300px;
+		}
+
+		/* Close X button style */
+		dialog button.close-btn {
+			position: absolute;
+			top: 0.25rem;
+			right: 0.25rem;
+			font-size: 1.5rem;
+			padding: 0;
+			border: none;
+			background: none;
+			cursor: pointer;
+			color: darkgray;
+		}
+
+		dialog button.close-btn:hover {
+			color: black;
+		}
+	</style>
+</head>
+
+<body>
+
+	<h2>Product Dashboard <button class="info-btn" onclick="infoModal.showModal()">i</button></h2>
+
+	<dialog id="infoModal" closedby="any">
+		<button class="close-btn" onclick="parentElement.close()" aria-label="Close">&times;</button>
+		<p>This is a native HTML dialog pop-up with a corner close button.</p>
+	</dialog>
+	<p>
+		Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+	</p>
+	<p>
+		Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+	</p>
+
+</body>
+
+</html>

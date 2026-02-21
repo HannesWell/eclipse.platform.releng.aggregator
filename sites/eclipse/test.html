@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Positioned Pop-up</title>
+	<style>
+		body {
+			font-family: system-ui, -apple-system, sans-serif;
+			background-color: #f4f4f9;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			height: 100vh;
+			margin: 0;
+		}
+
+		/* The Icon/Trigger */
+		#anchorBtn {
+			font-size: 2rem;
+			cursor: pointer;
+			padding: 10px;
+			background: white;
+			border: 1px solid #ccc;
+			border-radius: 50%;
+			transition: background 0.2s;
+		}
+
+		#anchorBtn:hover {
+			background: #eee;
+		}
+
+		/* The Dialog Styling */
+		dialog#popup {
+			position: fixed;
+			/* Necessary for dynamic positioning */
+			margin: 0;
+			/* Remove default browser centering */
+			padding: 15px;
+			border: none;
+			border-radius: 8px;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+			background: #333;
+			color: white;
+			width: 180px;
+			text-align: center;
+		}
+
+		/* Small arrow at the bottom of the pop-up */
+		dialog#popup::after {
+			content: "";
+			position: absolute;
+			top: 100%;
+			left: 50%;
+			margin-left: -8px;
+			border-width: 8px;
+			border-style: solid;
+			border-color: #333 transparent transparent transparent;
+		}
+	</style>
+</head>
+
+<body>
+
+	<p>Click the icon to see the pop-up appear exactly above it.</p>
+
+	<button id="anchorBtn">⚙️</button>
+
+	<dialog id="popup">
+		Settings Menu
+		<div style="font-size: 0.8rem; margin-top: 5px; opacity: 0.8;">
+			Configure your view here.
+		</div>
+	</dialog>
+
+	<script>
+		const btn = document.getElementById('anchorBtn');
+		const pop = document.getElementById('popup');
+
+		btn.onclick = (e) => {
+			if (pop.open) {
+				pop.close();
+			} else {
+				pop.show(); // Open as non-modal
+				positionPopup();
+			}
+		};
+
+		function positionPopup() {
+			// 1. Get coordinates of the button
+			const rect = btn.getBoundingClientRect();
+
+			// 2. Get coordinates of the dialog (now that it's visible)
+			const popRect = pop.getBoundingClientRect();
+
+			// 3. Calculate position
+			// Top: Button's top - Pop-up's height - small gap (12px)
+			const top = rect.top - popRect.height - 12;
+
+			// Left: Button's center - Pop-up's half width
+			const left = rect.left + (rect.width / 2) - (popRect.width / 2);
+
+			// 4. Apply styles
+			pop.style.top = `${top}px`;
+			pop.style.left = `${left}px`;
+		}
+
+		// Close if clicking elsewhere on the screen
+		window.addEventListener('mousedown', (e) => {
+			if (pop.open && !pop.contains(e.target) && e.target !== btn) {
+				pop.close();
+			}
+		});
+
+		// Recalculate position if the window is resized
+		window.onresize = () => {
+			if (pop.open) positionPopup();
+		};
+	</script>
+
+</body>
+
+</html>
