@@ -1,0 +1,41 @@
+pipeline {
+	options {
+		skipDefaultCheckout()
+		timeout(time: 8, unit: 'HOURS')
+	}
+	agent {
+		label 'basic'
+	}
+	tools {
+		jdk 'temurin-jdk25-latest'
+	}
+	environment {
+		ARCHIVE_ROOT = '/home/data/httpd/archive.eclipse.org'
+	}
+	stages {
+		stage('Convert wiki') {
+			steps {
+				checkout scmGit(userRemoteConfigs: [[url: "${scm.userRemoteConfigs[0].url}"]], branches: [[name: "${scm.branches[0].name}"]],
+					extensions: [cloneOption(depth: 1, shallow: true, noTags: true), sparseCheckout([
+					[path: 'scripts/releng/WikiCrawler.java'],
+				])])
+				sh '''
+					java scripts/releng/WikiCrawler.java '.'
+					zip -r wiki.eclipse.org.zip wiki.eclipse.org
+				'''
+				sshagent (['projects-storage.eclipse.org-bot-ssh']) {
+					sh '''
+						ssh genie.releng@projects-storage.eclipse.org mkdir -p "${ARCHIVE_ROOT}/eclipse/wiki/"
+						scp README.md genie.releng@projects-storage.eclipse.org:${ARCHIVE_ROOT}/eclipse/wiki/
+						scp wiki.eclipse.org.zip genie.releng@projects-storage.eclipse.org:${ARCHIVE_ROOT}/eclipse/wiki/
+					'''
+				}
+			}
+		}
+	}
+	post {
+		always {
+			archiveArtifacts artifacts: 'wiki.eclipse.org.zip,README.md', allowEmptyArchive: true
+		}
+	}
+}
