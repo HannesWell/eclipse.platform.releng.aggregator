@@ -22,8 +22,8 @@
 			<li><a href="buildlogs/reporeports/index.html"><b>Repository Reports </b></a></li>
 			<li><a href="buildlogs/logs.html"><b>Build and Release Engineering Logs</b></a></li>
 			<li><a href="testresults/logs.html"><b>Test Console Logs</b></a></li>
-			<li><a href="apitools/analysis/html/index.html"><b>API Verification Report</b></a><br>
-				API analysis of all Plug-ins against Eclipse ${previousReleaseAPILabel}<br>
+			<li><a href="apitools/analysis/html/index.html"><b>API Verification Report</b></a>
+				API analysis of all Plug-ins against Eclipse ${previousReleaseAPILabel}
 				(Exclusions listed in <a href="https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/blob/master/scripts/releng/apiReport/exclusions.txt">apiReport/exclusions.txt</a>).
 			</li>
 			<li><a href="apitools/deprecation/apideprecation.html"><b>API Tools Deprecation Report</b></a> Listing of all API deprecations since ${previousReleaseAPILabel}.</li>
@@ -106,7 +106,7 @@
 				const sortedTestNames = Array.from(allTestNames)
 				sortedTestNames.sort()
 				for (const testName of sortedTestNames) {
-					const testRow = testResultsTable.insertRow()
+					const testRow = appendRow(testResultsTable, COLLAPSIBLE_TABLE_MAIN_ROW)
 					insertLeanCell(testRow).innerHTML = testName.replace(/^org\.eclipse\./, '')
 					for (let t = 0; t < expectedTestConfigsCount; t++) {
 						const testResult = testSummaries[t][testName]
@@ -122,9 +122,17 @@
 						}
 						insertLeanCell(testRow, true).innerHTML = cellHTML
 					}
+					// Details row (collapsed by default)
+					const detailsRow = appendRow(testResultsTable, COLLAPSIBLE_TABLE_DETAILS_ROW)
+
+					const content = 'Hello'
+
+					detailsRow.innerHTML = `<td colspan="${expectedTestConfigsCount + 1}">${content}</td>`
 				}
 				//TODO: The number of executed/skipped cases per suite/plugin could also be displayed?
+				
 			})
+			activateCollapsiblesTable(testResultsTable)
 		}
 
 		function injectCompilerSummaryTable(compilerSummary) {
@@ -133,23 +141,20 @@
 				const issues = compilerSummary[logFile]
 				const shortName = computePluginLabel(logFile)
 				// Summary row
-				const row = compilerIssues.insertRow()
-				row.classList.add('collapsible-table-main-row')
+				const row = appendRow(compilerIssues, COLLAPSIBLE_TABLE_MAIN_ROW)
 				insertLeanCell(row, false).innerHTML = shortName
 				addLinkCell(row, `${shortName}--warnings`, issues.warnings)
 				addLinkCell(row, `${shortName}--infos`, issues.infos)
 				addLinkCell(row, `${shortName}--tasks`, issues.tasks)
 				// Details row (collapsed by default)
-				const detailsRow = compilerIssues.insertRow()
-				detailsRow.classList.add('collapsible-table-details-row')
+				const detailsRow = appendRow(compilerIssues, COLLAPSIBLE_TABLE_DETAILS_ROW)
 
 				const content = ''
 					+ (issues.warnings > 0 ? getDetailsContent(logFile, shortName, 'warning') : '')
 					+ (issues.infos > 0 ? getDetailsContent(logFile, shortName, 'info') : '')
 					+ (issues.tasks > 0 ? getDetailsContent(logFile, shortName, 'task') : '')
 
-				detailsRow.innerHTML = `<td colspan="${row.cells.length}">${content}</td>
-					`
+				detailsRow.innerHTML = `<td colspan="${row.cells.length}">${content}</td>`
 			}
 			activateCollapsiblesTable(compilerIssues)
 

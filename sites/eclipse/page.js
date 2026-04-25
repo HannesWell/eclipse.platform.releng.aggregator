@@ -607,13 +607,22 @@ function escapeHTML(rawString) {
 
 // Collapsibles/accordion tables
 
+const COLLAPSIBLE_TABLE_MAIN_ROW = 'collapsible-table-main-row'
+const COLLAPSIBLE_TABLE_DETAILS_ROW = 'collapsible-table-details-row'
+
+function appendRow(table, classToAdd){
+	const row = table.insertRow()
+	row.classList.add(classToAdd)
+	return row
+}
+
 let _eventListenersAdded = false
 
 function activateCollapsiblesTable(table) {
-    for (const row of table.querySelectorAll('.collapsible-table-main-row')) {
+    for (const row of table.querySelectorAll(`.${COLLAPSIBLE_TABLE_MAIN_ROW}`)) {
         row.onclick = () => openDetailsRow(row, true)
     }
-    for (const row of table.querySelectorAll('.collapsible-table-details-row')) {
+    for (const row of table.querySelectorAll(`.${COLLAPSIBLE_TABLE_MAIN_ROW}`)) {
         for (const cell of row.cells) {
             cell.innerHTML = `
 <div class="collapsible-table-animation-wrapper">
@@ -685,7 +694,7 @@ function activateCollapsiblesTable(table) {
         const id = hash.substring(1) // Remove '#' to get the ID
         const element = document.getElementById(id)
         if (element) {
-            const mainRow = element.closest('.collapsible-table-details-row').previousElementSibling
+            const mainRow = element.closest(`.${COLLAPSIBLE_TABLE_MAIN_ROW}`).previousElementSibling
             openDetailsRow(mainRow, false, element)
             element.scrollIntoView({ behavior: 'smooth' })
         }
