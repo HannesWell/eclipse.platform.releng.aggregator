@@ -31,7 +31,7 @@ def initialize(Object utilities) {
 	sh '''#!/bin/bash -xe
 		# Skip default initialization since this is a non-interactive session
 		$GCLOUD config set disable_prompts true
-		$GCLOUD auth activate-service-account --key-file=${GCLOULD_KEY_FILE}
+		#$GCLOUD auth activate-service-account --key-file=${GCLOULD_KEY_FILE}
 	'''
 }
 
