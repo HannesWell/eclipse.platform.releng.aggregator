@@ -273,9 +273,10 @@ private void removeDropsOnRemote(String remoteDirectory, List<String> drops) {
 
 // --- tool installation ---
 
-//TODO: Use this?
+//TODO: Support loca file URLs to a directory and ea flag for temurin.
+
 def getTemurinJDK(int version, String os, String arch, String releaseType='ga') {
-	if (os == 'linux' && arch == 'x86_64') {
+	if (os == 'linux' && arch == 'x86_64' && releaseType == 'ga') {
 		return tool(type: 'jdk', name: "temurin-jdk${version}-latest")
 	}
 	def jdkPath = "${WORKSPACE}/tools/jdk-${version}"

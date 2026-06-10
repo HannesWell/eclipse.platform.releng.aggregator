@@ -1,3 +1,6 @@
+@groovy.transform.Field
+def TEST = null
+
 pipeline {
 	options {
 		timeout(time: 16, unit: 'HOURS') // global timeout (starts at the beginning of this job)
@@ -24,7 +27,7 @@ pipeline {
 	}
 	agent none
 	stages {
-		stage('Set test agent') {
+		stage('Select agent') {
 			when {
 				beforeAgent true
 				equals actual: params.testAgent, expected: ''
@@ -75,6 +78,7 @@ pipeline {
 				stage('Run') {
 					options {
 						timeout(time: 8, unit: 'HOURS') // timeout of test execution (starts when this stage is accessed)
+						//TODO: Or set this when entering this agent?
 					}
 					environment {
 						// Declaring a jdk and ant the usual way in the 'tools' section, because of unknown reasons, breaks the usage of system commands like xvnc, pkill and sh
@@ -122,7 +126,7 @@ pipeline {
 				}
 				stage('Collect results') {
 					tools {
-						//TODO: chanage to OS/agent specific jdk. This should work when CBI provides this jdk for all agents!
+						//TODO: chanage to OS/agent specific jdk. Reuse the env variables set before. But  This should work when CBI provides this jdk for all agents!
 						jdk 'temurin-jdk25-latest'
 					}
 					steps {
@@ -170,9 +174,6 @@ pipeline {
 	}
 }
 
-@groovy.transform.Field
-def TEST = null
-
 @NonCPS
 def readTestConfiguration(Map<String, Object> buildConfigurations) {
 	def matcher = "$JOB_BASE_NAME" =~ /ep(?<major>\d)(?<minor>\d+)(?<type>[A-Z])-unit-(?<os>\w+)-(?<arch>\w+)-java(?<javaVersion>\d+)/
@@ -217,7 +218,8 @@ def getJDKInstallationPath(Map<String, Object> test) {
 		case 'tool': return tool(type:'jdk', name: test.jdk.name)
 		case 'local': return test.jdk.path
 		case 'install': return utilities.installDownloadableTool('jdk', test.jdk.url) + (test.os == 'macosx' ? '/Contents/Home' : '')
-		case 'temurin': return utilities.downloadTemurinJDK(test.javaVersion, test.os, test.arch, test.jdk.ea ? 'ea' : 'ga')
+		case null: // use temurin by default
+		case 'temurin': return utilities.getTemurinJDK(test.javaVersion, test.os, test.arch, test.jdk.ea ? 'ea' : 'ga')
 	}
 }
 
