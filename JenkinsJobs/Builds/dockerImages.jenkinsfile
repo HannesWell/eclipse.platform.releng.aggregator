@@ -12,23 +12,36 @@ pipeline {
 	triggers {
 		cron '@weekly'
 	}
-	// Use Kaniko for unprivileged image builds/pushes on Kubernetes-provisioned Jenkins agents.
+	// Use Buildah (rootless) for unprivileged image builds/pushes on Kubernetes-provisioned Jenkins agents.
+	// Buildah requires no Docker daemon and no privileged pod; only seccomp and AppArmor must be set to
+	// unconfined on the buildah container to allow user-namespace syscalls (unshare, mount).
 	agent {
 		kubernetes {
 			yaml '''
 apiVersion: v1
 kind: Pod
+metadata:
+  annotations:
+    container.apparmor.security.beta.kubernetes.io/buildah: unconfined
+    seccomp.security.alpha.kubernetes.io/buildah: unconfined
 spec:
   containers:
   - name: jnlp
     image: eclipsecbi/jiro-agent-ubuntu-2404:latest
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:debug
-    command: ["/busybox/cat"]
+  - name: buildah
+    image: quay.io/buildah/stable:latest
+    command: ["/bin/cat"]
     tty: true
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
     volumeMounts:
     - name: registry-credentials
-      mountPath: /kaniko/.docker
+      mountPath: /home/user/.docker
+      readOnly: true
+    - name: buildah-storage
+      mountPath: /home/user/.local/share/containers
   volumes:
   - name: registry-credentials
     secret:
@@ -36,6 +49,8 @@ spec:
       items:
       - key: .dockerconfigjson
         path: config.json
+  - name: buildah-storage
+    emptyDir: {}
 '''
 		}
 	}
@@ -81,13 +96,10 @@ spec:
 }
 
 def buildAndPushImage(String contextDir, String imageId) {
-	container('kaniko') {
+	container('buildah') {
 		sh """
-			/kaniko/executor \
-				--context=${WORKSPACE}/${contextDir} \
-				--dockerfile=${WORKSPACE}/${contextDir}/Dockerfile \
-				--destination=${imageId} \
-				--cache=true
+			buildah bud --pull -t ${imageId} ${WORKSPACE}/${contextDir}
+			buildah push ${imageId}
 		"""
 	}
 }
