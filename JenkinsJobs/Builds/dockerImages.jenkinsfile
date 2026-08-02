@@ -12,8 +12,32 @@ pipeline {
 	triggers {
 		cron '@weekly'
 	}
+	// Use Kaniko for unprivileged image builds/pushes on Kubernetes-provisioned Jenkins agents.
 	agent {
-		label 'docker-build'
+		kubernetes {
+			yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: jnlp
+    image: eclipsecbi/jiro-agent-ubuntu-2404:latest
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug
+    command: ["/busybox/cat"]
+    tty: true
+    volumeMounts:
+    - name: registry-credentials
+      mountPath: /kaniko/.docker
+  volumes:
+  - name: registry-credentials
+    secret:
+      secretName: docker-hub-credentials
+      items:
+      - key: .dockerconfigjson
+        path: config.json
+'''
+		}
 	}
 	stages {
 		stage('Get Docker Files') {
@@ -32,29 +56,14 @@ pipeline {
 		stage('Build and push Docker Images') {
 			steps {
 				script {
-					dir('eclipse.platform.releng.aggregator/cje-production/dockerfiles') {
-						parallel(
-							'debian-swtnative': { buildAndPushImage('debian/swtnativebuild', 'eclipse/platformreleng-debian-swtnativebuild:12') },
-							'debian-swtgtk3native': { buildAndPushImage('debian/swtgtk3nativebuild', 'eclipse/platformreleng-debian-swtgtk3nativebuild:10') },
-							'centos9-gtk4': { buildAndPushImage('centos-gtk4-mutter/9-gtk4', 'eclipse/platformreleng-centos-gtk4-mutter:9') },
-							'opensuse-gtk3': { buildAndPushImage('opensuse-gtk3-metacity/16-gtk3', 'eclipse/platformreleng-opensuse-gtk3-metacity:16') },
-						failFast: false)
-					}
-					dir('eclipse.jdt.core/org.eclipse.jdt.core/docker') {
-						parallel(
-							'jikespg': { buildAndPushImage('jikespg', 'eclipse/platformreleng-ubuntu-gtk3-metacity:jikespg') },
-						failFast: false)
-					}
+					parallel(
+						'debian-swtnative': { buildAndPushImage('eclipse.platform.releng.aggregator/cje-production/dockerfiles/debian/swtnativebuild', 'eclipse/platformreleng-debian-swtnativebuild:12') },
+						'debian-swtgtk3native': { buildAndPushImage('eclipse.platform.releng.aggregator/cje-production/dockerfiles/debian/swtgtk3nativebuild', 'eclipse/platformreleng-debian-swtgtk3nativebuild:10') },
+						'centos9-gtk4': { buildAndPushImage('eclipse.platform.releng.aggregator/cje-production/dockerfiles/centos-gtk4-mutter/9-gtk4', 'eclipse/platformreleng-centos-gtk4-mutter:9') },
+						'opensuse-gtk3': { buildAndPushImage('eclipse.platform.releng.aggregator/cje-production/dockerfiles/opensuse-gtk3-metacity/16-gtk3', 'eclipse/platformreleng-opensuse-gtk3-metacity:16') },
+						'jikespg': { buildAndPushImage('eclipse.jdt.core/org.eclipse.jdt.core/docker/jikespg', 'eclipse/platformreleng-ubuntu-gtk3-metacity:jikespg') },
+					failFast: false)
 				}
-			}
-		}
-		stage('Clean Docker Images') {
-			steps {
-				sh '''
-					docker images
-					docker system prune -a -f
-					docker images
-				'''
 			}
 		}
 	}
@@ -71,11 +80,14 @@ pipeline {
 	}
 }
 
-def buildAndPushImage(directory, imageId) {
-	dir(directory) {
-		sh "docker build --pull -t ${imageId} ."
-		withDockerRegistry([credentialsId: 'docker.com-bot', url: '']) {
-			sh "docker push ${imageId}"
-		}
+def buildAndPushImage(String contextDir, String imageId) {
+	container('kaniko') {
+		sh """
+			/kaniko/executor \
+				--context=${WORKSPACE}/${contextDir} \
+				--dockerfile=${WORKSPACE}/${contextDir}/Dockerfile \
+				--destination=${imageId} \
+				--cache=true
+		"""
 	}
 }
