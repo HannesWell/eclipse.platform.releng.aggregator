@@ -25,7 +25,7 @@ spec:
     tty: true
     env:
     - name: HOME
-      value: /tmp
+      value: /tmp/buildah-home
 '''
 		}
 	}
@@ -46,6 +46,7 @@ spec:
 		stage('Build and push Docker Images') {
 			steps {
 				container('buildah') {
+					sh 'mkdir -p "$HOME"'
 					withCredentials([usernamePassword(credentialsId: 'docker.com-bot', usernameVariable: 'REG_USER', passwordVariable: 'REG_PASS')]) {
 						sh 'buildah login -u "$REG_USER" -p "$REG_PASS" docker.io'
 						script {
