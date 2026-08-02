@@ -25,7 +25,7 @@ spec:
     tty: true
     env:
     - name: HOME
-      value: /tmp/buildah-home
+      value: /tmp
 '''
 		}
 	}
