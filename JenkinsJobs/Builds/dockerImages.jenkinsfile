@@ -23,6 +23,8 @@ spec:
     image: quay.io/buildah/stable:latest
     command: ["cat"]
     tty: true
+    securityContext:
+      privileged: true
     env:
     - name: HOME
       value: /tmp/buildah-home
