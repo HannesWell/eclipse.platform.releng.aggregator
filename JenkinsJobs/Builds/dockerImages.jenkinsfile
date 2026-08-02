@@ -26,6 +26,8 @@ spec:
     env:
     - name: HOME
       value: /tmp/buildah-home
+    - name: BUILDAH_ISOLATION
+      value: chroot
 '''
 		}
 	}
