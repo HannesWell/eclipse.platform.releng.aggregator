@@ -80,7 +80,7 @@ jobs:
           IS_ORGANIZATION: ${{ github.event.repository.owner.type == 'Organization' }}
         run: |
           set -exuo pipefail
-          cutoffDate="$(date -u -d "${CUTOFF_DAYS} days ago" +%s)"
+          cutoffDate="$(date -u -d "1 hour ago" +%s)"
           if [[ "$IS_ORGANIZATION" = 'true' ]]; then
             packagesEndpoint='/orgs/${{ github.repository_owner }}/packages/container/${{ matrix.image.id}}/versions'
           else
