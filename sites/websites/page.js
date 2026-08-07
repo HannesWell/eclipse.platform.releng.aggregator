@@ -626,14 +626,8 @@ function activateCollapsiblesTable(table) {
 `
         }
     }
-    for (loaderElement of table.querySelectorAll('.data-loader')) {
-        loaderElement.innerHTML = `
-<div style="display:flex; align-items:center; gap: 12px; color: #666;">
-	<div class="data-loader-spinner"></div>
-	<span>Fetching compile logs...</span>
-</div>
-`
-    }
+    //TODO: Unify and generalize?
+    insertWaitSpinner(table, 'data') //TODO: Pass 'Compile logs' as label
 
     if (!_eventListenersAdded) {
         window.addEventListener('load', checkAnchor)
@@ -646,34 +640,7 @@ function activateCollapsiblesTable(table) {
         const wrapper = detailsRow.querySelector('.collapsible-table-animation-wrapper')
         if (wrapper && (toggle || !wrapper.classList.contains('open'))) {
             wrapper.classList.toggle('open')
-            if (!detailsRow.classList.contains('is-loaded')) {
-                fetchAndApplyData(detailsRow, scrollTarget)
-            }
-        }
-    }
-
-    async function fetchAndApplyData(detailsRow, scrollTarget) {
-        try {
-            const AsyncFunction = async function() {}.constructor;
-            const dataCache = new Map()
-            for (loader of detailsRow.querySelectorAll('.data-loader')) {
-                const supplier = loader.getAttribute('data-supplier')
-                const processor = loader.getAttribute('data-processor')
-                let data = dataCache.get(supplier)
-                if (!data) {
-                    data = await new AsyncFunction('return ' + supplier)()
-                    dataCache.set(supplier, data)
-                }
-                const content = new Function('arg', 'return ' + processor)(data)
-                loader.innerHTML = content
-            }
-            detailsRow.classList.add('is-loaded')
-            if (scrollTarget) {
-                scrollTarget.scrollIntoView({ behavior: 'smooth' })
-            }
-        } catch (exception) {
-            detailsRow.querySelector('.collapsible-table-details-content').innerHTML = `<p style="color:red"><strong>Failed to load data. Please check your connection.</strong></p>`
-            logException(exception.message, exception)
+            fetchAndApplyData(detailsRow, scrollTarget)
         }
     }
 
@@ -689,6 +656,55 @@ function activateCollapsiblesTable(table) {
             openDetailsRow(mainRow, false, element)
             element.scrollIntoView({ behavior: 'smooth' })
         }
+    }
+}
+
+function insertWaitSpinner(container, dataTypeLabel) {
+    for (loaderElement of container.querySelectorAll('.data-loader')) {
+        //TODO: Center this!
+        loaderElement.innerHTML = `
+<div style="display:flex; align-items:center; gap: 12px; color: #666;">
+	<div class="data-loader-spinner"></div>
+	<span>Loading ${dataTypeLabel} ...</span>
+</div>
+`
+    }
+}
+
+function activateDataLoadingDetails(details, dataTypeLabel) {
+    insertWaitSpinner(details, dataTypeLabel)
+    //TODO: Alternativly? pass: , { once: true }
+    details.addEventListener('toggle', () => fetchAndApplyData(details));
+}
+
+async function fetchAndApplyData(dataContainer, scrollTarget = null) {
+    if (dataContainer.classList.contains('is-loaded')) {
+        return; // Already loaded
+    }
+    try {
+        const AsyncFunction = async function() {}.constructor;
+        const dataCache = new Map()
+        for (const loader of dataContainer.querySelectorAll('.data-loader')) {
+            const supplier = loader.getAttribute('data-supplier')
+            const processor = loader.getAttribute('data-processor')
+            let data = dataCache.get(supplier)
+            if (!data) {
+                data = await new AsyncFunction('return ' + supplier)()
+                dataCache.set(supplier, data)
+            }
+            const content = new Function('arg', 'return ' + processor)(data)
+            if (content) {
+                loader.innerHTML = content
+            }
+        }
+        dataContainer.classList.add('is-loaded')
+        if (scrollTarget) {
+            scrollTarget.scrollIntoView({ behavior: 'smooth' })
+        }
+    } catch (exception) {
+        //TODO: Check this!!! Before it was more specific
+        dataContainer.innerHTML = `<p style="color:red"><strong>Failed to load data. Please check your connection.</strong></p>`
+        logException(exception.message, exception)
     }
 }
 
@@ -750,4 +766,41 @@ function createCodeEditorBlock(line, content) {
 
 function applyCodeMarker(severity, rawCode) {
     return `<span class="code-marker" style="text-decoration-color: var(--marker-${severity})">${rawCode}</span>`
+}
+
+// --- Miscelanous utilities ---
+
+function loadScript(scriptSource) {
+    let script = document.querySelector(`script[src="${scriptSource}"]`)
+    if (!script) {
+        script = document.createElement('script')
+        script.src = scriptSource
+        document.head.appendChild(script);
+    }
+    return new Promise((resolve, reject) => {
+        script.addEventListener('load', () => resolve(script));
+        script.addEventListener('error', (err) => {
+            reject(`Failed to load script '${scriptSource}': ` + err);
+            console.log(err);
+        })
+    });
+}
+
+//TODO: unify both methods
+
+function loadStyleSheet(sheetSource) {
+    let link = document.querySelector(`link[href="${sheetSource}"]`)
+    if (!link) {
+        link = document.createElement('link')
+        link.href = sheetSource
+        link.rel = 'stylesheet'
+        document.head.appendChild(link);
+    }
+    return new Promise((resolve, reject) => {
+        link.addEventListener('load', () => resolve(link));
+        link.addEventListener('error', (err) => {
+            reject(`Failed to load link '${sheetSource}': ` + err);
+            console.log(err);
+        })
+    });
 }

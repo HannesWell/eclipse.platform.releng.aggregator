@@ -30,6 +30,23 @@
 			The <a href="https://archive.eclipse.org/eclipse/downloads/">archive site</a> contains older releases (including the last 3.x version, <a href="https://archive.eclipse.org/eclipse/downloads/drops/R-3.8.2-201301310800/">3.8.2</a>).
 			For reference, see also the <a href="https://calendar.google.com/calendar/embed?src=prfk26fdmpru1mptlb06p0jh4s%40group.calendar.google.com">Eclipse Build and RelEng calendar</a>.
 		</p>
+
+
+		<details id="releng-calendar-details">
+			<summary id="releng-calendar" class="toc-level-3">Eclipse Build and RelEng calendar</summary>
+			<p>
+				TODO: Show the calendar and until it's loaded, show the wait symbol.
+				Load it when the details element is opened
+				TODO: Show the link to the calendar (make it copyable)
+			</p>
+			<!--
+				
+			<iframe id="open-web-calendar" style="background:url('https://raw.githubusercontent.com/niccokunzmann/open-web-calendar/master/static/img/loaders/circular-loader.gif') center center no-repeat;" src="https://open-web-calendar.hosted.quelltext.eu/calendar.html?tabs=month&amp;tabs=week&amp;target=_blank&amp;title=Eclipse%20Releng%20and%20Build%20calendar&amp;url=https%3A%2F%2Fraw.githubusercontent.com%2FHannesWell%2Feclipse.platform.releng.aggregator%2Frefs%2Fheads%2Frelease-calendar%2Fproduction%2Fbasic.ics" sandbox="allow-scripts allow-same-origin allow-popups allow-downloads allow-popups-to-escape-sandbox" allowTransparency="true" scrolling="no" frameborder="0" height="300px" width="100%" loading="lazy"></iframe>
+			-->
+
+			<div id="releng-calendar-container" style="padding: 10px;" class="data-loader" data-supplier="fetchCalendarEvents(`${RELENG_CALENDAR_URL}`)" data-processor="generateCalendar(arg)"> </div>
+		</details>
+
 		<h3 id="latest-downloads">Latest Downloads</h3>
 		<table class="builds-table" data-path="latest"></table>
 
@@ -104,6 +121,12 @@
 		const TWENTYFOUR_HOURS_AGO = new Date()
 		TWENTYFOUR_HOURS_AGO.setTime(TWENTYFOUR_HOURS_AGO.getTime() - 24 * 60 * 60 * 1000)
 
+		// RelEng calendar
+		const RELENG_CALENDAR_URL = 'https://raw.githubusercontent.com/HannesWell/eclipse.platform.releng.aggregator/refs/heads/release-calendar/production/basic.ics'
+		const RELENG_CALENDAR_THEME = 'forma'
+		const RELENG_CALENDAR_PALETTE = 'blue'
+		const FULLCALENDAR_VERSION = '7.0'
+
 		contentPostProcessor = (mainElement, contentData) => {
 			const dataTables = Array.from(mainElement.getElementsByClassName('builds-table'))
 			for (const table of dataTables) {
@@ -144,6 +167,8 @@
 					`
 				}
 			}
+			const calendarDetails = document.getElementById('releng-calendar-details')
+			activateDataLoadingDetails(calendarDetails, 'calendar')
 		}
 
 		const errorMarkerStyle = 'font-weight:800; font-size:1.2em; line-height:1em; font-family:sans-serif; color:indianred; margin: 0 0.25em 0 0.25em;'
@@ -178,7 +203,100 @@
 			}
 		}
 
+		//TODO: Maybe create a separate calendar page and embedded it as lazy loading I-frame
+		async function fetchCalendarEvents(icalURL) {
+			const icalSource = fetch(icalURL)
+
+			const icalScript = loadScript('https://unpkg.com/ical.js/dist/ical.es5.min.cjs')
+
+			//TODO: Does this even make sense and are the style sheets always loaded syncronously?
+			const style1 = loadStyleSheet(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/skeleton.css`)
+			const style2 = loadStyleSheet(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/themes/${RELENG_CALENDAR_THEME}/theme.css`)
+			const style3 = loadStyleSheet(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/themes/${RELENG_CALENDAR_THEME}/palettes/${RELENG_CALENDAR_PALETTE}.css`)
+			await Promise.all([style1, style2, style3])
+			const icsText = await (await icalSource).text()
+			await icalScript
+			const jcalData = ICAL.parse(icsText);
+
+			await loadScript(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/all/global.js`)
+			await loadScript(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/themes/${RELENG_CALENDAR_THEME}/global.js`)
+			//TODO: Or do the CSS files have to be loaded first?
+
+			//TODO: Return created calendar events
+			//return jcalData
+
+
+			const vcalendar = new ICAL.Component(jcalData);
+			const vevents = vcalendar.getAllSubcomponents('vevent');
+			const events = [];
+
+			vevents.forEach((vevent) => {
+				const event = new ICAL.Event(vevent);
+
+				if (event.isRecurring()) {
+					const rangeStart = ICAL.Time.now();
+					rangeStart.adjust(-1, 0, 0, 0);
+
+					const rangeEnd = ICAL.Time.now();
+					rangeEnd.adjust(2, 0, 0, 0);
+
+					const iterator = event.iterator(rangeStart);
+					let next;
+
+					while ((next = iterator.next())) {
+						if (next.compare(rangeEnd) > 0) {
+							break;
+						}
+
+						const occurrence = event.getOccurrenceDetails(next);
+						events.push({
+							title: event.summary || '(no title)',
+							start: occurrence.startDate.toJSDate(),
+							end: occurrence.endDate ? occurrence.endDate.toJSDate() : null,
+							allDay: occurrence.startDate.isDate,
+							url: event.url || undefined
+						});
+					}
+				} else if (event.startDate) {
+					events.push({
+						title: event.summary || '(no title)',
+						start: event.startDate.toJSDate(),
+						end: event.endDate ? event.endDate.toJSDate() : null,
+						allDay: event.startDate.isDate,
+						url: event.url || undefined
+					});
+				}
+			});
+
+			return events;
+		}
+
+		function generateCalendar(calendarEvents) {
+			console.log(calendarEvents)
+
+			//TODO: pass the calendar container as argument?
+			const calendarContainer = document.getElementById('releng-calendar-container')
+			const calendar = new FullCalendar.Calendar(calendarContainer, {
+				themeSystem: 'forma',
+				initialView: 'dayGridMonth',
+				headerToolbar: {
+					left: 'prev,next today',
+					center: 'title',
+					right: 'dayGridMonth,timeGridWeek,listMonth'
+				},
+				height: 'auto', //TODO: Improve
+				navLinks: true,
+				editable: false,
+				events: calendarEvents
+			});
+			calendar.render();
+			// calendar.addEventSource(calendarEvents);
+		}
+
 		generate()
+
+	</script>
+	<script type="module">
 
 	</script>
 </body>
