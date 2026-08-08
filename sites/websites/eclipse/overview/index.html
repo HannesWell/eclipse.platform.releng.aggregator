@@ -44,7 +44,7 @@
 			<iframe id="open-web-calendar" style="background:url('https://raw.githubusercontent.com/niccokunzmann/open-web-calendar/master/static/img/loaders/circular-loader.gif') center center no-repeat;" src="https://open-web-calendar.hosted.quelltext.eu/calendar.html?tabs=month&amp;tabs=week&amp;target=_blank&amp;title=Eclipse%20Releng%20and%20Build%20calendar&amp;url=https%3A%2F%2Fraw.githubusercontent.com%2FHannesWell%2Feclipse.platform.releng.aggregator%2Frefs%2Fheads%2Frelease-calendar%2Fproduction%2Fbasic.ics" sandbox="allow-scripts allow-same-origin allow-popups allow-downloads allow-popups-to-escape-sandbox" allowTransparency="true" scrolling="no" frameborder="0" height="300px" width="100%" loading="lazy"></iframe>
 			-->
 
-			<div id="releng-calendar-container" style="padding: 10px;" class="data-loader" data-supplier="fetchCalendarEvents(`${RELENG_CALENDAR_URL}`)" data-processor="generateCalendar(arg)"> </div>
+			<div id="releng-calendar-container" style="padding: 10px;" class="data-loader" data-supplier="fetchCalendarEvents(`${RELENG_CALENDAR_URL}`)" data-processor="generateCalendar(arg)"></div>
 		</details>
 
 		<h3 id="latest-downloads">Latest Downloads</h3>
@@ -122,8 +122,7 @@
 		TWENTYFOUR_HOURS_AGO.setTime(TWENTYFOUR_HOURS_AGO.getTime() - 24 * 60 * 60 * 1000)
 
 		// RelEng calendar
-		//FIXME: Use final URL!
-		const RELENG_CALENDAR_URL = 'https://raw.githubusercontent.com/HannesWell/eclipse.platform.releng.aggregator/refs/heads/release-calendar/sites/releng-calendar.ics'
+		const RELENG_CALENDAR_URL = 'https://raw.githubusercontent.com/eclipse-platform/eclipse.platform.releng.aggregator/refs/heads/master/sites/releng-calendar.ics'
 		const RELENG_CALENDAR_THEME = 'forma'
 		const RELENG_CALENDAR_PALETTE = 'blue'
 		const FULLCALENDAR_VERSION = '7.0'
@@ -228,38 +227,31 @@
 
 			for (const vevent of vevents) {
 				const event = new ICAL.Event(vevent);
-
 				if (event.isRecurring()) {
 					const rangeStart = ICAL.Time.now();
 					rangeStart.adjust(-1, 0, 0, 0);
-
 					const rangeEnd = ICAL.Time.now();
 					rangeEnd.adjust(2, 0, 0, 0);
-
 					const iterator = event.iterator(rangeStart);
 					let next;
-
 					while ((next = iterator.next())) {
 						if (next.compare(rangeEnd) > 0) {
 							break;
 						}
-
 						const occurrence = event.getOccurrenceDetails(next);
 						events.push({
 							title: event.summary || '(no title)',
 							start: occurrence.startDate.toJSDate(),
-							end: occurrence.endDate ? occurrence.endDate.toJSDate() : null,
+							end: occurrence.endDate?.toJSDate(),
 							allDay: occurrence.startDate.isDate,
-							url: event.url || undefined
 						});
 					}
 				} else if (event.startDate) {
 					events.push({
 						title: event.summary || '(no title)',
 						start: event.startDate.toJSDate(),
-						end: event.endDate ? event.endDate.toJSDate() : null,
+						end: event.endDate?.toJSDate(),
 						allDay: event.startDate.isDate,
-						url: event.url || undefined
 					});
 				}
 			}
