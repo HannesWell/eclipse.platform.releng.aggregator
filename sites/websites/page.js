@@ -771,36 +771,33 @@ function applyCodeMarker(severity, rawCode) {
 // --- Miscelanous utilities ---
 
 function loadScript(scriptSource) {
-    let script = document.querySelector(`script[src="${scriptSource}"]`)
-    if (!script) {
-        script = document.createElement('script')
-        script.src = scriptSource
-        document.head.appendChild(script);
-    }
-    return new Promise((resolve, reject) => {
-        script.addEventListener('load', () => resolve(script));
-        script.addEventListener('error', (err) => {
-            reject(`Failed to load script '${scriptSource}': ` + err);
-            console.log(err);
-        })
-    });
+    return load([...document.scripts].find(l => l.src == scriptSource), () => {
+        const newScript = document.createElement('script')
+        newScript.src = scriptSource
+        return newScript
+    })
 }
 
-//TODO: unify both methods
+function loadStyleSheet(styleSource) {
+    return load([...document.styleSheets].find(l => l.href == styleSource), () => {
+        const newStyleSheet = document.createElement('link')
+        newStyleSheet.rel = 'stylesheet'
+        newStyleSheet.href = styleSource
+        return newStyleSheet
+    })
+}
 
-function loadStyleSheet(sheetSource) {
-    let link = document.querySelector(`link[href="${sheetSource}"]`)
-    if (!link) {
-        link = document.createElement('link')
-        link.href = sheetSource
-        link.rel = 'stylesheet'
-        document.head.appendChild(link);
+function load(element, factory) {
+    if (element) {
+        return Promise.resolve(element)
     }
     return new Promise((resolve, reject) => {
-        link.addEventListener('load', () => resolve(link));
-        link.addEventListener('error', (err) => {
-            reject(`Failed to load link '${sheetSource}': ` + err);
+        const newElement = factory()
+        newElement.onload = resolve
+        newElement.onerror = (err) => {
+            reject(`Failed to load link '${styleSource}': ` + err);
             console.log(err);
-        })
+        }
+        document.head.appendChild(newElement);
     });
 }

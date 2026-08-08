@@ -40,7 +40,7 @@
 				TODO: Show the link to the calendar (make it copyable)
 			</p>
 			<!--
-				
+				TODO: Clean up!
 			<iframe id="open-web-calendar" style="background:url('https://raw.githubusercontent.com/niccokunzmann/open-web-calendar/master/static/img/loaders/circular-loader.gif') center center no-repeat;" src="https://open-web-calendar.hosted.quelltext.eu/calendar.html?tabs=month&amp;tabs=week&amp;target=_blank&amp;title=Eclipse%20Releng%20and%20Build%20calendar&amp;url=https%3A%2F%2Fraw.githubusercontent.com%2FHannesWell%2Feclipse.platform.releng.aggregator%2Frefs%2Fheads%2Frelease-calendar%2Fproduction%2Fbasic.ics" sandbox="allow-scripts allow-same-origin allow-popups allow-downloads allow-popups-to-escape-sandbox" allowTransparency="true" scrolling="no" frameborder="0" height="300px" width="100%" loading="lazy"></iframe>
 			-->
 
@@ -122,7 +122,8 @@
 		TWENTYFOUR_HOURS_AGO.setTime(TWENTYFOUR_HOURS_AGO.getTime() - 24 * 60 * 60 * 1000)
 
 		// RelEng calendar
-		const RELENG_CALENDAR_URL = 'https://raw.githubusercontent.com/HannesWell/eclipse.platform.releng.aggregator/refs/heads/release-calendar/production/basic.ics'
+		//FIXME: Use final URL!
+		const RELENG_CALENDAR_URL = 'https://raw.githubusercontent.com/HannesWell/eclipse.platform.releng.aggregator/refs/heads/release-calendar/sites/releng-calendar.ics'
 		const RELENG_CALENDAR_THEME = 'forma'
 		const RELENG_CALENDAR_PALETTE = 'blue'
 		const FULLCALENDAR_VERSION = '7.0'
@@ -206,31 +207,26 @@
 		//TODO: Maybe create a separate calendar page and embedded it as lazy loading I-frame
 		async function fetchCalendarEvents(icalURL) {
 			const icalSource = fetch(icalURL)
-
-			const icalScript = loadScript('https://unpkg.com/ical.js/dist/ical.es5.min.cjs')
+			const iCalScript = loadScript('https://unpkg.com/ical.js/dist/ical.es5.min.cjs')
 
 			//TODO: Does this even make sense and are the style sheets always loaded syncronously?
-			const style1 = loadStyleSheet(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/skeleton.css`)
-			const style2 = loadStyleSheet(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/themes/${RELENG_CALENDAR_THEME}/theme.css`)
-			const style3 = loadStyleSheet(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/themes/${RELENG_CALENDAR_THEME}/palettes/${RELENG_CALENDAR_PALETTE}.css`)
-			await Promise.all([style1, style2, style3])
+			const calendarResources = Promise.all([
+				loadStyleSheet(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/skeleton.css`),
+				loadStyleSheet(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/themes/${RELENG_CALENDAR_THEME}/theme.css`),
+				loadStyleSheet(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/themes/${RELENG_CALENDAR_THEME}/palettes/${RELENG_CALENDAR_PALETTE}.css`),
+				loadScript(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/all/global.js`)
+					.then(() => loadScript(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/themes/${RELENG_CALENDAR_THEME}/global.js`)),
+			])
+
 			const icsText = await (await icalSource).text()
-			await icalScript
+			await iCalScript
 			const jcalData = ICAL.parse(icsText);
-
-			await loadScript(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/all/global.js`)
-			await loadScript(`https://cdn.jsdelivr.net/npm/fullcalendar@${FULLCALENDAR_VERSION}/themes/${RELENG_CALENDAR_THEME}/global.js`)
-			//TODO: Or do the CSS files have to be loaded first?
-
-			//TODO: Return created calendar events
-			//return jcalData
-
 
 			const vcalendar = new ICAL.Component(jcalData);
 			const vevents = vcalendar.getAllSubcomponents('vevent');
 			const events = [];
 
-			vevents.forEach((vevent) => {
+			for (const vevent of vevents) {
 				const event = new ICAL.Event(vevent);
 
 				if (event.isRecurring()) {
@@ -266,14 +262,14 @@
 						url: event.url || undefined
 					});
 				}
-			});
+			}
+
+			await calendarResources
 
 			return events;
 		}
 
 		function generateCalendar(calendarEvents) {
-			console.log(calendarEvents)
-
 			//TODO: pass the calendar container as argument?
 			const calendarContainer = document.getElementById('releng-calendar-container')
 			const calendar = new FullCalendar.Calendar(calendarContainer, {
@@ -290,7 +286,6 @@
 				events: calendarEvents
 			});
 			calendar.render();
-			// calendar.addEventSource(calendarEvents);
 		}
 
 		generate()
