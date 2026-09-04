@@ -4,9 +4,7 @@ pipeline {
 		timeout(time: 5, unit: 'MINUTES')
 		buildDiscarder(logRotator(numToKeepStr:'5'))
 	}
-	agent {
-		label 'basic'
-	}
+	agent any
 	stages {
 		stage('Create Jobs') {
 			environment {
@@ -54,7 +52,7 @@ pipeline {
 							}
 						}
 						
-						jobDsl(additionalParameters: [FOLDER_DEFINITIONS: folderDefinitions,  PIPELINE_JOB_DEFINITIONS: pipelineJobDefinitions], sandbox: true, scriptText : '''\
+						jobDsl(additionalParameters: [FOLDER_DEFINITIONS: folderDefinitions,  PIPELINE_JOB_DEFINITIONS: pipelineJobDefinitions], sandbox: false, scriptText : '''\
 							FOLDER_DEFINITIONS.each{ folderName, folderDef ->
 								folder(folderName) {
 									if (folderDef.displayName != null) {

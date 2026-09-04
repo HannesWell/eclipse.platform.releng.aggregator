@@ -1,7 +1,7 @@
 [submodule "eclipse.jdt"]
   path = eclipse.jdt
-  url = https://github.com/eclipse-jdt/eclipse.jdt.git
-  branch = master
+  url = https://github.com/HannesWell/eclipse.jdt.git
+  branch = dev-preparation-improved
 [submodule "eclipse.jdt.core"]
   path = eclipse.jdt.core
   url = https://github.com/eclipse-jdt/eclipse.jdt.core.git
@@ -20,8 +20,8 @@
   branch = master
 [submodule "eclipse.pde"]
   path = eclipse.pde
-  url = https://github.com/eclipse-pde/eclipse.pde.git
-  branch = master
+  url = https://github.com/HannesWell/eclipse.pde.git
+  branch = dev-preparation-improved
 [submodule "eclipse.platform"]
   path = eclipse.platform
   url = https://github.com/eclipse-platform/eclipse.platform.git

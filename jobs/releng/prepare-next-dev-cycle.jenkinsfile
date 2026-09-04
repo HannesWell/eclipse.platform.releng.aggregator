@@ -47,7 +47,7 @@ pipeline {
 					assignEnvVariable('NEXT_RELEASE_VERSION_MINOR', nextVersion.minor)
 					
 					echo "PREVIOUS_RELEASE_CANDIDATE_ID: ${PREVIOUS_RELEASE_CANDIDATE_ID}"
-					def buildProperties = utilities.loadBuildDropProperties("${PREVIOUS_RELEASE_CANDIDATE_ID}")
+					def buildProperties = readProperties(file: 'cje-production/buildproperties.txt')
 					
 					def previousRC = utilities.matchBuildIdentifier("${PREVIOUS_RELEASE_CANDIDATE_ID}", { iBuild ->
 						iBuild.major = buildProperties.STREAMMajor
@@ -206,30 +206,6 @@ pipeline {
 						"./${PREPARATION_SCRIPT}"
 					done
 				'''
-			}
-		}
-		stage('Early setup redirection') {
-			steps {
-				dir('oomph') {
-					script {
-						def previousRC = utilities.loadBuildDropProperties("${PREVIOUS_RELEASE_CANDIDATE_ID}")
-						replaceInFile('Platform.setup', [
-							"early.redirection.${PREVIOUS_RELEASE_VERSION}" : "early.redirection.${NEXT_RELEASE_VERSION}",
-							" ${PREVIOUS_RELEASE_VERSION}" : " ${NEXT_RELEASE_VERSION}",
-							" ${previousRC.PREVIOUS_RELEASE_VER}" : " ${PREVIOUS_RELEASE_VERSION}",
-						])
-						replaceAllInFile('Platform.setup', [
-							'id="early.redirection"\\s+disabled="true"' : 'id="early.redirection"',
-							*:redirectionTaskReplacementEntry('early.redirection.ibuild',
-								"https://download.eclipse.org/eclipse/updates/${PREVIOUS_RELEASE_VERSION}-I-builds",
-								"https://download.eclipse.org/eclipse/updates/${NEXT_RELEASE_VERSION}-I-builds"),
-							*:redirectionTaskReplacementEntry('early.redirection.baseline',
-								"https://download.eclipse.org/eclipse/updates/${previousRC.PREVIOUS_RELEASE_REPO_ID}/${previousRC.PREVIOUS_RELEASE_ID}",
-								"https://download.eclipse.org/eclipse/updates/${PREVIOUS_RELEASE_VERSION}-I-builds/${PREVIOUS_RELEASE_CANDIDATE_I_BUILD}"),
-						])
-						sh "git commit --message 'Enable and update early redirection for ${NEXT_RELEASE_VERSION} in platform setup' ."
-					}
-				}
 			}
 		}
 		stage('Prepare maintenance branch') {
