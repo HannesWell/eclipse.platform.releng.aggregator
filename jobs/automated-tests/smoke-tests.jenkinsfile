@@ -106,6 +106,7 @@ def runSmokeTest(Closure executorAgent, String agentId, String os, String arch, 
 							# we want java.io.tmpdir to be in $WORKSPACE, but must already exist, for Java to use it.
 							mkdir -p tmp
 							
+							#TODO: replace this too!!!
 							curl -o getEBuilder.xml https://download.eclipse.org/eclipse/relengScripts/testScripts/bootstrap/getEBuilder.xml
 							
 							echo JAVA_HOME: $JAVA_HOME
