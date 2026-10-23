@@ -34,6 +34,7 @@ pipeline {
 				script {
 					def jobFolderName = "${env.JOB_NAME}".split('/')[-2]
 					echo "Job folder: $jobFolderName"
+//					jobFolderName = 'y-builds'
 					BUILD = readJSON(file: 'jobs/buildConfigurations.json').values().find{ c -> c.folder == jobFolderName}
 					if (BUILD == null) {
 						error "Unsupported folder for smoke tests: ${jobFolderName}"
@@ -65,7 +66,7 @@ pipeline {
 		}
 	}
 	post {
-		unsuccessful {
+		always {
 			emailext subject: "Smoke test for ${buildId} - ${currentBuild.currentResult}", 
 				body: """\
 					Smoke tests failed for ${buildId}. Please review the logs:

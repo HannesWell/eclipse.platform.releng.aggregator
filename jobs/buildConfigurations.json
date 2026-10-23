@@ -8,7 +8,7 @@
 				"schedule": "TZ=UTC\n# Format: Minute Hour Day Month Day-of-week (1-7)\n0 23 30-31 8 *\n0 23 * 9,10 *\n0 23 1-25 11 *"
 			}
 		},
-		"mailingList": "platform-releng-dev@eclipse.org",
+		"mailingList": "wellmann.hannes1@gmx.net",
 		"tests": [
 			{
 				"os": "linux",
@@ -71,25 +71,12 @@
 				"arch": "x86_64",
 				"javaVersion": [
 					25,
+					26,
 					27
 				],
 				"agent": {
 					"type": "kubernetes",
 					"image": "ghcr.io/eclipse-platform/platformreleng-opensuse-gtk3-metacity:16"
-				}
-			},
-			{
-				"label": "Linux RISC-V",
-				"os": "linux",
-				"ws": "gtk",
-				"arch": "riscv64",
-				"javaVersion": [
-					25,
-					27
-				],
-				"agent": {
-					"type": "static",
-					"label": "riscv64"
 				}
 			},
 			{
@@ -99,6 +86,7 @@
 				"arch": "x86_64",
 				"javaVersion": [
 					25,
+					26,
 					27
 				],
 				"agent": {
@@ -151,7 +139,7 @@
 			"eclipse.jdt.debug": "BETA_JAVA28",
 			"eclipse.jdt.ui": "BETA_JAVA28"
 		},
-		"mailingList": "jdt-dev@eclipse.org",
+		"mailingList": "wellmann.hannes1@gmx.net",
 		"tests": [
 			{
 				"os": "linux",
@@ -211,17 +199,6 @@
 				"agent": {
 					"type": "kubernetes",
 					"image": "ghcr.io/eclipse-platform/platformreleng-opensuse-gtk3-metacity:16"
-				}
-			},
-			{
-				"label": "Linux RISC-V",
-				"os": "linux",
-				"ws": "gtk",
-				"arch": "riscv64",
-				"javaVersion": "28-ea",
-				"agent": {
-					"type": "static",
-					"label": "riscv64"
 				}
 			},
 			{
