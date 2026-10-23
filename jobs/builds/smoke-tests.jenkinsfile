@@ -34,6 +34,7 @@ pipeline {
 				script {
 					def jobFolderName = "${env.JOB_NAME}".split('/')[-2]
 					echo "Job folder: $jobFolderName"
+//					jobFolderName = 'y-builds'
 					BUILD = readJSON(file: 'jobs/buildConfigurations.json').values().find{ c -> c.folder == jobFolderName}
 					if (BUILD == null) {
 						error "Unsupported folder for smoke tests: ${jobFolderName}"
@@ -65,7 +66,7 @@ pipeline {
 		}
 	}
 	post {
-		unsuccessful {
+		always {
 			emailext subject: "Smoke test for ${buildId} - ${currentBuild.currentResult}", 
 				body: """\
 					Smoke tests failed for ${buildId}. Please review the logs:
@@ -97,6 +98,7 @@ def runSmokeTest(Closure executorAgent, String name, String os, String ws, Strin
 				"JAVA_HOME=${javaHome}", "ANT_HOME=${ antHome }",
 				"WORKSPACE=${pwd()}", "PATH=${javaHome}/bin:${antHome}/bin:${PATH}",
 				"ANT_OPTS=-Djava.io.tmpdir=${pwd()}/tmp",
+				'GIT_HOST=https://github.com/HannesWell',
 			]) {
 				xvnc(useXauthority: true) {
 					if (os =='linux') {
@@ -125,7 +127,7 @@ def runSmokeTest(Closure executorAgent, String name, String os, String ws, Strin
 							ant -diagnostics 1>antDiagnostics.txt 2>&1
 							java -XshowSettings -version 1>javaSettings.txt 2>&1
 							
-							ant -f getEBuilder.xml -DbuildId=${buildId} \
+							ant -f getEBuilder.xml -DbuildId=${buildId} -DtestConfigurationBranch=smoke-tests-testing \
 							  -Dosgi.os=''' + os + ''' -Dosgi.ws=''' + ws + ''' -Dosgi.arch=''' + arch + ''' \
 							  -DtestSuite=${testsToRun}
 						'''

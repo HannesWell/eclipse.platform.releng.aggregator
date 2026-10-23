@@ -205,4 +205,6 @@ echo "platformParmString: ${platformParmString}"
 echo "platformString: ${platformString}"
 echo "testedPlatform: ${testedPlatform}"
 
-$jvm ${ANT_OPTS} ${platformArgString} -jar $launcher -data workspace -application org.eclipse.ant.core.antRunner -file ${PWD}/test.xml ${platformParmString} -D$installmode=true $properties -logger org.apache.tools.ant.DefaultLogger $tests
+# -DextraVMargs='--enable-final-field-mutation=ALL-UNNAMED -XX:+EnableDynamicAgentLoading'
+# -verbose -logger org.apache.tools.ant.listener.ProfileLogger 
+$jvm ${ANT_OPTS} ${platformArgString} -jar $launcher -data workspace -application org.eclipse.ant.core.antRunner -file ${PWD}/test.xml ${platformParmString} -D$installmode=true $properties $tests
