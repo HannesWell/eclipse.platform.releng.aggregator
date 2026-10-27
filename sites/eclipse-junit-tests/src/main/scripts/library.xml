@@ -266,6 +266,9 @@
             <env
                 key="ECLIPSE_I_BUILD_TEST"
                 value="true"/>
+            <env
+                key="SWT_SESSIONMANAGER_DBUS_DISABLE"
+                value="true"/>
         </java>
         <antcall target="collect-results" />
     </target>
