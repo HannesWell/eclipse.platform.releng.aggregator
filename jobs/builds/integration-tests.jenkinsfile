@@ -9,14 +9,16 @@ pipeline {
 		skipDefaultCheckout()
 	}
 	parameters {
-		string(name: 'buildId', trim: true, description: 'Build Id to test. For example: <code>I20251010-0150</code>')
-		string(name: 'testSuite', defaultValue: 'all', trim: true, description: '''This can be any ant target from
+		string(name: 'buildId', defaultValue: 'I20261026-2300', trim: true, description: 'Build Id to test. For example: <code>I20251010-0150</code>')
+		string(name: 'testSuite', defaultValue: 'ant', trim: true, description: '''This can be any ant target from
 			the <a href="https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/blob/master/production/testScripts/configuration/sdk.tests/testScripts/test.xml"><code>test.xml</code></a>
 		''')
-		string(name: 'testAgent', trim: true, description: '''The Jenkins build agent this test should run on. If not specified to will be read from the
+		string(name: 'testAgent', defaultValue: 'ubuntu-2404', trim: true, description: '''The Jenkins build agent this test should run on. If not specified to will be read from the
 			<a href="https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/blob/master/jobs/buildConfigurations.json"><code>buildConfigurations.json</code></a>
 			for the configuration implied by this job's name.
 		''')
+		//FIXME: Remove this!!!
+		string(name: 'jobBaseName', trim: true)
 	}
 	agent none
 	environment {
@@ -24,6 +26,7 @@ pipeline {
 		GIT_BRANCH = "${scm.branches[0].name}" //TODO: Or really use params.buildId?
 		// Download Server locations (seldomly changes)
 		EP_ECLIPSE_DROPS = '/home/data/httpd/download.eclipse.org/eclipse/downloads/drops4'
+		JOB_BASE_NAME = "${params.jobBaseName}" //TODO: Remove this!
 	}
 	stages {
 		stage('Select agent') {
@@ -145,8 +148,8 @@ pipeline {
 								ssh genie.releng@projects-storage.eclipse.org mkdir -p ${remoteResultsDirectory}
 								
 								# First delete result files from a previous run of the same configuration (in case that test configuration was run again), then transfer the new results.
-								ssh genie.releng@projects-storage.eclipse.org rm -rfv ${remoteResultsDirectory}/${JOB_BASE_NAME}* ${remoteResultsDirectory}/*/*${JOB_BASE_NAME}*
-								scp -r ${localResultsDirectory}/* genie.releng@projects-storage.eclipse.org:${remoteResultsDirectory}
+								#ssh genie.releng@projects-storage.eclipse.org rm -rfv ${remoteResultsDirectory}/${JOB_BASE_NAME}* ${remoteResultsDirectory}/*/*${JOB_BASE_NAME}*
+								#scp -r ${localResultsDirectory}/* genie.releng@projects-storage.eclipse.org:${remoteResultsDirectory}
 							""")
 						}
 						build job: 'releng/update-index', wait: false
@@ -164,9 +167,10 @@ pipeline {
 
 @NonCPS
 def readTestConfiguration(Map<String, Object> buildConfigurations) {
-	def matcher = "$JOB_BASE_NAME" =~ /ep(?<major>\d)(?<minor>\d+)(?<type>[A-Z])-unit-(?<os>\w+)-(?<arch>\w+)-java(?<javaVersion>\d+)/
+	def jobName = params.jobBaseName ? params.jobBaseName : "$JOB_BASE_NAME" //FIXME: Clean-up and inline
+	def matcher = jobName =~ /ep(?<major>\d)(?<minor>\d+)(?<type>[A-Z])-unit-(?<os>\w+)-(?<arch>\w+)-java(?<javaVersion>\d+)/
 	if (!matcher.matches()) {
-		throw new Exception("Unsupported test job name: $JOB_BASE_NAME" )
+		throw new Exception("Unsupported test job name: $jobName" )
 	}
 	def buildType = matcher.group('type')
 	def os = matcher.group('os')
