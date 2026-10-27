@@ -71,7 +71,6 @@
 				"arch": "x86_64",
 				"javaVersion": [
 					25,
-					26,
 					27
 				],
 				"agent": {
@@ -86,7 +85,6 @@
 				"arch": "x86_64",
 				"javaVersion": [
 					25,
-					26,
 					27
 				],
 				"agent": {
