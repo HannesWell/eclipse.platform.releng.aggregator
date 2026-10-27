@@ -9,14 +9,15 @@ pipeline {
 		skipDefaultCheckout()
 	}
 	parameters {
-		string(name: 'buildId', trim: true, description: 'Build Id to test. For example: <code>I20251010-0150</code>')
-		string(name: 'testSuite', defaultValue: 'all', trim: true, description: '''This can be any ant target from
+		string(name: 'buildId', defaultValue: 'I20261026-2300', trim: true, description: 'Build Id to test. For example: <code>I20251010-0150</code>')
+		string(name: 'testSuite', defaultValue: 'ant', trim: true, description: '''This can be any ant target from
 			the <a href="https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/blob/master/production/testScripts/configuration/sdk.tests/testScripts/test.xml"><code>test.xml</code></a>
 		''')
-		string(name: 'testAgent', trim: true, description: '''The Jenkins build agent this test should run on. If not specified to will be read from the
+		string(name: 'testAgent', defaultValue: 'ubuntu-2404', trim: true, description: '''The Jenkins build agent this test should run on. If not specified to will be read from the
 			<a href="https://github.com/eclipse-platform/eclipse.platform.releng.aggregator/blob/master/jobs/buildConfigurations.json"><code>buildConfigurations.json</code></a>
 			for the configuration implied by this job's name.
 		''')
+		string(name: 'jobBaseName', trim: true)
 	}
 	agent none
 	environment {
@@ -24,6 +25,7 @@ pipeline {
 		GIT_BRANCH = "${scm.branches[0].name}" //TODO: Or really use params.buildId?
 		// Download Server locations (seldomly changes)
 		EP_ECLIPSE_DROPS = '/home/data/httpd/download.eclipse.org/eclipse/downloads/drops4'
+		JOB_BASE_NAME = "${params.jobBaseName}"
 	}
 	stages {
 		stage('Select agent') {
@@ -37,7 +39,7 @@ pipeline {
 			// Read the eventual test-agent's label, if not provided by the caller (usually it's provided)
 			steps {
 				script {
-					def buildConfigurations = sh(script: "curl --fail https://raw.githubusercontent.com/eclipse-platform/eclipse.platform.releng.aggregator/refs/heads/master/jobs/buildConfigurations.json", returnStdout: true)
+					def buildConfigurations = sh(script: "curl --fail https://raw.githubusercontent.com/HannesWell/eclipse.platform.releng.aggregator/refs/heads/tests-rework/jobs/buildConfigurations.json", returnStdout: true)
 					TEST = readTestConfiguration(readJSON(text: buildConfigurations))
 					echo "Read agent for OS=${TEST.os} ARCH=${TEST.arch}: ${TEST.agent}"
 				}
@@ -144,8 +146,6 @@ pipeline {
 							runScript(false, """
 								ssh genie.releng@projects-storage.eclipse.org mkdir -p ${remoteResultsDirectory}
 								
-								ssh genie.releng@projects-storage.eclipse.org rm -rfv ${remoteResultsDirectory}/${JOB_BASE_NAME}* ${remoteResultsDirectory}/*/*${JOB_BASE_NAME}*
-								scp -r ${localResultsDirectory}/* genie.releng@projects-storage.eclipse.org:${remoteResultsDirectory}
 							""")
 						}
 						build job: 'releng/update-index', wait: false
