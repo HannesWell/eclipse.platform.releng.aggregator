@@ -279,6 +279,7 @@ def getTemurinJDK(int version, String os, String arch, String releaseType = 'ga'
 	}
 	def jdkPath = "${WORKSPACE}/tools/jdk-${version}"
 	if (fileExists("${jdkPath}")) {
+		//FIXME: Does ls work on Windows by default? Probably not, like sh.
 		return "${jdkPath}/" + sh(script: "ls ${jdkPath}", returnStdout: true).strip()
 	}
 	return downloadTemurinJDK(version, os, arch, releaseType)
@@ -306,6 +307,7 @@ def installDownloadableTool(String toolType, String url) {
 		} else { // Windows 10 and later has a tar.exe that can handle zip files (even read from std-in)
 			bat scriptText
 		}
+		//FIXME: Does ls work on Windows by default? Probably not, like sh.
 		def subDirs = sh(script: 'ls', returnStdout: true).strip().split('\\s+')
 		if (subDirs.length != 1) {
 			error "Not exactly one subfolder in ${pwd()}: ${subDirs}"
