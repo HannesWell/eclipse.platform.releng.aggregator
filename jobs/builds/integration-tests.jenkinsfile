@@ -87,9 +87,11 @@ pipeline {
 					environment {
 						ANT_OPTS = "-Djava.io.tmpdir=${pathOf(env.WORKSPACE + '/tmp')}"
 						JAVA_HOME = "${jdkToolFor(TEST)}"
+						//TODO: Consider subsequent addition of JAVA_11_HOME, Java_17_HOME, etc.
 					}
 					steps {
 						script {
+							//TODO: Eventually do all of this in a Java script and run the preamble if on unix
 							def preambel = ''
 							if (isUnix()) {
 								preambel = '''#!/bin/bash -xe
@@ -123,6 +125,7 @@ pipeline {
 				}
 				stage('Collect results') {
 					tools {
+						//TODO: chanage to OS/agent specific jdk. Reuse the env variables set before. But  This should work when CBI provides this jdk for all agents!
 						jdk 'temurin-jdk25-latest'
 					}
 					environment {
@@ -131,6 +134,7 @@ pipeline {
 					}
 					steps {
 						script {
+							//TODO: Maybe do this in the run phase too? and just name this transfer results? But this way we can just collect the logs from the previous stage for all running
 							def testResults = junit(keepLongStdio: true, testResults: '**/eclipse-testing/results/xml/*.xml')
 							writeJSON(file: "workarea/${buildId}/eclipse-testing/results/${JOB_BASE_NAME}.json",
 								json: [passCount: testResults.passCount, failCount: testResults.failCount, skipCount: testResults.skipCount, duration: testResults.duration])
@@ -143,6 +147,7 @@ pipeline {
 								${REPO_ROOT}/scripts/releng/TestResultsGenerator.java
 						""")
 						sshagent(['projects-storage.eclipse.org-bot-ssh']) {
+							// TODO: Does this work on Windows? Use runScript?
 							// Transfer test results to storage-server
 							runScript(false, """
 								ssh genie.releng@projects-storage.eclipse.org mkdir -p ${remoteResultsDirectory}
