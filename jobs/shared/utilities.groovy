@@ -300,7 +300,7 @@ def downloadTemurinJDK(int version, String os, String arch, String releaseType='
 def installDownloadableTool(String toolType, String url) {
 	dir("${WORKSPACE}/tools/${toolType}") {
 		deleteDir()
-		def scriptText = "curl --fail --location ${url} | ${ isUnix() ? 'tar' : 'C:\\Windows\\System32\\tar.exe'} -xzf -"
+		def scriptText = "curl --fail --location ${url} | tar -xzf -"
 		if (isUnix()) {
 			sh scriptText
 		} else { // Windows 10 and later has a tar.exe that can handle zip files (even read from std-in)
