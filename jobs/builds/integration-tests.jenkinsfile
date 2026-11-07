@@ -90,6 +90,12 @@ pipeline {
 					}
 					steps {
 						script {
+							echo "Get JDK 2 (just for testing)" //TODO: Remove!
+							def home = getJDKInstallationPath(TEST)
+							echo "home: $home"
+							def home2 = getJDKInstallationPath(TEST)
+							echo "home2: $home2"
+							
 							//TODO: Eventually do all of this in a Java script and run the preamble if on unix
 							def preambel = ''
 							if (isUnix()) {
