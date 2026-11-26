@@ -1,0 +1,25 @@
+import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
+
+String read(String name) {
+    return new String(Files.readAllBytes(new File(basedir, name).toPath()), StandardCharsets.UTF_8);
+}
+
+void check(boolean condition, String message) {
+    if (!condition) {
+        throw new IllegalStateException(message);
+    }
+}
+
+String source = read("consumer/vendor/vendor/Library.java");
+check(source.contains("int used()"), "Used method was removed");
+check(source.contains("retained"), "Used field was removed");
+check(!source.contains("unused"), "Unused members were retained");
+check(!new File(basedir, "consumer/vendor/vendor/Unused.java").exists(), "Unused type was retained");
+check(new File(basedir, "consumer/target/classes/app/Main.class").exists(), "Main was not compiled");
+check(new File(basedir, "consumer/target/classes/vendor/Library.class").exists(), "Library was not compiled");
+check(!new File(basedir, "consumer/target/classes/vendor/Unused.class").exists(), "Unused type was compiled");
+String log = read("build.log");
+check(log.contains("Would remove") && log.contains("Dry run:"), "Default dry run was not executed");
+check(log.contains("Pruned:"), "Apply invocation was not executed");
+return true;
