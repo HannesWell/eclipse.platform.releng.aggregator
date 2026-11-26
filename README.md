@@ -47,6 +47,10 @@ git clean -f -d -x
 git reset --hard HEAD
 ```
 
+For a standalone Maven goal that removes unreachable Java declarations from a
+Tycho plugin's selected source folder, see the
+[plugin code pruner](maven-plugins/plugin-code-pruner/README.md).
+
 Build with custom compiler
 --------------------------
 
